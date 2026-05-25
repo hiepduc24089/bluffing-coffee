@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+:root {
+  font-family:
+    "Be Vietnam Pro",
+    "Segoe UI",
+    sans-serif;
+  color: #0f172a;
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 32%),
+    linear-gradient(180deg, #f6fffd 0%, #f7f8fc 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-sider {
+  border-inline-end: 1px solid #e2e8f0;
+}
+
+.app-brand {
+  padding: 24px 20px 16px;
+}
+
+.app-brand__title.ant-typography {
+  margin-bottom: 0;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom: 1px solid #e2e8f0;
+  backdrop-filter: blur(12px);
+}
+
+.app-header__title.ant-typography {
+  margin: 0;
+}
+
+.app-content {
+  padding: 24px;
+}
+
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-header__title.ant-typography {
+  margin-bottom: 4px;
+}
+
+.page-header__subtitle.ant-typography {
+  margin-bottom: 0;
+}
+
+.toolbar {
+  display: flex;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.w-full {
+  width: 100%;
+}
+
+@media (max-width: 992px) {
+  .app-shell.ant-layout {
+    flex-direction: column;
+  }
+
+  .app-sider.ant-layout-sider {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+
+  .toolbar {
+    flex-direction: column;
+  }
+}
