@@ -86,6 +86,87 @@ body {
   margin-bottom: 16px;
 }
 
+.app-table-ra2n .ant-table-thead > tr > th {
+  background: #dfe7ef;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.app-table-ra2n .ant-table-thead > tr > th::before {
+  background-color: #cbd5e1 !important;
+}
+
+.login-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  align-items: center;
+  min-height: 100vh;
+  gap: 48px;
+  padding: 48px;
+}
+
+.login-screen--centered {
+  grid-template-columns: minmax(320px, 420px);
+  justify-content: center;
+}
+
+.login-hero {
+  max-width: 620px;
+}
+
+.login-eyebrow.ant-typography {
+  color: #0f766e;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.login-brand-title.ant-typography {
+  margin: 8px 0 16px;
+  color: #0f172a;
+  font-size: 56px;
+  line-height: 1;
+}
+
+.login-brand-copy.ant-typography {
+  max-width: 520px;
+  color: #475569;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.login-card.ant-card {
+  border: 1px solid #dbe4ee;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+}
+
+.login-card__header {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.login-card__header .ant-typography {
+  margin-bottom: 0;
+}
+
+.login-card__alert {
+  margin-bottom: 16px;
+}
+
+.login-card__alternate.ant-typography {
+  display: block;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.auth-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -114,5 +195,15 @@ body {
 
   .toolbar {
     flex-direction: column;
+  }
+
+  .login-screen {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .login-brand-title.ant-typography {
+    font-size: 40px;
   }
 }

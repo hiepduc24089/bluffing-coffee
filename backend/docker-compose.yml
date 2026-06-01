@@ -1,0 +1,92 @@
+name: bluffing-coffee
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bluffing_coffee_backend
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - backend_vendor:/var/www/html/vendor
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost:5173,localhost:8000,127.0.0.1:5173,127.0.0.1:8000}
+      SESSION_DOMAIN: ${SESSION_DOMAIN:-localhost}
+      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
+      DB_CONNECTION: ${DB_CONNECTION:-mysql}
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_DATABASE: ${DB_DATABASE:-bluffing_coffee}
+      DB_USERNAME: ${DB_USERNAME:-bluffing_coffee}
+      DB_PASSWORD: ${DB_PASSWORD:-bluffing_coffee}
+      CACHE_STORE: ${CACHE_STORE:-redis}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      SESSION_DRIVER: ${SESSION_DRIVER:-database}
+      REDIS_CLIENT: ${REDIS_CLIENT:-phpredis}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - bluffing_coffee
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: bluffing_coffee_nginx
+    ports:
+      - "${BACKEND_PORT:-8000}:80"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - bluffing_coffee
+
+  mysql:
+    image: mysql:8.4
+    container_name: bluffing_coffee_mysql
+    ports:
+      - "${MYSQL_HOST:-127.0.0.1}:${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-bluffing_coffee}
+      MYSQL_USER: ${DB_USERNAME:-bluffing_coffee}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-bluffing_coffee}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - bluffing_coffee
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: bluffing_coffee_redis
+    ports:
+      - "${REDIS_HOST_IP:-127.0.0.1}:${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - bluffing_coffee
+
+volumes:
+  backend_vendor:
+  mysql_data:
+  redis_data:
+
+networks:
+  bluffing_coffee:
+    driver: bridge

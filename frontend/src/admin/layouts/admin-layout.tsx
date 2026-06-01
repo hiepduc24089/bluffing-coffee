@@ -6,22 +6,22 @@ const { Header, Sider, Content } = Layout;
 
 const menuItems = [
   {
-    key: '/dashboard',
+    key: '/admin/dashboard',
     icon: <DashboardOutlined />,
-    label: <Link to="/dashboard">Dashboard</Link>,
+    label: <Link to="/admin/dashboard">Tổng quan</Link>,
   },
   {
-    key: '/tournaments',
+    key: '/admin/tournaments',
     icon: <TrophyOutlined />,
-    label: <Link to="/tournaments">Tournaments</Link>,
+    label: <Link to="/admin/tournaments">Giải đấu</Link>,
   },
 ];
 
 export function AdminLayout() {
   const location = useLocation();
-  const selectedKeys = location.pathname.startsWith('/tournaments')
-    ? ['/tournaments']
-    : ['/dashboard'];
+  const selectedKeys = location.pathname.startsWith('/admin/tournaments')
+    ? ['/admin/tournaments']
+    : ['/admin/dashboard'];
 
   return (
     <Layout className="app-shell">
@@ -30,14 +30,14 @@ export function AdminLayout() {
           <Typography.Title level={4} className="app-brand__title">
             Bluffing Coffee
           </Typography.Title>
-          <Typography.Text type="secondary">Admin Console</Typography.Text>
+          <Typography.Text type="secondary">Trang quản trị</Typography.Text>
         </div>
         <Menu mode="inline" selectedKeys={selectedKeys} items={menuItems} />
       </Sider>
       <Layout>
         <Header className="app-header">
           <Typography.Title level={3} className="app-header__title">
-            Bluffing Coffee Management
+            Quản lý Bluffing Coffee
           </Typography.Title>
         </Header>
         <Content className="app-content">

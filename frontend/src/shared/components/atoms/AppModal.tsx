@@ -1,7 +1,8 @@
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import type { ModalProps } from 'antd';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { CloseOutlined } from '@ant-design/icons';
+import AppButton from '@/shared/components/atoms/AppButton';
 
 type AppModalStyles = NonNullable<ModalProps['styles']>;
 
@@ -192,7 +193,7 @@ const AppModal: React.FC<AppModalProps> = ({
       footer={footer => (
         <div className={footerClass}>
           {onDelete && (
-            <Button
+            <AppButton
               onClick={onDelete}
               type="primary"
               danger
@@ -200,7 +201,7 @@ const AppModal: React.FC<AppModalProps> = ({
               aria-label="Xóa"
             >
               Xóa
-            </Button>
+            </AppButton>
           )}
           <div className="flex gap-2">{footer}</div>
         </div>

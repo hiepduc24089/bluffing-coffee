@@ -1,15 +1,16 @@
 import { http } from '@/shared/lib/http';
 import type { PaginatedResponse } from '@/shared/types/api';
+import { getAdminAuthHeaders } from '@/admin/modules/auth/utils/admin-auth-storage';
 import type {
   TournamentFilter,
   TournamentFormValues,
   TournamentRow,
-} from '@/modules/tournament/types/tournament.type';
+} from '@/admin/modules/tournament/types/tournament.type';
 
 const mockRows: TournamentRow[] = [
   {
     id: 'tour-001',
-    name: 'Friday Deep Stack',
+    name: 'Giải tối thứ sáu',
     buyIn: 150000,
     capacity: 60,
     status: 'published',
@@ -17,7 +18,7 @@ const mockRows: TournamentRow[] = [
   },
   {
     id: 'tour-002',
-    name: 'Sunday Main Event',
+    name: 'Giải chủ nhật',
     buyIn: 500000,
     capacity: 120,
     status: 'draft',
@@ -34,7 +35,8 @@ export async function getTournamentList(
   filters: TournamentFilter,
 ): Promise<PaginatedResponse<TournamentRow>> {
   try {
-    const response = await http.get<PaginatedResponse<TournamentRow>>('/tournaments', {
+    const response = await http.get<PaginatedResponse<TournamentRow>>('/admin/tournaments', {
+      headers: getAdminAuthHeaders(),
       params: {
         search: filters.keyword || undefined,
         status: filters.status,
@@ -67,9 +69,13 @@ export async function getTournamentList(
 }
 
 export async function createTournament(payload: TournamentFormValues) {
-  return http.post('/tournaments', payload);
+  return http.post('/admin/tournaments', payload, {
+    headers: getAdminAuthHeaders(),
+  });
 }
 
 export async function updateTournament(id: string, payload: TournamentFormValues) {
-  return http.put(`/tournaments/${id}`, payload);
+  return http.put(`/admin/tournaments/${id}`, payload, {
+    headers: getAdminAuthHeaders(),
+  });
 }

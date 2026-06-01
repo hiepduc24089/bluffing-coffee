@@ -3,9 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\TournamentStatusEnum;
-use App\Enums\UserRoleEnum;
+use App\Models\Admin;
 use App\Models\Tournament;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -83,8 +82,6 @@ class TournamentApiTest extends TestCase
 
     private function actingAsAdmin(): void
     {
-        Sanctum::actingAs(User::factory()->create([
-            'role' => UserRoleEnum::Admin,
-        ]));
+        Sanctum::actingAs(Admin::factory()->create(), ['admin']);
     }
 }

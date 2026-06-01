@@ -1,25 +1,8 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { AdminLayout } from '@/layouts/admin-layout';
-import { DashboardPage } from '@/modules/dashboard/pages/DashboardPage';
-import { TournamentPage } from '@/modules/tournament/pages/TournamentPage';
+import { createBrowserRouter } from 'react-router-dom';
+import { adminRoutes } from '@/admin/routes';
+import { mainRoutes } from '@/main/routes';
 
 export const appRouter = createBrowserRouter([
-  {
-    path: '/',
-    element: <AdminLayout />,
-    children: [
-      {
-        index: true,
-        element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: 'dashboard',
-        element: <DashboardPage />,
-      },
-      {
-        path: 'tournaments',
-        element: <TournamentPage />,
-      },
-    ],
-  },
+  ...mainRoutes,
+  ...adminRoutes,
 ]);
