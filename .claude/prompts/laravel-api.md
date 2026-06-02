@@ -17,6 +17,9 @@ Requirements:
 - Support index, show, store, update, destroy unless the request says otherwise
 - Index endpoints should support pagination and keyword search when relevant
 - Use consistent naming and file placement based on project conventions
+- Put admin-only API routes under `/api/admin`
+- Put member/main-facing API routes under `/api/main`
+- Use Sanctum ability or role middleware consistently with existing auth routes
 
 Output quality bar:
 - Production-ready code, not scaffolding placeholders

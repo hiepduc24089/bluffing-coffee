@@ -11,7 +11,7 @@ Requirements:
 
 Implementation checklist:
 - Backend: migration, model, controller, form requests, service, repository, API resource, routes
-- Frontend: module folder, page, table, filters, create/edit modal, API layer, hooks, types
+- Frontend: area module folder, page, table, filters, create/edit modal, API layer, hooks, types
 - Search and pagination should exist on both API and admin page when relevant
 - Use project naming and folder conventions consistently
 
@@ -30,3 +30,5 @@ Decision rules:
 - Keep trivial CRUD simple
 - Do not invent a second architecture
 - Prefer explicit, maintainable code over generic abstractions
+- Put admin CRUD modules under `frontend/src/admin/modules`
+- Put member/main modules under `frontend/src/main/modules`

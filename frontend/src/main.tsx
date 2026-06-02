@@ -23,7 +23,30 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       theme={{
         token: {
           colorPrimary: '#0f766e',
-          borderRadius: 10,
+          borderRadius: 6,
+          borderRadiusLG: 6,
+          borderRadiusSM: 4,
+        },
+        components: {
+          Button: {
+            borderRadius: 6,
+            borderRadiusLG: 6,
+            borderRadiusSM: 4,
+          },
+          Input: {
+            borderRadius: 6,
+            borderRadiusLG: 6,
+            borderRadiusSM: 4,
+          },
+          InputNumber: {
+            borderRadius: 6,
+          },
+          Select: {
+            borderRadius: 6,
+          },
+          DatePicker: {
+            borderRadius: 6,
+          },
         },
       }}
     >

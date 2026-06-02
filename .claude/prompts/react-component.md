@@ -15,8 +15,11 @@ Requirements:
 - Follow `rules/frontend-rules.md`
 - Keep route page thin and move reusable logic into hooks/components
 - Put request logic in module `api/`
+- Place admin pages under `src/admin/modules/[module-name]`
+- Place member/main pages under `src/main/modules/[module-name]`
 - Use typed table rows, form values, and filters
 - Include loading, empty, and submission states
+- Prefer existing shared atom wrappers for common inputs, buttons, tables, modals, selects, and date pickers
 
 Output quality bar:
 - Production-ready and modular
