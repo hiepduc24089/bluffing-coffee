@@ -12,7 +12,7 @@ class MemberSeeder extends Seeder
     {
         User::factory()->create([
             'name' => 'Member User',
-            'email' => 'member@bluffing.coffee',
+            'phone' => '0900000001',
             'role' => UserRoleEnum::Member,
         ]);
     }

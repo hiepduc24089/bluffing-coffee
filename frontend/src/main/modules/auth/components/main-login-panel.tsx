@@ -1,11 +1,11 @@
-import { LockOutlined, MailOutlined } from '@ant-design/icons';
+import { LockOutlined, PhoneOutlined } from '@ant-design/icons';
 import { Card, Form, Space, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import AppButton from '@/shared/components/atoms/AppButton';
 import AppTextField from '@/shared/components/atoms/AppTextField';
 
 type LoginFormValues = {
-  email: string;
+  phone: string;
   password: string;
 };
 
@@ -48,17 +48,14 @@ export function MainLoginPanel({
 
         <Form<LoginFormValues> layout="vertical" requiredMark={false} onFinish={handleSubmit}>
           <Form.Item
-            name="email"
-            label="Địa chỉ email"
-            rules={[
-              { required: true, message: 'Vui lòng nhập email' },
-              { type: 'email', message: 'Email không hợp lệ' },
-            ]}
+            name="phone"
+            label="Số điện thoại"
+            rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}
           >
             <AppTextField
               size="large"
-              placeholder="thanhvien@bluffing.coffee"
-              prefix={<MailOutlined />}
+              placeholder="0900000001"
+              prefix={<PhoneOutlined />}
             />
           </Form.Item>
 

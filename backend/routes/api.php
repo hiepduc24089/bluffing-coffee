@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AdminAuthController;
+use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Main\MainAuthController;
 use App\Http\Controllers\Api\TournamentController;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('auth/logout', [AdminAuthController::class, 'logout'])->name('auth.logout');
 
         Route::apiResource('tournaments', TournamentController::class);
+        Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])
+            ->name('users.reset-password');
+        Route::apiResource('users', UserController::class)->except(['show']);
     });
 });
 

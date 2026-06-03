@@ -1,4 +1,4 @@
-import { DashboardOutlined, TrophyOutlined } from '@ant-design/icons';
+import { DashboardOutlined, TeamOutlined, TrophyOutlined } from '@ant-design/icons';
 import { Layout, Menu, Typography } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
@@ -15,12 +15,19 @@ const menuItems = [
     icon: <TrophyOutlined />,
     label: <Link to="/admin/tournaments">Giải đấu</Link>,
   },
+  {
+    key: '/admin/users',
+    icon: <TeamOutlined />,
+    label: <Link to="/admin/users">Thành viên</Link>,
+  },
 ];
 
 export function AdminLayout() {
   const location = useLocation();
   const selectedKeys = location.pathname.startsWith('/admin/tournaments')
     ? ['/admin/tournaments']
+    : location.pathname.startsWith('/admin/users')
+      ? ['/admin/users']
     : ['/admin/dashboard'];
 
   return (

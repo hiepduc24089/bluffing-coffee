@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AuthUserResource extends JsonResource
+class UserResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -17,6 +17,7 @@ class AuthUserResource extends JsonResource
             'name' => $this->name,
             'phone' => $this->phone,
             'role' => $this->role->value,
+            'createdAt' => $this->created_at?->format('Y-m-d H:i'),
         ];
     }
 }

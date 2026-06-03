@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api\Main;
 
-use App\DTOs\LoginDTO;
+use App\DTOs\PhoneLoginDTO;
 use App\Enums\UserRoleEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
+use App\Http\Requests\MainLoginRequest;
 use App\Http\Resources\AuthUserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
@@ -19,10 +19,10 @@ class MainAuthController extends Controller
     ) {
     }
 
-    public function login(LoginRequest $request): JsonResponse
+    public function login(MainLoginRequest $request): JsonResponse
     {
         $result = $this->authService->login(
-            LoginDTO::fromArray($request->validated()),
+            PhoneLoginDTO::fromArray($request->validated()),
             UserRoleEnum::Member,
             'main-api-token',
         );

@@ -4,6 +4,7 @@ import { RequireAdminAuth } from '@/admin/modules/auth/components/require-admin-
 import { AdminLoginPage } from '@/admin/modules/auth/pages/AdminLoginPage';
 import { DashboardPage } from '@/admin/modules/dashboard/pages/DashboardPage';
 import { TournamentPage } from '@/admin/modules/tournament/pages/TournamentPage';
+import { UserPage } from '@/admin/modules/user/pages/UserPage';
 
 export const adminRoutes: RouteObject[] = [
   {
@@ -28,6 +29,10 @@ export const adminRoutes: RouteObject[] = [
           {
             path: 'tournaments',
             element: <TournamentPage />,
+          },
+          {
+            path: 'users',
+            element: <UserPage />,
           },
         ],
       },
