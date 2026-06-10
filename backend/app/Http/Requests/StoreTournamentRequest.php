@@ -23,6 +23,7 @@ class StoreTournamentRequest extends FormRequest
             'buyIn' => ['required', 'integer', 'min:0'],
             'capacity' => ['required', 'integer', 'min:2'],
             'status' => ['required', 'string', Rule::in(TournamentStatusEnum::values())],
+            'rewardProfileId' => ['nullable', 'integer', 'exists:reward_profiles,id'],
             'startAt' => ['required', 'date_format:Y-m-d H:i'],
         ];
     }

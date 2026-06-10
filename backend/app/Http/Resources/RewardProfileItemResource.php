@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AuthUserResource extends JsonResource
+class RewardProfileItemResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -14,11 +14,8 @@ class AuthUserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'phone' => $this->phone,
-            'role' => $this->role->value,
-            'bpBalance' => $this->bp_balance,
-            'rankLevel' => $this->rank_level,
+            'position' => $this->position,
+            'bpReward' => $this->bp_reward,
         ];
     }
 }

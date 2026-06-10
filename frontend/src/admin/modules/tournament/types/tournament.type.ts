@@ -6,6 +6,8 @@ export type TournamentRow = {
   buyIn: number;
   capacity: number;
   status: TournamentStatus;
+  rewardProfileId?: number | null;
+  rewardProfile?: RewardProfile;
   startAt: string;
 };
 
@@ -21,5 +23,75 @@ export type TournamentFormValues = {
   buyIn: number;
   capacity: number;
   status: TournamentStatus;
+  rewardProfileId?: number | null;
   startAt: string;
+};
+
+export type RewardProfileItem = {
+  id: number;
+  position: number;
+  bpReward: number;
+};
+
+export type RewardProfile = {
+  id: number;
+  name: string;
+  code: string;
+  isActive: boolean;
+  items: RewardProfileItem[];
+};
+
+export type RewardProfileFormValues = {
+  name: string;
+  code: string;
+  isActive: boolean;
+  items: Array<{
+    position: number;
+    bpReward: number;
+  }>;
+};
+
+export type TournamentRegistrationStatus = 'registered' | 'finished' | 'cancelled';
+
+export type TournamentRegistrationRow = {
+  id: number;
+  tournamentId: string;
+  userId: number;
+  user?: {
+    id: string;
+    name: string;
+    phone: string;
+    role: string;
+    bpBalance: number;
+    rankLevel?: string | null;
+    createdAt: string;
+  };
+  status: TournamentRegistrationStatus;
+  finalPosition?: number | null;
+  finishedAt?: string | null;
+  createdAt: string;
+};
+
+export type BpTransactionRow = {
+  id: number;
+  userId: number;
+  user?: {
+    id: string;
+    name: string;
+    phone: string;
+    role: string;
+    bpBalance: number;
+    rankLevel?: string | null;
+    createdAt: string;
+  };
+  amount: number;
+  transactionType: 'earned' | 'spent' | 'adjusted' | 'expired' | 'reversed';
+  referenceType?: string | null;
+  referenceId?: string | number | null;
+  reference?: TournamentRegistrationRow | null;
+  rewardKey?: string | null;
+  expiresAt?: string | null;
+  note?: string | null;
+  createdBy?: number | null;
+  createdAt: string;
 };

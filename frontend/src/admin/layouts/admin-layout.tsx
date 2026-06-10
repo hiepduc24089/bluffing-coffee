@@ -1,4 +1,10 @@
-import { DashboardOutlined, TeamOutlined, TrophyOutlined } from '@ant-design/icons';
+import {
+  DashboardOutlined,
+  GiftOutlined,
+  TeamOutlined,
+  TrophyOutlined,
+  UserAddOutlined,
+} from '@ant-design/icons';
 import { Layout, Menu, Typography } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
@@ -11,14 +17,24 @@ const menuItems = [
     label: <Link to="/admin/dashboard">Tổng quan</Link>,
   },
   {
+    key: '/admin/users',
+    icon: <TeamOutlined />,
+    label: <Link to="/admin/users">Thành viên</Link>,
+  },
+  {
+    key: '/admin/reward-profiles',
+    icon: <GiftOutlined />,
+    label: <Link to="/admin/reward-profiles">Cấu hình giải đấu</Link>,
+  },
+  {
     key: '/admin/tournaments',
     icon: <TrophyOutlined />,
     label: <Link to="/admin/tournaments">Giải đấu</Link>,
   },
   {
-    key: '/admin/users',
-    icon: <TeamOutlined />,
-    label: <Link to="/admin/users">Thành viên</Link>,
+    key: '/admin/tournament-registrations',
+    icon: <UserAddOutlined />,
+    label: <Link to="/admin/tournament-registrations">Đăng ký giải</Link>,
   },
 ];
 
@@ -26,6 +42,10 @@ export function AdminLayout() {
   const location = useLocation();
   const selectedKeys = location.pathname.startsWith('/admin/tournaments')
     ? ['/admin/tournaments']
+    : location.pathname.startsWith('/admin/tournament-registrations')
+      ? ['/admin/tournament-registrations']
+    : location.pathname.startsWith('/admin/reward-profiles')
+      ? ['/admin/reward-profiles']
     : location.pathname.startsWith('/admin/users')
       ? ['/admin/users']
     : ['/admin/dashboard'];

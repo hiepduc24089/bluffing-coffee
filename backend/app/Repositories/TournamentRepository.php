@@ -10,6 +10,7 @@ class TournamentRepository
     public function paginate(?string $search, ?string $status, int $perPage): LengthAwarePaginator
     {
         return Tournament::query()
+            ->with('rewardProfile')
             ->when($search, function ($query, string $search) {
                 $query->where('name', 'like', '%'.$search.'%');
             })

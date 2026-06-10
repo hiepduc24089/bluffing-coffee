@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Card, Space, Tag } from 'antd';
+import { Card, message, Space, Tag } from 'antd';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import AppButton from '@/shared/components/atoms/AppButton';
 import AppSelect from '@/shared/components/atoms/AppSelect';
@@ -7,6 +8,11 @@ import AppTable from '@/shared/components/atoms/AppTable';
 import AppTextField from '@/shared/components/atoms/AppTextField';
 import { PageHeader } from '@/shared/components/layout/page-header';
 import { TournamentFormModal } from '@/admin/modules/tournament/components/tournament-form-modal';
+import {
+  createTournament,
+  getRewardProfiles,
+  tournamentQueryKeys,
+} from '@/admin/modules/tournament/api/tournament.api';
 import { useTournamentList } from '@/admin/modules/tournament/hooks/use-tournament-list';
 import type {
   TournamentFilter,
@@ -36,16 +42,36 @@ const statusLabels: Record<TournamentStatus, string> = {
 };
 
 export function TournamentPage() {
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<TournamentFilter>(defaultFilters);
   const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
   const [modalOpen, setModalOpen] = useState(false);
   const { data, isLoading } = useTournamentList(filters);
+  const { data: rewardProfiles = [] } = useQuery({
+    queryKey: tournamentQueryKeys.rewardProfiles,
+    queryFn: getRewardProfiles,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createTournament,
+    onSuccess: async () => {
+      message.success('Đã tạo giải đấu.');
+      setModalOpen(false);
+      await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.all });
+    },
+  });
 
   const columns: ColumnsType<TournamentRow> = [
     {
       title: 'Tên giải đấu',
       dataIndex: 'name',
       key: 'name',
+    },
+    {
+      title: 'Reward profile',
+      dataIndex: 'rewardProfile',
+      key: 'rewardProfile',
+      render: (_, record) => record.rewardProfile?.name ?? '-',
     },
     {
       title: 'Phí tham gia',
@@ -71,8 +97,8 @@ export function TournamentPage() {
     },
   ];
 
-  const handleCreate = async (_values: TournamentFormValues) => {
-    setModalOpen(false);
+  const handleCreate = async (values: TournamentFormValues) => {
+    await createMutation.mutateAsync(values);
   };
 
   return (
@@ -157,6 +183,8 @@ export function TournamentPage() {
 
       <TournamentFormModal
         open={modalOpen}
+        submitting={createMutation.isPending}
+        rewardProfiles={rewardProfiles}
         onCancel={() => setModalOpen(false)}
         onSubmit={handleCreate}
       />

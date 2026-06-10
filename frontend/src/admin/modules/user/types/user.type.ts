@@ -3,6 +3,8 @@ export type UserRow = {
   name: string;
   phone: string;
   role: string;
+  bpBalance: number;
+  rankLevel?: string | null;
   createdAt: string;
 };
 

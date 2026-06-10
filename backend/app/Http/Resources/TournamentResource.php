@@ -18,6 +18,8 @@ class TournamentResource extends JsonResource
             'buyIn' => $this->buy_in,
             'capacity' => $this->capacity,
             'status' => $this->status->value,
+            'rewardProfileId' => $this->reward_profile_id,
+            'rewardProfile' => $this->whenLoaded('rewardProfile', fn () => RewardProfileResource::make($this->rewardProfile)),
             'startAt' => $this->start_at?->format('Y-m-d H:i'),
         ];
     }

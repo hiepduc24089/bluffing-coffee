@@ -5,10 +5,11 @@
     "Be Vietnam Pro",
     "Segoe UI",
     sans-serif;
+  font-size: 15px;
   color: #0f172a;
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 32%),
-    linear-gradient(180deg, #f6fffd 0%, #f7f8fc 100%);
+    linear-gradient(135deg, rgba(15, 118, 110, 0.12), transparent 30%),
+    linear-gradient(180deg, #f7faf9 0%, #eef3f7 100%);
 }
 
 * {
@@ -28,35 +29,91 @@ body {
 
 .app-shell {
   min-height: 100vh;
+  background: #eef3f7;
 }
 
 .app-sider {
-  border-inline-end: 1px solid #e2e8f0;
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, #0f2f2c 0%, #14213d 55%, #24160f 100%) !important;
+  box-shadow: 10px 0 32px rgba(15, 23, 42, 0.18);
 }
 
 .app-brand {
-  padding: 24px 20px 16px;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .app-brand__title.ant-typography {
   margin-bottom: 0;
+  color: #f8fafc;
+  letter-spacing: 0;
+}
+
+.app-brand .ant-typography-secondary {
+  color: #a7f3d0 !important;
+}
+
+.app-sider .ant-menu {
+  padding: 14px 12px;
+  background: transparent;
+  border-inline-end: 0 !important;
+}
+
+.app-sider .ant-menu-item {
+  height: 42px;
+  margin: 4px 0;
+  color: #d8e6e5;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.app-sider .ant-menu-item .anticon {
+  color: #94d3cb;
+}
+
+.app-sider .ant-menu-item a {
+  color: inherit;
+}
+
+.app-sider .ant-menu-item:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.app-sider .ant-menu-item-selected {
+  color: #ffffff !important;
+  background: linear-gradient(90deg, #0f766e 0%, #b7791f 100%) !important;
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.28);
+}
+
+.app-sider .ant-menu-item-selected .anticon {
+  color: #ffffff;
 }
 
 .app-header {
   display: flex;
   align-items: center;
   padding: 0 24px;
-  background: rgba(255, 255, 255, 0.72);
-  border-bottom: 1px solid #e2e8f0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.92), rgba(240, 253, 250, 0.86));
+  border-bottom: 1px solid #d7e4e2;
   backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
 }
 
 .app-header__title.ant-typography {
   margin: 0;
+  color: #12312f;
+  font-size: 25px;
 }
 
 .app-content {
   padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(15, 118, 110, 0.07), transparent 220px),
+    #eef3f7;
 }
 
 .page-stack {
@@ -70,14 +127,24 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid #d9e6e4;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(183, 121, 31, 0.08)),
+    #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
 }
 
 .page-header__title.ant-typography {
   margin-bottom: 4px;
+  color: #0f2f2c;
+  font-size: 26px;
 }
 
 .page-header__subtitle.ant-typography {
   margin-bottom: 0;
+  font-size: 15px;
 }
 
 .toolbar {
@@ -86,14 +153,58 @@ body {
   margin-bottom: 16px;
 }
 
-.app-table-ra2n .ant-table-thead > tr > th {
-  background: #dfe7ef;
-  color: #0f172a;
+.app-content .ant-card {
+  border-color: #d9e6e4;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
+}
+
+.app-content .ant-card,
+.app-content .ant-table,
+.app-content .ant-form,
+.app-content .ant-input,
+.app-content .ant-input-number,
+.app-content .ant-select,
+.app-content .ant-btn,
+.app-content .ant-picker,
+.app-content .ant-tag {
+  font-size: 15px;
+}
+
+.app-content .ant-statistic-title {
+  color: #47615f;
   font-weight: 600;
 }
 
+.app-content .ant-statistic-content {
+  color: #0f766e;
+}
+
+.app-table-ra2n .ant-table-thead > tr > th {
+  background: #dcebe8;
+  color: #0f2f2c;
+  font-weight: 600;
+  border-color: #aebfbd !important;
+}
+
 .app-table-ra2n .ant-table-thead > tr > th::before {
-  background-color: #cbd5e1 !important;
+  background-color: #aebfbd !important;
+}
+
+.app-table-ra2n .ant-table {
+  border-color: #b8c8c6;
+}
+
+.app-table-ra2n .ant-table-container {
+  border-color: #b8c8c6 !important;
+}
+
+.app-table-ra2n .ant-table-cell {
+  border-color: #c2d0ce !important;
+}
+
+.app-table-ra2n .ant-table-tbody > tr > td {
+  border-color: #c2d0ce !important;
 }
 
 .login-screen {

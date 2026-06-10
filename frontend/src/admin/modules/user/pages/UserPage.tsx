@@ -81,6 +81,19 @@ export function UserPage() {
       key: 'phone',
     },
     {
+      title: 'BP',
+      dataIndex: 'bpBalance',
+      key: 'bpBalance',
+      align: 'right',
+      render: (value?: number) => (value ?? 0).toLocaleString('vi-VN'),
+    },
+    {
+      title: 'Rank',
+      dataIndex: 'rankLevel',
+      key: 'rankLevel',
+      render: (value?: string | null) => value ?? '-',
+    },
+    {
       title: 'Ngày tạo',
       dataIndex: 'createdAt',
       key: 'createdAt',
