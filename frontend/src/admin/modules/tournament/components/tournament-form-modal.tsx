@@ -50,6 +50,8 @@ export function TournamentFormModal({
             : {
                 status: 'draft',
                 buyIn: 0,
+                ticketPriceWithDrink: 0,
+                ticketPriceWithoutDrink: 0,
                 capacity: 9,
               }
         }
@@ -57,6 +59,8 @@ export function TournamentFormModal({
           onSubmit({
             name: values.name,
             buyIn: values.buyIn,
+            ticketPriceWithDrink: values.ticketPriceWithDrink,
+            ticketPriceWithoutDrink: values.ticketPriceWithoutDrink,
             capacity: values.capacity,
             status: values.status,
             rewardProfileId: values.rewardProfileId ?? null,
@@ -75,15 +79,40 @@ export function TournamentFormModal({
               label: `${profile.name} (${profile.code})`,
               value: profile.id,
             }))}
+            onChange={(value) => {
+              const profile = rewardProfiles.find((item) => item.id === value);
+
+              if (!profile) return;
+
+              form.setFieldsValue({
+                ticketPriceWithDrink: profile.defaultPriceWithDrink,
+                ticketPriceWithoutDrink: profile.defaultPriceWithoutDrink,
+              });
+            }}
           />
         </Form.Item>
 
         <Form.Item
           name="buyIn"
-          label="Phí tham gia"
-          rules={[{ required: true, message: 'Vui lòng nhập phí tham gia' }]}
+          hidden
         >
           <AppInputNumber className="w-full" min={0} />
+        </Form.Item>
+
+        <Form.Item
+          name="ticketPriceWithDrink"
+          label="Giá vé + 1 đồ uống pha + nước lọc"
+          rules={[{ required: true, message: 'Vui lòng nhập giá vé có đồ uống pha' }]}
+        >
+          <AppInputNumber className="w-full" min={0} precision={0} />
+        </Form.Item>
+
+        <Form.Item
+          name="ticketPriceWithoutDrink"
+          label="Giá vé + nước lọc"
+          rules={[{ required: true, message: 'Vui lòng nhập giá vé không đồ uống pha' }]}
+        >
+          <AppInputNumber className="w-full" min={0} precision={0} />
         </Form.Item>
 
         <Form.Item

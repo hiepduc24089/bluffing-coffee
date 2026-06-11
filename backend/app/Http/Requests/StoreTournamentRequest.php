@@ -20,7 +20,9 @@ class StoreTournamentRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'buyIn' => ['required', 'integer', 'min:0'],
+            'buyIn' => ['sometimes', 'integer', 'min:0'],
+            'ticketPriceWithDrink' => ['required', 'integer', 'min:0'],
+            'ticketPriceWithoutDrink' => ['required', 'integer', 'min:0'],
             'capacity' => ['required', 'integer', 'min:2'],
             'status' => ['required', 'string', Rule::in(TournamentStatusEnum::values())],
             'rewardProfileId' => ['nullable', 'integer', 'exists:reward_profiles,id'],

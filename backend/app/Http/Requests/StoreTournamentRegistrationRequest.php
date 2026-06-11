@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreTournamentRegistrationRequest extends FormRequest
 {
@@ -18,6 +19,7 @@ class StoreTournamentRegistrationRequest extends FormRequest
     {
         return [
             'userId' => ['required', 'integer', 'exists:users,id'],
+            'entryType' => ['required', 'string', Rule::in(['with_drink', 'without_drink'])],
         ];
     }
 }

@@ -1,5 +1,6 @@
 import { Navigate, type RouteObject } from 'react-router-dom';
 import { AdminLayout } from '@/admin/layouts/admin-layout';
+import { BadgePage } from '@/admin/modules/badge/pages/BadgePage';
 import { RequireAdminAuth } from '@/admin/modules/auth/components/require-admin-auth';
 import { AdminLoginPage } from '@/admin/modules/auth/pages/AdminLoginPage';
 import { DashboardPage } from '@/admin/modules/dashboard/pages/DashboardPage';
@@ -43,6 +44,10 @@ export const adminRoutes: RouteObject[] = [
           {
             path: 'users',
             element: <UserPage />,
+          },
+          {
+            path: 'badges',
+            element: <BadgePage />,
           },
         ],
       },

@@ -33,6 +33,8 @@ class RewardProfileController extends Controller
                 'name' => $validated['name'],
                 'code' => $validated['code'],
                 'is_active' => $validated['isActive'] ?? true,
+                'default_price_with_drink' => $validated['defaultPriceWithDrink'],
+                'default_price_without_drink' => $validated['defaultPriceWithoutDrink'],
             ]);
 
             $this->syncItems($profile, $validated['items']);
@@ -57,6 +59,8 @@ class RewardProfileController extends Controller
                 'name' => $validated['name'],
                 'code' => $validated['code'],
                 'is_active' => $validated['isActive'] ?? $rewardProfile->is_active,
+                'default_price_with_drink' => $validated['defaultPriceWithDrink'],
+                'default_price_without_drink' => $validated['defaultPriceWithoutDrink'],
             ]);
 
             $rewardProfile->items()->delete();

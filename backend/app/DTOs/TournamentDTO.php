@@ -10,6 +10,8 @@ readonly class TournamentDTO
     public function __construct(
         public string $name,
         public int $buyIn,
+        public int $ticketPriceWithDrink,
+        public int $ticketPriceWithoutDrink,
         public int $capacity,
         public TournamentStatusEnum $status,
         public ?int $rewardProfileId,
@@ -18,13 +20,15 @@ readonly class TournamentDTO
     }
 
     /**
-     * @param array{name: string, buyIn: int, capacity: int, status: string, rewardProfileId?: int|null, startAt: string} $payload
+     * @param array{name: string, buyIn?: int, capacity: int, status: string, rewardProfileId?: int|null, startAt: string} $payload
      */
     public static function fromArray(array $payload): self
     {
         return new self(
             name: $payload['name'],
-            buyIn: (int) $payload['buyIn'],
+            buyIn: (int) ($payload['buyIn'] ?? 0),
+            ticketPriceWithDrink: (int) ($payload['ticketPriceWithDrink'] ?? 0),
+            ticketPriceWithoutDrink: (int) ($payload['ticketPriceWithoutDrink'] ?? 0),
             capacity: (int) $payload['capacity'],
             status: TournamentStatusEnum::from($payload['status']),
             rewardProfileId: isset($payload['rewardProfileId']) ? (int) $payload['rewardProfileId'] : null,
@@ -40,6 +44,8 @@ readonly class TournamentDTO
         return [
             'name' => $this->name,
             'buy_in' => $this->buyIn,
+            'ticket_price_with_drink' => $this->ticketPriceWithDrink,
+            'ticket_price_without_drink' => $this->ticketPriceWithoutDrink,
             'capacity' => $this->capacity,
             'status' => $this->status->value,
             'reward_profile_id' => $this->rewardProfileId,

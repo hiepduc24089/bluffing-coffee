@@ -41,6 +41,8 @@ const statusLabels: Record<TournamentStatus, string> = {
   completed: 'Đã hoàn tất',
 };
 
+const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}đ`;
+
 export function TournamentPage() {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<TournamentFilter>(defaultFilters);
@@ -74,10 +76,16 @@ export function TournamentPage() {
       render: (_, record) => record.rewardProfile?.name ?? '-',
     },
     {
-      title: 'Phí tham gia',
-      dataIndex: 'buyIn',
-      key: 'buyIn',
-      render: (value: number) => value.toLocaleString('vi-VN'),
+      title: 'Vé + đồ uống',
+      dataIndex: 'ticketPriceWithDrink',
+      key: 'ticketPriceWithDrink',
+      render: (value?: number | null) => formatCurrency(value),
+    },
+    {
+      title: 'Vé nước lọc',
+      dataIndex: 'ticketPriceWithoutDrink',
+      key: 'ticketPriceWithoutDrink',
+      render: (value?: number | null) => formatCurrency(value),
     },
     {
       title: 'Sức chứa',
@@ -105,7 +113,7 @@ export function TournamentPage() {
     <div className="page-stack">
       <PageHeader
         title="Giải đấu"
-        subtitle="Quản lý lịch giải đấu, phí tham gia và sức chứa người chơi."
+        subtitle="Quản lý lịch giải đấu, reward profile và sức chứa người chơi."
         extra={
           <AppButton type="primary" onClick={() => setModalOpen(true)}>
             Tạo giải đấu

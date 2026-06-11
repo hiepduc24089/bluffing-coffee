@@ -17,6 +17,8 @@ const mockRows: TournamentRow[] = [
     id: 'tour-001',
     name: 'Giải tối thứ sáu',
     buyIn: 150000,
+    ticketPriceWithDrink: 85000,
+    ticketPriceWithoutDrink: 60000,
     capacity: 60,
     status: 'published',
     rewardProfileId: null,
@@ -26,6 +28,8 @@ const mockRows: TournamentRow[] = [
     id: 'tour-002',
     name: 'Giải chủ nhật',
     buyIn: 500000,
+    ticketPriceWithDrink: 85000,
+    ticketPriceWithoutDrink: 60000,
     capacity: 120,
     status: 'draft',
     rewardProfileId: null,
@@ -134,10 +138,14 @@ export async function getTournamentRegistrations(
   return response.data.data;
 }
 
-export async function createTournamentRegistration(tournamentId: string, userId: number) {
+export async function createTournamentRegistration(
+  tournamentId: string,
+  userId: number,
+  entryType: 'with_drink' | 'without_drink',
+) {
   const response = await http.post<{ data: TournamentRegistrationRow }>(
     `/admin/tournaments/${tournamentId}/registrations`,
-    { userId },
+    { userId, entryType },
     {
       headers: getAdminAuthHeaders(),
     },

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AdminAuthController;
+use App\Http\Controllers\Api\Admin\BadgeController;
 use App\Http\Controllers\Api\Admin\BpTransactionController;
 use App\Http\Controllers\Api\Admin\RewardProfileController;
 use App\Http\Controllers\Api\Admin\TournamentBpTransactionController;
@@ -71,6 +72,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         });
 
         Route::apiResource('users', UserController::class)->except(['show']);
+        Route::apiResource('badges', BadgeController::class)->except(['show']);
     });
 });
 

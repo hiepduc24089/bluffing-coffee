@@ -29,9 +29,19 @@ class TournamentRegistrationController extends Controller
 
     public function store(StoreTournamentRegistrationRequest $request, Tournament $tournament): TournamentRegistrationResource
     {
+        $validated = $request->validated();
+
+        $entryPrice = $validated['entryType'] === 'with_drink'
+            ? $tournament->ticket_price_with_drink
+            : $tournament->ticket_price_without_drink;
+
         $registration = $tournament->registrations()->firstOrCreate(
             ['user_id' => $request->validated('userId')],
-            ['status' => TournamentRegistrationStatusEnum::Registered->value],
+            [
+                'entry_price' => $entryPrice,
+                'entry_type' => $validated['entryType'],
+                'status' => TournamentRegistrationStatusEnum::Registered->value,
+            ],
         );
 
         return TournamentRegistrationResource::make($registration->refresh()->load('user'));

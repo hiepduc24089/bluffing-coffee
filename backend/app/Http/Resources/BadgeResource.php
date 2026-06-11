@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class RewardProfileResource extends JsonResource
+class BadgeResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -16,10 +16,8 @@ class RewardProfileResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'code' => $this->code,
-            'isActive' => $this->is_active,
-            'defaultPriceWithDrink' => $this->default_price_with_drink,
-            'defaultPriceWithoutDrink' => $this->default_price_without_drink,
-            'items' => RewardProfileItemResource::collection($this->whenLoaded('items')),
+            'icon' => $this->icon,
+            'description' => $this->description,
             'createdAt' => $this->created_at?->format('Y-m-d H:i'),
         ];
     }

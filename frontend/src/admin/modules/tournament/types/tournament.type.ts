@@ -4,6 +4,8 @@ export type TournamentRow = {
   id: string;
   name: string;
   buyIn: number;
+  ticketPriceWithDrink: number;
+  ticketPriceWithoutDrink: number;
   capacity: number;
   status: TournamentStatus;
   rewardProfileId?: number | null;
@@ -21,6 +23,8 @@ export type TournamentFilter = {
 export type TournamentFormValues = {
   name: string;
   buyIn: number;
+  ticketPriceWithDrink: number;
+  ticketPriceWithoutDrink: number;
   capacity: number;
   status: TournamentStatus;
   rewardProfileId?: number | null;
@@ -38,6 +42,8 @@ export type RewardProfile = {
   name: string;
   code: string;
   isActive: boolean;
+  defaultPriceWithDrink: number;
+  defaultPriceWithoutDrink: number;
   items: RewardProfileItem[];
 };
 
@@ -45,6 +51,8 @@ export type RewardProfileFormValues = {
   name: string;
   code: string;
   isActive: boolean;
+  defaultPriceWithDrink: number;
+  defaultPriceWithoutDrink: number;
   items: Array<{
     position: number;
     bpReward: number;
@@ -66,6 +74,8 @@ export type TournamentRegistrationRow = {
     rankLevel?: string | null;
     createdAt: string;
   };
+  entryPrice: number;
+  entryType?: 'with_drink' | 'without_drink' | null;
   status: TournamentRegistrationStatus;
   finalPosition?: number | null;
   finishedAt?: string | null;

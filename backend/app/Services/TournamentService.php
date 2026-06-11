@@ -50,4 +50,5 @@ class TournamentService
             $this->tournamentRepository->delete($lockedTournament);
         });
     }
+
 }

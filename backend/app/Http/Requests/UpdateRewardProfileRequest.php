@@ -28,6 +28,8 @@ class UpdateRewardProfileRequest extends FormRequest
                 Rule::unique('reward_profiles', 'code')->ignore($rewardProfile?->id),
             ],
             'isActive' => ['sometimes', 'boolean'],
+            'defaultPriceWithDrink' => ['required', 'integer', 'min:0'],
+            'defaultPriceWithoutDrink' => ['required', 'integer', 'min:0'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.position' => ['required', 'integer', 'min:1'],
             'items.*.bpReward' => ['required', 'integer', 'min:0'],

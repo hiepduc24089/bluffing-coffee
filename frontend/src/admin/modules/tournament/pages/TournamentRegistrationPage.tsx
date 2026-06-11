@@ -37,10 +37,13 @@ const statusColors: Record<TournamentRegistrationStatus, string> = {
   cancelled: 'default',
 };
 
+const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}đ`;
+
 export function TournamentRegistrationPage() {
   const queryClient = useQueryClient();
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>();
   const [selectedUserId, setSelectedUserId] = useState<number>();
+  const [selectedEntryType, setSelectedEntryType] = useState<'with_drink' | 'without_drink'>();
   const [draftPositions, setDraftPositions] = useState<Record<number, number | null>>({});
   const [draftStatuses, setDraftStatuses] = useState<Record<number, TournamentRegistrationStatus>>({});
 
@@ -93,10 +96,16 @@ export function TournamentRegistrationPage() {
   };
 
   const createMutation = useMutation({
-    mutationFn: () => createTournamentRegistration(selectedTournamentId as string, selectedUserId as number),
+    mutationFn: () =>
+      createTournamentRegistration(
+        selectedTournamentId as string,
+        selectedUserId as number,
+        selectedEntryType as 'with_drink' | 'without_drink',
+      ),
     onSuccess: async () => {
       message.success('Đã đăng ký thành viên vào giải đấu.');
       setSelectedUserId(undefined);
+      setSelectedEntryType(undefined);
       await invalidateRegistrations();
     },
   });
@@ -155,6 +164,22 @@ export function TournamentRegistrationPage() {
       key: 'bp',
       align: 'right',
       render: (_, record) => (record.user?.bpBalance ?? 0).toLocaleString('vi-VN'),
+    },
+    {
+      title: 'Gói vé',
+      key: 'entryType',
+      render: (_, record) => (
+        <Space direction="vertical" size={0}>
+          <span>
+            {record.entryType === 'with_drink'
+              ? 'Vé + 1 đồ uống pha + nước lọc'
+              : 'Vé + nước lọc'}
+          </span>
+          <Typography.Text type="secondary">
+            {formatCurrency(record.entryPrice)}
+          </Typography.Text>
+        </Space>
+      ),
     },
     {
       title: 'Trạng thái',
@@ -248,7 +273,7 @@ export function TournamentRegistrationPage() {
     },
   ];
 
-  const canRegister = Boolean(selectedTournamentId && selectedUserId);
+  const canRegister = Boolean(selectedTournamentId && selectedUserId && selectedEntryType);
 
   return (
     <div className="page-stack">
@@ -278,6 +303,7 @@ export function TournamentRegistrationPage() {
             onChange={(value) => {
               setSelectedTournamentId(value as string | undefined);
               setSelectedUserId(undefined);
+              setSelectedEntryType(undefined);
               setDraftPositions({});
               setDraftStatuses({});
             }}
@@ -292,6 +318,28 @@ export function TournamentRegistrationPage() {
             optionFilterProp="searchText"
             options={userOptions}
             onChange={(value) => setSelectedUserId(value as number)}
+          />
+
+          <AppSelect
+            placeholder="Chọn gói vé"
+            style={{ minWidth: 280 }}
+            disabled={!selectedTournamentId}
+            value={selectedEntryType}
+            options={
+              selectedTournament
+                ? [
+                    {
+                      label: `Vé + 1 đồ uống pha + nước lọc - ${formatCurrency(selectedTournament.ticketPriceWithDrink)}`,
+                      value: 'with_drink',
+                    },
+                    {
+                      label: `Vé + nước lọc - ${formatCurrency(selectedTournament.ticketPriceWithoutDrink)}`,
+                      value: 'without_drink',
+                    },
+                  ]
+                : []
+            }
+            onChange={(value) => setSelectedEntryType(value as 'with_drink' | 'without_drink')}
           />
 
           <AppButton

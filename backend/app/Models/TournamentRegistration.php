@@ -11,6 +11,8 @@ class TournamentRegistration extends Model
     protected $fillable = [
         'tournament_id',
         'user_id',
+        'entry_price',
+        'entry_type',
         'status',
         'final_position',
         'finished_at',
@@ -20,6 +22,7 @@ class TournamentRegistration extends Model
     {
         return [
             'status' => TournamentRegistrationStatusEnum::class,
+            'entry_price' => 'integer',
             'final_position' => 'integer',
             'finished_at' => 'datetime',
         ];
@@ -34,4 +37,5 @@ class TournamentRegistration extends Model
     {
         return $this->belongsTo(User::class);
     }
+
 }

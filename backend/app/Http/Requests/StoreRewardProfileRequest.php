@@ -20,6 +20,8 @@ class StoreRewardProfileRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:100', 'unique:reward_profiles,code'],
             'isActive' => ['sometimes', 'boolean'],
+            'defaultPriceWithDrink' => ['required', 'integer', 'min:0'],
+            'defaultPriceWithoutDrink' => ['required', 'integer', 'min:0'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.position' => ['required', 'integer', 'min:1'],
             'items.*.bpReward' => ['required', 'integer', 'min:0'],

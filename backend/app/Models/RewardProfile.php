@@ -11,12 +11,16 @@ class RewardProfile extends Model
         'name',
         'code',
         'is_active',
+        'default_price_with_drink',
+        'default_price_without_drink',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'default_price_with_drink' => 'integer',
+            'default_price_without_drink' => 'integer',
         ];
     }
 

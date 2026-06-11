@@ -24,6 +24,8 @@ class Tournament extends Model
     protected $fillable = [
         'name',
         'buy_in',
+        'ticket_price_with_drink',
+        'ticket_price_without_drink',
         'capacity',
         'status',
         'reward_profile_id',
@@ -37,6 +39,8 @@ class Tournament extends Model
     {
         return [
             'buy_in' => 'integer',
+            'ticket_price_with_drink' => 'integer',
+            'ticket_price_without_drink' => 'integer',
             'capacity' => 'integer',
             'status' => TournamentStatusEnum::class,
             'reward_profile_id' => 'integer',
@@ -53,4 +57,5 @@ class Tournament extends Model
     {
         return $this->hasMany(TournamentRegistration::class);
     }
+
 }

@@ -17,6 +17,8 @@ class TournamentRegistrationResource extends JsonResource
             'tournamentId' => $this->tournament_id,
             'userId' => $this->user_id,
             'user' => $this->whenLoaded('user', fn () => UserResource::make($this->user)),
+            'entryPrice' => $this->entry_price,
+            'entryType' => $this->entry_type,
             'status' => $this->status->value,
             'finalPosition' => $this->final_position,
             'finishedAt' => $this->finished_at?->format('Y-m-d H:i'),

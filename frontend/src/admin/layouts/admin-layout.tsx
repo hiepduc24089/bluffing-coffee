@@ -1,6 +1,7 @@
 import {
   DashboardOutlined,
   GiftOutlined,
+  TagsOutlined,
   TeamOutlined,
   TrophyOutlined,
   UserAddOutlined,
@@ -20,6 +21,11 @@ const menuItems = [
     key: '/admin/users',
     icon: <TeamOutlined />,
     label: <Link to="/admin/users">Thành viên</Link>,
+  },
+  {
+    key: '/admin/badges',
+    icon: <TagsOutlined />,
+    label: <Link to="/admin/badges">Huy hiệu</Link>,
   },
   {
     key: '/admin/reward-profiles',
@@ -48,6 +54,8 @@ export function AdminLayout() {
       ? ['/admin/reward-profiles']
     : location.pathname.startsWith('/admin/users')
       ? ['/admin/users']
+    : location.pathname.startsWith('/admin/badges')
+      ? ['/admin/badges']
     : ['/admin/dashboard'];
 
   return (

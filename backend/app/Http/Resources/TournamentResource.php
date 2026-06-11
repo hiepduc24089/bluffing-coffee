@@ -16,6 +16,8 @@ class TournamentResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'buyIn' => $this->buy_in,
+            'ticketPriceWithDrink' => $this->ticket_price_with_drink,
+            'ticketPriceWithoutDrink' => $this->ticket_price_without_drink,
             'capacity' => $this->capacity,
             'status' => $this->status->value,
             'rewardProfileId' => $this->reward_profile_id,

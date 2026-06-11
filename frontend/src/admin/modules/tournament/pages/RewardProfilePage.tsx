@@ -26,12 +26,16 @@ const defaultFormValues: RewardProfileFormValues = {
   name: '',
   code: '',
   isActive: true,
+  defaultPriceWithDrink: 0,
+  defaultPriceWithoutDrink: 0,
   items: [
     { position: 1, bpReward: 0 },
     { position: 2, bpReward: 0 },
     { position: 3, bpReward: 0 },
   ],
 };
+
+const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}đ`;
 
 export function RewardProfilePage() {
   const queryClient = useQueryClient();
@@ -52,6 +56,8 @@ export function RewardProfilePage() {
         name: editingProfile.name,
         code: editingProfile.code,
         isActive: editingProfile.isActive,
+        defaultPriceWithDrink: editingProfile.defaultPriceWithDrink,
+        defaultPriceWithoutDrink: editingProfile.defaultPriceWithoutDrink,
         items: editingProfile.items
           .slice()
           .sort((a, b) => a.position - b.position)
@@ -120,6 +126,16 @@ export function RewardProfilePage() {
       ),
     },
     {
+      title: 'Giá mặc định',
+      key: 'defaultPrices',
+      render: (_, record) => (
+        <Space direction="vertical" size={0}>
+          <span>Có đồ uống: {formatCurrency(record.defaultPriceWithDrink)}</span>
+          <span>Nước lọc: {formatCurrency(record.defaultPriceWithoutDrink)}</span>
+        </Space>
+      ),
+    },
+    {
       title: 'BP theo thứ hạng',
       dataIndex: 'items',
       key: 'items',
@@ -172,6 +188,8 @@ export function RewardProfilePage() {
     const payload = {
       ...values,
       isActive: Boolean(values.isActive),
+      defaultPriceWithDrink: Number(values.defaultPriceWithDrink),
+      defaultPriceWithoutDrink: Number(values.defaultPriceWithoutDrink),
       items: values.items
         .filter((item) => item.position && item.bpReward !== undefined && item.bpReward !== null)
         .map((item) => ({
@@ -249,6 +267,22 @@ export function RewardProfilePage() {
 
           <Form.Item name="isActive" valuePropName="checked">
             <AppCheckbox>Đang sử dụng</AppCheckbox>
+          </Form.Item>
+
+          <Form.Item
+            name="defaultPriceWithDrink"
+            label="Giá mặc định: vé + 1 đồ uống pha + nước lọc"
+            rules={[{ required: true, message: 'Vui lòng nhập giá vé có đồ uống pha' }]}
+          >
+            <AppInputNumber className="w-full" min={0} precision={0} />
+          </Form.Item>
+
+          <Form.Item
+            name="defaultPriceWithoutDrink"
+            label="Giá mặc định: vé + nước lọc"
+            rules={[{ required: true, message: 'Vui lòng nhập giá vé nước lọc' }]}
+          >
+            <AppInputNumber className="w-full" min={0} precision={0} />
           </Form.Item>
 
           <Form.List name="items">
