@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { EditOutlined, KeyOutlined, PlusOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Card, message, Popconfirm, Space, Tooltip } from 'antd';
+import { DeleteOutlined, EditOutlined, EyeOutlined, KeyOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { Card, Popconfirm, Space, Tooltip } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import AppButton from '@/shared/components/atoms/AppButton';
 import AppTable from '@/shared/components/atoms/AppTable';
@@ -18,6 +19,7 @@ import {
 import { UserFormModal } from '@/admin/modules/user/components/user-form-modal';
 import { useUserList } from '@/admin/modules/user/hooks/use-user-list';
 import type { UserFilter, UserFormValues, UserRow } from '@/admin/modules/user/types/user.type';
+import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const defaultFilters: UserFilter = {
   keyword: '',
@@ -27,6 +29,8 @@ const defaultFilters: UserFilter = {
 
 export function UserPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const toast = useAppToast();
   const [filters, setFilters] = useState<UserFilter>(defaultFilters);
   const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
   const [modalOpen, setModalOpen] = useState(false);
@@ -38,7 +42,7 @@ export function UserPage() {
   const createMutation = useMutation({
     mutationFn: createUser,
     onSuccess: async () => {
-      message.success('Đã thêm thành viên. Password mặc định là số điện thoại.');
+      toast.success('Đã thêm thành viên. Password mặc định là số điện thoại.');
       setModalOpen(false);
       await invalidateUsers();
     },
@@ -47,7 +51,7 @@ export function UserPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, values }: { id: string; values: UserFormValues }) => updateUser(id, values),
     onSuccess: async () => {
-      message.success('Đã cập nhật thành viên.');
+      toast.success('Đã cập nhật thành viên.');
       setModalOpen(false);
       setEditingUser(null);
       await invalidateUsers();
@@ -57,16 +61,13 @@ export function UserPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteUser,
     onSuccess: async () => {
-      message.success('Đã xóa thành viên.');
+      toast.success('Đã xóa thành viên.');
       await invalidateUsers();
     },
   });
 
   const resetPasswordMutation = useMutation({
     mutationFn: resetUserPassword,
-    onSuccess: () => {
-      message.success('Đã reset password về số điện thoại của thành viên.');
-    },
   });
 
   const columns: ColumnsType<UserRow> = [
@@ -74,6 +75,11 @@ export function UserPage() {
       title: 'Tên Thành Viên',
       dataIndex: 'name',
       key: 'name',
+      render: (value: string, record) => (
+        <AppButton type="link" onClick={() => navigate(`/admin/users/${record.id}`)}>
+          {value}
+        </AppButton>
+      ),
     },
     {
       title: 'Số điện thoại',
@@ -113,6 +119,9 @@ export function UserPage() {
                 setModalOpen(true);
               }}
             />
+          </Tooltip>
+          <Tooltip title="Xem chi tiết">
+            <AppButton icon={<EyeOutlined />} onClick={() => navigate(`/admin/users/${record.id}`)} />
           </Tooltip>
           <Popconfirm
             title="Reset password"

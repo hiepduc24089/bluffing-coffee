@@ -4,6 +4,8 @@ export type BadgeRow = {
   code: string;
   icon?: string | null;
   description?: string | null;
+  isSystem: boolean;
+  earnedAt?: string | null;
   createdAt: string;
 };
 

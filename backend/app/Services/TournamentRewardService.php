@@ -32,7 +32,7 @@ class TournamentRewardService
 
             if (! $lockedTournament->rewardProfile) {
                 throw ValidationException::withMessages([
-                    'rewardProfileId' => 'Tournament must have a reward profile before finalizing rewards.',
+                    'rewardProfileId' => 'Giải đấu phải có cấu hình thưởng trước khi finalize.',
                 ]);
             }
 
@@ -42,6 +42,10 @@ class TournamentRewardService
             $transactions = [];
 
             foreach ($lockedTournament->registrations as $registration) {
+                if ($registration->status === TournamentRegistrationStatusEnum::Cancelled) {
+                    continue;
+                }
+
                 if ($registration->final_position === null) {
                     continue;
                 }
@@ -94,5 +98,66 @@ class TournamentRewardService
 
             return $transactions;
         });
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function preview(Tournament $tournament): array
+    {
+        $tournament->load(['rewardProfile.items', 'registrations.user']);
+
+        if (! $tournament->rewardProfile) {
+            throw ValidationException::withMessages([
+                'rewardProfileId' => 'Giải đấu phải có cấu hình thưởng trước khi finalize.',
+            ]);
+        }
+
+        $rewardByPosition = $tournament->rewardProfile->items->keyBy('position');
+
+        return $tournament->registrations
+            ->map(function ($registration) use ($tournament, $rewardByPosition) {
+                $rewardItem = $registration->final_position !== null
+                    ? $rewardByPosition->get($registration->final_position)
+                    : null;
+
+                $rewardKey = $registration->final_position !== null
+                    ? sprintf(
+                        'TOURNAMENT:%s:POSITION:%s:USER:%s',
+                        $tournament->id,
+                        $registration->final_position,
+                        $registration->user_id,
+                    )
+                    : null;
+
+                $alreadyRewarded = $rewardKey
+                    ? BpTransaction::query()->where('reward_key', $rewardKey)->exists()
+                    : false;
+
+                $bpReward = (int) ($rewardItem?->bp_reward ?? 0);
+                $isCancelled = $registration->status === TournamentRegistrationStatusEnum::Cancelled;
+                $isRewardable = ! $isCancelled && $registration->final_position !== null && $bpReward > 0;
+
+                return [
+                    'registrationId' => $registration->id,
+                    'userId' => $registration->user_id,
+                    'userName' => $registration->user?->name,
+                    'phone' => $registration->user?->phone,
+                    'status' => $registration->status->value,
+                    'finalPosition' => $registration->final_position,
+                    'bpReward' => $bpReward,
+                    'alreadyRewarded' => $alreadyRewarded,
+                    'willReward' => $isRewardable && ! $alreadyRewarded,
+                    'note' => match (true) {
+                        $isCancelled => 'Đăng ký đã bị hủy.',
+                        $registration->final_position === null => 'Chưa nhập vị trí kết thúc.',
+                        $bpReward <= 0 => 'Chưa cấu hình BP thưởng cho vị trí này.',
+                        $alreadyRewarded => 'Đã cộng BP trước đó.',
+                        default => null,
+                    },
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

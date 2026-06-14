@@ -19,7 +19,7 @@ class AuthService
 
         if (! $user || ! Hash::check($dto->password, $user->password)) {
             throw ValidationException::withMessages([
-                'phone' => ['The provided credentials are incorrect.'],
+                'phone' => ['Số điện thoại hoặc mật khẩu không đúng.'],
             ]);
         }
 

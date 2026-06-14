@@ -5,6 +5,7 @@ import {
   TeamOutlined,
   TrophyOutlined,
   UserAddOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, Typography } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -26,6 +27,11 @@ const menuItems = [
     key: '/admin/badges',
     icon: <TagsOutlined />,
     label: <Link to="/admin/badges">Huy hiệu</Link>,
+  },
+  {
+    key: '/admin/leaderboard',
+    icon: <BarChartOutlined />,
+    label: <Link to="/admin/leaderboard">Leaderboard</Link>,
   },
   {
     key: '/admin/reward-profiles',
@@ -56,6 +62,8 @@ export function AdminLayout() {
       ? ['/admin/users']
     : location.pathname.startsWith('/admin/badges')
       ? ['/admin/badges']
+    : location.pathname.startsWith('/admin/leaderboard')
+      ? ['/admin/leaderboard']
     : ['/admin/dashboard'];
 
   return (

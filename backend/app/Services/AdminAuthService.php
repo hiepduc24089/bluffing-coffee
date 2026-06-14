@@ -17,7 +17,7 @@ class AdminAuthService
 
         if (! $admin || ! Hash::check($dto->password, $admin->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => ['Email hoặc mật khẩu không đúng.'],
             ]);
         }
 

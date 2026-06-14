@@ -3,12 +3,14 @@
 namespace App\DTOs;
 
 use App\Enums\TournamentStatusEnum;
+use App\Enums\TournamentTypeEnum;
 use Carbon\CarbonImmutable;
 
 readonly class TournamentDTO
 {
     public function __construct(
         public string $name,
+        public TournamentTypeEnum $tournamentType,
         public int $buyIn,
         public int $ticketPriceWithDrink,
         public int $ticketPriceWithoutDrink,
@@ -20,12 +22,13 @@ readonly class TournamentDTO
     }
 
     /**
-     * @param array{name: string, buyIn?: int, capacity: int, status: string, rewardProfileId?: int|null, startAt: string} $payload
+     * @param array{name: string, tournamentType?: string, buyIn?: int, capacity: int, status: string, rewardProfileId?: int|null, startAt: string} $payload
      */
     public static function fromArray(array $payload): self
     {
         return new self(
             name: $payload['name'],
+            tournamentType: TournamentTypeEnum::from($payload['tournamentType'] ?? TournamentTypeEnum::Normal->value),
             buyIn: (int) ($payload['buyIn'] ?? 0),
             ticketPriceWithDrink: (int) ($payload['ticketPriceWithDrink'] ?? 0),
             ticketPriceWithoutDrink: (int) ($payload['ticketPriceWithoutDrink'] ?? 0),
@@ -43,6 +46,7 @@ readonly class TournamentDTO
     {
         return [
             'name' => $this->name,
+            'tournament_type' => $this->tournamentType->value,
             'buy_in' => $this->buyIn,
             'ticket_price_with_drink' => $this->ticketPriceWithDrink,
             'ticket_price_without_drink' => $this->ticketPriceWithoutDrink,

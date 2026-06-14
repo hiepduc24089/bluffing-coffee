@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { Card, message, Popconfirm, Space, Tag, Tooltip } from 'antd';
+import { Card, Popconfirm, Space, Tag, Tooltip } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
@@ -17,6 +17,7 @@ import {
 import { BadgeFormModal } from '@/admin/modules/badge/components/badge-form-modal';
 import { useBadgeList } from '@/admin/modules/badge/hooks/use-badge-list';
 import type { BadgeFilter, BadgeFormValues, BadgeRow } from '@/admin/modules/badge/types/badge.type';
+import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const defaultFilters: BadgeFilter = {
   keyword: '',
@@ -26,6 +27,7 @@ const defaultFilters: BadgeFilter = {
 
 export function BadgePage() {
   const queryClient = useQueryClient();
+  const toast = useAppToast();
   const [filters, setFilters] = useState<BadgeFilter>(defaultFilters);
   const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,7 +39,7 @@ export function BadgePage() {
   const createMutation = useMutation({
     mutationFn: createBadge,
     onSuccess: async () => {
-      message.success('Đã thêm huy hiệu.');
+      toast.success('Đã thêm huy hiệu.');
       setModalOpen(false);
       await invalidateBadges();
     },
@@ -46,7 +48,7 @@ export function BadgePage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, values }: { id: string; values: BadgeFormValues }) => updateBadge(id, values),
     onSuccess: async () => {
-      message.success('Đã cập nhật huy hiệu.');
+      toast.success('Đã cập nhật huy hiệu.');
       setModalOpen(false);
       setEditingBadge(null);
       await invalidateBadges();
@@ -56,7 +58,7 @@ export function BadgePage() {
   const deleteMutation = useMutation({
     mutationFn: deleteBadge,
     onSuccess: async () => {
-      message.success('Đã xóa huy hiệu.');
+      toast.success('Đã xóa huy hiệu.');
       await invalidateBadges();
     },
   });
@@ -71,7 +73,12 @@ export function BadgePage() {
       title: 'Mã',
       dataIndex: 'code',
       key: 'code',
-      render: (value: string) => <Tag>{value}</Tag>,
+      render: (value: string, record) => (
+        <Space size={6} wrap>
+          <Tag>{value}</Tag>
+          {record.isSystem ? <Tag color="blue">Hệ thống</Tag> : null}
+        </Space>
+      ),
     },
     {
       title: 'Icon',
@@ -114,9 +121,15 @@ export function BadgePage() {
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
             onConfirm={() => deleteMutation.mutate(record.id)}
+            disabled={record.isSystem}
           >
             <Tooltip title="Xóa">
-              <AppButton danger icon={<DeleteOutlined />} loading={deleteMutation.isPending} />
+              <AppButton
+                danger
+                icon={<DeleteOutlined />}
+                disabled={record.isSystem}
+                loading={deleteMutation.isPending}
+              />
             </Tooltip>
           </Popconfirm>
         </Space>

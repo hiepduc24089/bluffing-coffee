@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { DeleteOutlined, GiftOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
-import { Card, message, Popconfirm, Space, Tag, Tooltip, Typography } from 'antd';
+import { Card, Modal, Popconfirm, Space, Tag, Tooltip, Typography } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -14,6 +14,7 @@ import {
   createTournamentRegistration,
   deleteTournamentRegistration,
   finalizeTournamentRewards,
+  getTournamentRewardPreview,
   getTournamentList,
   getTournamentRegistrations,
   tournamentQueryKeys,
@@ -22,8 +23,10 @@ import {
 import type {
   TournamentRegistrationRow,
   TournamentRegistrationStatus,
+  TournamentRewardPreviewRow,
   TournamentRow,
 } from '@/admin/modules/tournament/types/tournament.type';
+import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const statusLabels: Record<TournamentRegistrationStatus, string> = {
   registered: 'Đã đăng ký',
@@ -41,11 +44,13 @@ const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString
 
 export function TournamentRegistrationPage() {
   const queryClient = useQueryClient();
+  const toast = useAppToast();
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>();
   const [selectedUserId, setSelectedUserId] = useState<number>();
   const [selectedEntryType, setSelectedEntryType] = useState<'with_drink' | 'without_drink'>();
   const [draftPositions, setDraftPositions] = useState<Record<number, number | null>>({});
   const [draftStatuses, setDraftStatuses] = useState<Record<number, TournamentRegistrationStatus>>({});
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { data: tournaments } = useQuery({
     queryKey: tournamentQueryKeys.list({ keyword: '', page: 1, perPage: 100 }),
@@ -63,6 +68,12 @@ export function TournamentRegistrationPage() {
     queryKey: registrationsQueryKey,
     queryFn: () => getTournamentRegistrations(selectedTournamentId as string),
     enabled: Boolean(selectedTournamentId),
+  });
+
+  const rewardPreviewQuery = useQuery({
+    queryKey: ['tournament-reward-preview', selectedTournamentId],
+    queryFn: () => getTournamentRewardPreview(selectedTournamentId as string),
+    enabled: Boolean(selectedTournamentId && previewOpen),
   });
 
   const selectedTournament = useMemo(
@@ -103,7 +114,7 @@ export function TournamentRegistrationPage() {
         selectedEntryType as 'with_drink' | 'without_drink',
       ),
     onSuccess: async () => {
-      message.success('Đã đăng ký thành viên vào giải đấu.');
+      toast.success('Đã đăng ký thành viên vào giải đấu.');
       setSelectedUserId(undefined);
       setSelectedEntryType(undefined);
       await invalidateRegistrations();
@@ -125,7 +136,7 @@ export function TournamentRegistrationPage() {
         status,
       }),
     onSuccess: async () => {
-      message.success('Đã cập nhật đăng ký.');
+      toast.success('Đã cập nhật đăng ký.');
       await invalidateRegistrations();
     },
   });
@@ -133,7 +144,7 @@ export function TournamentRegistrationPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteTournamentRegistration,
     onSuccess: async () => {
-      message.success('Đã xóa đăng ký.');
+      toast.success('Đã xóa đăng ký.');
       await invalidateRegistrations();
     },
   });
@@ -141,12 +152,56 @@ export function TournamentRegistrationPage() {
   const finalizeMutation = useMutation({
     mutationFn: () => finalizeTournamentRewards(selectedTournamentId as string),
     onSuccess: async () => {
-      message.success('Đã finalize và cộng BP theo reward profile.');
+      toast.success('Đã finalize và cộng BP theo reward profile.');
       await invalidateRegistrations();
       await queryClient.invalidateQueries({ queryKey: userQueryKeys.all });
       await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ['tournament-reward-preview', selectedTournamentId] });
+      setPreviewOpen(false);
     },
   });
+
+  const previewColumns: ColumnsType<TournamentRewardPreviewRow> = [
+    {
+      title: 'Thành viên',
+      key: 'member',
+      render: (_, record) => (
+        <Space direction="vertical" size={0}>
+          <span>{record.userName ?? '-'}</span>
+          <Typography.Text type="secondary">{record.phone ?? ''}</Typography.Text>
+        </Space>
+      ),
+    },
+    {
+      title: 'Vị trí',
+      dataIndex: 'finalPosition',
+      key: 'finalPosition',
+      align: 'right',
+      render: (value?: number | null) => value ?? '-',
+    },
+    {
+      title: 'BP sẽ cộng',
+      dataIndex: 'bpReward',
+      key: 'bpReward',
+      align: 'right',
+      render: (value: number, record) => (record.willReward ? value.toLocaleString('vi-VN') : '-'),
+    },
+    {
+      title: 'Trạng thái',
+      key: 'status',
+      render: (_, record) => {
+        if (record.willReward) {
+          return <Tag color="green">Sẽ cộng BP</Tag>;
+        }
+
+        if (record.alreadyRewarded) {
+          return <Tag color="blue">Đã cộng trước đó</Tag>;
+        }
+
+        return <Tag>{record.note ?? 'Không cộng'}</Tag>;
+      },
+    },
+  ];
 
   const columns: ColumnsType<TournamentRegistrationRow> = [
     {
@@ -352,22 +407,14 @@ export function TournamentRegistrationPage() {
             Đăng ký
           </AppButton>
 
-          <Popconfirm
-            title="Finalize rewards"
-            description="Hệ thống sẽ cộng BP theo vị trí đã nhập và reward profile của giải đấu."
-            okText="Finalize"
-            cancelText="Hủy"
-            onConfirm={() => finalizeMutation.mutate()}
+          <AppButton
+            icon={<GiftOutlined />}
             disabled={!selectedTournamentId}
+            loading={finalizeMutation.isPending}
+            onClick={() => setPreviewOpen(true)}
           >
-            <AppButton
-              icon={<GiftOutlined />}
-              disabled={!selectedTournamentId}
-              loading={finalizeMutation.isPending}
-            >
-              Finalize rewards
-            </AppButton>
-          </Popconfirm>
+            Preview finalize
+          </AppButton>
         </Space>
 
         {selectedTournament ? (
@@ -385,6 +432,32 @@ export function TournamentRegistrationPage() {
           pagination={false}
         />
       </Card>
+
+      <Modal
+        open={previewOpen}
+        title="Preview finalize rewards"
+        width={860}
+        okText="Finalize và cộng BP"
+        cancelText="Hủy"
+        okButtonProps={{
+          disabled: !rewardPreviewQuery.data?.some((row) => row.willReward),
+          loading: finalizeMutation.isPending,
+        }}
+        onCancel={() => setPreviewOpen(false)}
+        onOk={() => finalizeMutation.mutate()}
+      >
+        <Typography.Paragraph type="secondary">
+          Kiểm tra BP sẽ được cộng trước khi finalize. Các dòng thiếu vị trí, đã hủy, không có reward
+          hoặc đã cộng trước đó sẽ không cộng thêm BP.
+        </Typography.Paragraph>
+        <AppTable<TournamentRewardPreviewRow>
+          rowKey="registrationId"
+          loading={rewardPreviewQuery.isLoading}
+          columns={previewColumns}
+          dataSource={rewardPreviewQuery.data ?? []}
+          pagination={false}
+        />
+      </Modal>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, message, Space, Tag } from 'antd';
+import { Card, Space, Tag } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import AppButton from '@/shared/components/atoms/AppButton';
@@ -19,7 +19,9 @@ import type {
   TournamentFormValues,
   TournamentRow,
   TournamentStatus,
+  TournamentType,
 } from '@/admin/modules/tournament/types/tournament.type';
+import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const defaultFilters: TournamentFilter = {
   keyword: '',
@@ -41,10 +43,18 @@ const statusLabels: Record<TournamentStatus, string> = {
   completed: 'Đã hoàn tất',
 };
 
+const tournamentTypeLabels: Record<TournamentType, string> = {
+  normal: 'Thường',
+  deepstack: 'DeepStack',
+  turbo: 'Turbo',
+  sitngo: 'Sit & Go',
+};
+
 const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}đ`;
 
 export function TournamentPage() {
   const queryClient = useQueryClient();
+  const toast = useAppToast();
   const [filters, setFilters] = useState<TournamentFilter>(defaultFilters);
   const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
   const [modalOpen, setModalOpen] = useState(false);
@@ -57,7 +67,7 @@ export function TournamentPage() {
   const createMutation = useMutation({
     mutationFn: createTournament,
     onSuccess: async () => {
-      message.success('Đã tạo giải đấu.');
+      toast.success('Đã tạo giải đấu.');
       setModalOpen(false);
       await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.all });
     },
@@ -74,6 +84,12 @@ export function TournamentPage() {
       dataIndex: 'rewardProfile',
       key: 'rewardProfile',
       render: (_, record) => record.rewardProfile?.name ?? '-',
+    },
+    {
+      title: 'Loại giải',
+      dataIndex: 'tournamentType',
+      key: 'tournamentType',
+      render: (value: TournamentType) => <Tag>{tournamentTypeLabels[value] ?? value}</Tag>,
     },
     {
       title: 'Vé + đồ uống',

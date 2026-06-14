@@ -14,7 +14,7 @@ class EnsureUserHasRole
         $user = $request->user();
 
         if (! $user || $user->role !== UserRoleEnum::from($role)) {
-            abort(Response::HTTP_FORBIDDEN, 'This account cannot access this area.');
+            abort(Response::HTTP_FORBIDDEN, 'Tài khoản này không có quyền truy cập khu vực này.');
         }
 
         return $next($request);

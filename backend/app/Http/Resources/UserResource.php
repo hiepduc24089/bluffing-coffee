@@ -19,6 +19,8 @@ class UserResource extends JsonResource
             'role' => $this->role->value,
             'bpBalance' => $this->bp_balance,
             'rankLevel' => $this->rank_level,
+            'statistic' => $this->whenLoaded('statistic', fn () => UserStatisticResource::make($this->statistic)),
+            'badges' => BadgeResource::collection($this->whenLoaded('badges')),
             'createdAt' => $this->created_at?->format('Y-m-d H:i'),
         ];
     }

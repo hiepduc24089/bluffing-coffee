@@ -18,6 +18,8 @@ class BadgeResource extends JsonResource
             'code' => $this->code,
             'icon' => $this->icon,
             'description' => $this->description,
+            'isSystem' => $this->is_system,
+            'earnedAt' => $this->whenPivotLoaded('user_badges', fn () => $this->pivot->earned_at),
             'createdAt' => $this->created_at?->format('Y-m-d H:i'),
         ];
     }

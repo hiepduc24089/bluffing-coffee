@@ -10,12 +10,14 @@ import type {
   TournamentRegistrationStatus,
   BpTransactionRow,
   RewardProfileFormValues,
+  TournamentRewardPreviewRow,
 } from '@/admin/modules/tournament/types/tournament.type';
 
 const mockRows: TournamentRow[] = [
   {
     id: 'tour-001',
     name: 'Giải tối thứ sáu',
+    tournamentType: 'normal',
     buyIn: 150000,
     ticketPriceWithDrink: 85000,
     ticketPriceWithoutDrink: 60000,
@@ -27,6 +29,7 @@ const mockRows: TournamentRow[] = [
   {
     id: 'tour-002',
     name: 'Giải chủ nhật',
+    tournamentType: 'normal',
     buyIn: 500000,
     ticketPriceWithDrink: 85000,
     ticketPriceWithoutDrink: 60000,
@@ -182,6 +185,19 @@ export async function finalizeTournamentRewards(tournamentId: string): Promise<v
   await http.post(`/admin/tournaments/${tournamentId}/finalize-rewards`, null, {
     headers: getAdminAuthHeaders(),
   });
+}
+
+export async function getTournamentRewardPreview(
+  tournamentId: string,
+): Promise<TournamentRewardPreviewRow[]> {
+  const response = await http.get<{ data: TournamentRewardPreviewRow[] }>(
+    `/admin/tournaments/${tournamentId}/reward-preview`,
+    {
+      headers: getAdminAuthHeaders(),
+    },
+  );
+
+  return response.data.data;
 }
 
 export async function getTournamentBpTransactions(tournamentId: string): Promise<BpTransactionRow[]> {

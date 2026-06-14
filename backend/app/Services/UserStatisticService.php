@@ -33,17 +33,18 @@ class UserStatisticService
      */
     private function applyWinCounter(array &$updates, UserStatistic $statistic, Tournament $tournament): void
     {
+        $type = $tournament->tournament_type?->value;
         $name = strtolower($tournament->name);
 
-        if (str_contains($name, 'sit') || str_contains($name, 'sng')) {
+        if ($type === 'sitngo' || str_contains($name, 'sit') || str_contains($name, 'sng')) {
             $updates['sitngo_wins'] = $statistic->sitngo_wins + 1;
         }
 
-        if (str_contains($name, 'turbo')) {
+        if ($type === 'turbo' || str_contains($name, 'turbo')) {
             $updates['turbo_wins'] = $statistic->turbo_wins + 1;
         }
 
-        if (str_contains($name, 'deepstack') || str_contains($name, 'deep stack')) {
+        if ($type === 'deepstack' || str_contains($name, 'deepstack') || str_contains($name, 'deep stack')) {
             $updates['deepstack_wins'] = $statistic->deepstack_wins + 1;
         }
     }

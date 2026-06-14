@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Admin\AdminAuthController;
 use App\Http\Controllers\Api\Admin\BadgeController;
 use App\Http\Controllers\Api\Admin\BpTransactionController;
+use App\Http\Controllers\Api\Admin\LeaderboardController;
 use App\Http\Controllers\Api\Admin\RewardProfileController;
 use App\Http\Controllers\Api\Admin\TournamentBpTransactionController;
 use App\Http\Controllers\Api\Admin\TournamentRegistrationController;
@@ -47,6 +48,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::post('{tournament}/finalize-rewards', [TournamentRewardController::class, 'finalize'])
                 ->name('finalize-rewards');
+            Route::get('{tournament}/reward-preview', [TournamentRewardController::class, 'preview'])
+                ->name('reward-preview');
 
             Route::get('{tournament}/bp-transactions', [TournamentBpTransactionController::class, 'index'])
                 ->name('bp-transactions.index');
@@ -69,9 +72,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 ->name('bp-adjustments.store');
             Route::post('{user}/reset-password', [UserController::class, 'resetPassword'])
                 ->name('reset-password');
+            Route::post('{user}/badges', [UserController::class, 'attachBadge'])
+                ->name('badges.attach');
+            Route::delete('{user}/badges/{badge}', [UserController::class, 'detachBadge'])
+                ->name('badges.detach');
         });
 
-        Route::apiResource('users', UserController::class)->except(['show']);
+        Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+        Route::apiResource('users', UserController::class);
         Route::apiResource('badges', BadgeController::class)->except(['show']);
     });
 });

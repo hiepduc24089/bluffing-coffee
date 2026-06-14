@@ -1,8 +1,10 @@
 export type TournamentStatus = 'draft' | 'published' | 'running' | 'completed';
+export type TournamentType = 'normal' | 'deepstack' | 'turbo' | 'sitngo';
 
 export type TournamentRow = {
   id: string;
   name: string;
+  tournamentType: TournamentType;
   buyIn: number;
   ticketPriceWithDrink: number;
   ticketPriceWithoutDrink: number;
@@ -22,6 +24,7 @@ export type TournamentFilter = {
 
 export type TournamentFormValues = {
   name: string;
+  tournamentType: TournamentType;
   buyIn: number;
   ticketPriceWithDrink: number;
   ticketPriceWithoutDrink: number;
@@ -64,6 +67,7 @@ export type TournamentRegistrationStatus = 'registered' | 'finished' | 'cancelle
 export type TournamentRegistrationRow = {
   id: number;
   tournamentId: string;
+  tournament?: TournamentRow;
   userId: number;
   user?: {
     id: string;
@@ -104,4 +108,17 @@ export type BpTransactionRow = {
   note?: string | null;
   createdBy?: number | null;
   createdAt: string;
+};
+
+export type TournamentRewardPreviewRow = {
+  registrationId: number;
+  userId: number;
+  userName?: string | null;
+  phone?: string | null;
+  status: TournamentRegistrationStatus;
+  finalPosition?: number | null;
+  bpReward: number;
+  alreadyRewarded: boolean;
+  willReward: boolean;
+  note?: string | null;
 };

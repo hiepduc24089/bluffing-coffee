@@ -74,7 +74,7 @@ class BpService
     {
         if ($amount === 0) {
             throw ValidationException::withMessages([
-                'amount' => 'BP amount must not be zero.',
+                'amount' => 'Số BP phải khác 0.',
             ]);
         }
 
@@ -94,7 +94,7 @@ class BpService
 
             if ($nextBalance < 0) {
                 throw ValidationException::withMessages([
-                    'amount' => 'BP balance cannot be negative.',
+                    'amount' => 'Số dư BP không được âm.',
                 ]);
             }
 
@@ -132,7 +132,7 @@ class BpService
 
             if ($nextBalance < 0) {
                 throw ValidationException::withMessages([
-                    'amount' => 'BP balance cannot be negative.',
+                    'amount' => 'Số dư BP không được âm.',
                 ]);
             }
 
@@ -171,7 +171,7 @@ class BpService
     ): BpTransaction {
         if ($amount === 0) {
             throw ValidationException::withMessages([
-                'amount' => 'BP amount must not be zero.',
+                'amount' => 'Số BP phải khác 0.',
             ]);
         }
 
@@ -195,7 +195,7 @@ class BpService
 
             if ($nextBalance < 0) {
                 throw ValidationException::withMessages([
-                    'amount' => 'BP balance cannot be negative.',
+                    'amount' => 'Số dư BP không được âm.',
                 ]);
             }
 

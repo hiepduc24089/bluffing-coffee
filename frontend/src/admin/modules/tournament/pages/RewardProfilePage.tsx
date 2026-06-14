@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Card, Form, message, Popconfirm, Space, Tag, Tooltip } from 'antd';
+import { Card, Form, Popconfirm, Space, Tag, Tooltip } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import AppButton from '@/shared/components/atoms/AppButton';
@@ -21,6 +21,7 @@ import type {
   RewardProfile,
   RewardProfileFormValues,
 } from '@/admin/modules/tournament/types/tournament.type';
+import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const defaultFormValues: RewardProfileFormValues = {
   name: '',
@@ -39,6 +40,7 @@ const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString
 
 export function RewardProfilePage() {
   const queryClient = useQueryClient();
+  const toast = useAppToast();
   const [form] = Form.useForm<RewardProfileFormValues>();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<RewardProfile | null>(null);
@@ -80,7 +82,7 @@ export function RewardProfilePage() {
   const createMutation = useMutation({
     mutationFn: createRewardProfile,
     onSuccess: async () => {
-      message.success('Đã tạo reward profile.');
+      toast.success('Đã tạo reward profile.');
       setModalOpen(false);
       await invalidateRewardProfiles();
     },
@@ -90,7 +92,7 @@ export function RewardProfilePage() {
     mutationFn: ({ id, values }: { id: number; values: RewardProfileFormValues }) =>
       updateRewardProfile(id, values),
     onSuccess: async () => {
-      message.success('Đã cập nhật reward profile.');
+      toast.success('Đã cập nhật reward profile.');
       setModalOpen(false);
       setEditingProfile(null);
       await invalidateRewardProfiles();
@@ -100,7 +102,7 @@ export function RewardProfilePage() {
   const deleteMutation = useMutation({
     mutationFn: deleteRewardProfile,
     onSuccess: async () => {
-      message.success('Đã xóa reward profile.');
+      toast.success('Đã xóa reward profile.');
       await invalidateRewardProfiles();
     },
   });

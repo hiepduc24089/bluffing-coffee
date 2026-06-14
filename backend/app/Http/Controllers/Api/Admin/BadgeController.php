@@ -10,6 +10,7 @@ use App\Http\Resources\BadgeResource;
 use App\Models\Badge;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
 class BadgeController extends Controller
@@ -36,20 +37,38 @@ class BadgeController extends Controller
 
     public function store(StoreBadgeRequest $request): BadgeResource
     {
-        $badge = Badge::query()->create($request->validated());
+        $validated = $request->validated();
+        $badge = Badge::query()->create([
+            ...$validated,
+            'is_system' => true,
+        ]);
 
         return BadgeResource::make($badge);
     }
 
     public function update(UpdateBadgeRequest $request, Badge $badge): BadgeResource
     {
-        $badge->update($request->validated());
+        $validated = $request->validated();
+
+        if ($badge->is_system && $validated['code'] !== $badge->code) {
+            throw ValidationException::withMessages([
+                'code' => 'Không thể đổi mã của huy hiệu hệ thống.',
+            ]);
+        }
+
+        $badge->update($validated);
 
         return BadgeResource::make($badge);
     }
 
     public function destroy(Badge $badge): JsonResponse
     {
+        if ($badge->is_system) {
+            throw ValidationException::withMessages([
+                'badge' => 'Không thể xóa huy hiệu hệ thống.',
+            ]);
+        }
+
         $badge->delete();
 
         return response()->json(null, Response::HTTP_NO_CONTENT);

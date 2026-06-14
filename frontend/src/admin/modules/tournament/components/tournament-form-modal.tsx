@@ -49,6 +49,7 @@ export function TournamentFormModal({
               }
             : {
                 status: 'draft',
+                tournamentType: 'normal',
                 buyIn: 0,
                 ticketPriceWithDrink: 0,
                 ticketPriceWithoutDrink: 0,
@@ -58,6 +59,7 @@ export function TournamentFormModal({
         onFinish={(values) =>
           onSubmit({
             name: values.name,
+            tournamentType: values.tournamentType,
             buyIn: values.buyIn,
             ticketPriceWithDrink: values.ticketPriceWithDrink,
             ticketPriceWithoutDrink: values.ticketPriceWithoutDrink,
@@ -70,6 +72,21 @@ export function TournamentFormModal({
       >
         <Form.Item name="name" label="Tên giải đấu" rules={[{ required: true, message: 'Vui lòng nhập tên giải đấu' }]}>
           <AppTextField placeholder="Giải tối thứ sáu" />
+        </Form.Item>
+
+        <Form.Item
+          name="tournamentType"
+          label="Loại giải đấu"
+          rules={[{ required: true, message: 'Vui lòng chọn loại giải đấu' }]}
+        >
+          <AppSelect
+            options={[
+              { label: 'Thường', value: 'normal' },
+              { label: 'DeepStack', value: 'deepstack' },
+              { label: 'Turbo', value: 'turbo' },
+              { label: 'Sit & Go', value: 'sitngo' },
+            ]}
+          />
         </Form.Item>
 
         <Form.Item name="rewardProfileId" label="Reward profile">

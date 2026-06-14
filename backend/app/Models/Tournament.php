@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TournamentStatusEnum;
+use App\Enums\TournamentTypeEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +24,7 @@ class Tournament extends Model
      */
     protected $fillable = [
         'name',
+        'tournament_type',
         'buy_in',
         'ticket_price_with_drink',
         'ticket_price_without_drink',
@@ -39,6 +41,7 @@ class Tournament extends Model
     {
         return [
             'buy_in' => 'integer',
+            'tournament_type' => TournamentTypeEnum::class,
             'ticket_price_with_drink' => 'integer',
             'ticket_price_without_drink' => 'integer',
             'capacity' => 'integer',
