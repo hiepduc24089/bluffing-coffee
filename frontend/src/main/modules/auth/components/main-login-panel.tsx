@@ -1,8 +1,12 @@
 import { LockOutlined, PhoneOutlined } from '@ant-design/icons';
-import { Card, Form, Space, Typography } from 'antd';
-import { Link } from 'react-router-dom';
+import { Alert, Card, Form, Space, Typography } from 'antd';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AppButton from '@/shared/components/atoms/AppButton';
 import AppTextField from '@/shared/components/atoms/AppTextField';
+import { loginMain, mainAuthQueryKeys } from '@/main/modules/auth/api/main-auth.api';
+import { setMainAuthToken } from '@/main/modules/auth/utils/main-auth-storage';
 
 type LoginFormValues = {
   phone: string;
@@ -26,9 +30,39 @@ export function MainLoginPanel({
   alternateLinkText,
   alternateTo,
 }: MainLoginPanelProps) {
-  const handleSubmit = (_values: LoginFormValues) => {
-    // Tích hợp API sau khi chốt contract đăng nhập backend.
-  };
+  const [form] = Form.useForm<LoginFormValues>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const fromLocation = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+  const from = fromLocation?.pathname
+    ? `${fromLocation.pathname}${fromLocation.search ?? ''}`
+    : undefined;
+
+  const loginMutation = useMutation({
+    mutationFn: loginMain,
+    onSuccess: async (result) => {
+      setMainAuthToken(result.token);
+      await queryClient.invalidateQueries({ queryKey: mainAuthQueryKeys.me });
+      navigate(from && from !== '/login' ? from : '/check-in', { replace: true });
+    },
+    onError: (error) => {
+      const axiosError = error as AxiosError<{
+        message?: string;
+        errors?: Record<string, string[]>;
+      }>;
+      const phoneMessage = axiosError.response?.data?.errors?.phone?.[0];
+
+      if (phoneMessage) {
+        form.setFields([
+          {
+            name: 'phone',
+            errors: ['Số điện thoại hoặc mật khẩu không đúng'],
+          },
+        ]);
+      }
+    },
+  });
 
   return (
     <main className="login-screen">
@@ -46,7 +80,22 @@ export function MainLoginPanel({
           <Typography.Text type="secondary">{subtitle}</Typography.Text>
         </Space>
 
-        <Form<LoginFormValues> layout="vertical" requiredMark={false} onFinish={handleSubmit}>
+        {loginMutation.isError && (
+          <Alert
+            className="login-card__alert"
+            type="error"
+            showIcon
+            message="Đăng nhập thất bại"
+            description="Vui lòng kiểm tra số điện thoại và mật khẩu rồi thử lại."
+          />
+        )}
+
+        <Form<LoginFormValues>
+          form={form}
+          layout="vertical"
+          requiredMark={false}
+          onFinish={(values) => loginMutation.mutate(values)}
+        >
           <Form.Item
             name="phone"
             label="Số điện thoại"
@@ -72,7 +121,13 @@ export function MainLoginPanel({
             />
           </Form.Item>
 
-          <AppButton type="primary" size="large" htmlType="submit" block>
+          <AppButton
+            type="primary"
+            size="large"
+            htmlType="submit"
+            loading={loginMutation.isPending}
+            block
+          >
             {submitText}
           </AppButton>
         </Form>

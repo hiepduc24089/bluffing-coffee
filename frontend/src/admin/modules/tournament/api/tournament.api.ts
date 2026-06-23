@@ -93,6 +93,12 @@ export async function updateTournament(id: string, payload: TournamentFormValues
   });
 }
 
+export async function deleteTournament(id: string): Promise<void> {
+  await http.delete(`/admin/tournaments/${id}`, {
+    headers: getAdminAuthHeaders(),
+  });
+}
+
 export async function getRewardProfiles(): Promise<RewardProfile[]> {
   const response = await http.get<{ data: RewardProfile[] }>('/admin/reward-profiles', {
     headers: getAdminAuthHeaders(),

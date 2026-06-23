@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\TournamentRegistrationController;
 use App\Http\Controllers\Api\Admin\TournamentRewardController;
 use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Main\MainAuthController;
+use App\Http\Controllers\Api\Main\TournamentCheckInController;
 use App\Http\Controllers\Api\TournamentController;
 use Illuminate\Support\Facades\Route;
 
@@ -115,6 +116,13 @@ Route::prefix('main')->name('main.')->group(function () {
         Route::prefix('auth')->name('auth.')->group(function () {
             Route::get('me', [MainAuthController::class, 'me'])->name('me');
             Route::post('logout', [MainAuthController::class, 'logout'])->name('logout');
+        });
+
+        Route::prefix('check-in')->name('check-in.')->group(function () {
+            Route::get('tournaments/today', [TournamentCheckInController::class, 'todayTournaments'])
+                ->name('tournaments.today');
+            Route::get('current', [TournamentCheckInController::class, 'current'])->name('current');
+            Route::post('/', [TournamentCheckInController::class, 'store'])->name('store');
         });
     });
 });

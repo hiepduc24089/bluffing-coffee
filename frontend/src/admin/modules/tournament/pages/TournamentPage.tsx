@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Card, Space, Tag } from 'antd';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Card, Popconfirm, Space, Tag, Tooltip } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import AppButton from '@/shared/components/atoms/AppButton';
@@ -10,8 +11,10 @@ import { PageHeader } from '@/shared/components/layout/page-header';
 import { TournamentFormModal } from '@/admin/modules/tournament/components/tournament-form-modal';
 import {
   createTournament,
+  deleteTournament,
   getRewardProfiles,
   tournamentQueryKeys,
+  updateTournament,
 } from '@/admin/modules/tournament/api/tournament.api';
 import { useTournamentList } from '@/admin/modules/tournament/hooks/use-tournament-list';
 import type {
@@ -50,6 +53,7 @@ export function TournamentPage() {
   const [filters, setFilters] = useState<TournamentFilter>(defaultFilters);
   const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingTournament, setEditingTournament] = useState<TournamentRow | null>(null);
   const { data, isLoading } = useTournamentList(filters);
   const { data: rewardProfiles = [] } = useQuery({
     queryKey: tournamentQueryKeys.rewardProfiles,
@@ -61,6 +65,24 @@ export function TournamentPage() {
     onSuccess: async () => {
       toast.success('Đã tạo giải đấu.');
       setModalOpen(false);
+      await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.all });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, values }: { id: string; values: TournamentFormValues }) => updateTournament(id, values),
+    onSuccess: async () => {
+      toast.success('Đã cập nhật giải đấu.');
+      setModalOpen(false);
+      setEditingTournament(null);
+      await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.all });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteTournament,
+    onSuccess: async () => {
+      toast.success('Đã xóa giải đấu.');
       await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.all });
     },
   });
@@ -105,10 +127,50 @@ export function TournamentPage() {
       dataIndex: 'startAt',
       key: 'startAt',
     },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      width: 120,
+      render: (_, record) => (
+        <Space size={8}>
+          <Tooltip title="Chỉnh sửa">
+            <AppButton
+              icon={<EditOutlined />}
+              onClick={() => {
+                setEditingTournament(record);
+                setModalOpen(true);
+              }}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="Xóa giải đấu"
+            description="Giải đấu này và các đăng ký liên quan sẽ bị xóa."
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => deleteMutation.mutate(record.id)}
+          >
+            <Tooltip title="Xóa">
+              <AppButton danger icon={<DeleteOutlined />} loading={deleteMutation.isPending} />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
+      ),
+    },
   ];
 
-  const handleCreate = async (values: TournamentFormValues) => {
+  const handleSubmit = async (values: TournamentFormValues) => {
+    if (editingTournament) {
+      await updateMutation.mutateAsync({ id: editingTournament.id, values });
+      return;
+    }
+
     await createMutation.mutateAsync(values);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingTournament(null);
   };
 
   return (
@@ -117,7 +179,13 @@ export function TournamentPage() {
         title="Giải đấu"
         subtitle="Quản lý lịch diễn ra, mẫu cấu hình áp dụng, giá vé và sức chứa người chơi."
         extra={
-          <AppButton type="primary" onClick={() => setModalOpen(true)}>
+          <AppButton
+            type="primary"
+            onClick={() => {
+              setEditingTournament(null);
+              setModalOpen(true);
+            }}
+          >
             Tạo giải đấu
           </AppButton>
         }
@@ -193,10 +261,11 @@ export function TournamentPage() {
 
       <TournamentFormModal
         open={modalOpen}
-        submitting={createMutation.isPending}
+        initialValues={editingTournament ?? undefined}
+        submitting={createMutation.isPending || updateMutation.isPending}
         rewardProfiles={rewardProfiles}
-        onCancel={() => setModalOpen(false)}
-        onSubmit={handleCreate}
+        onCancel={closeModal}
+        onSubmit={handleSubmit}
       />
     </div>
   );

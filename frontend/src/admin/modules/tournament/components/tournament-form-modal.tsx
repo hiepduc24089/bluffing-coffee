@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Form } from 'antd';
 import dayjs from 'dayjs';
 import AppButton from '@/shared/components/atoms/AppButton';
@@ -30,6 +31,26 @@ export function TournamentFormModal({
   onSubmit,
 }: TournamentFormModalProps) {
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (initialValues) {
+      form.setFieldsValue({
+        ...initialValues,
+        startAt: dayjs(initialValues.startAt),
+      });
+      return;
+    }
+
+    form.setFieldsValue({
+      status: 'draft',
+      buyIn: 0,
+      ticketPriceWithDrink: 0,
+      ticketPriceWithoutDrink: 0,
+      capacity: 9,
+    });
+  }, [form, initialValues, open]);
 
   return (
     <AppModal
