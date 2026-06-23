@@ -17,7 +17,6 @@ const mockRows: TournamentRow[] = [
   {
     id: 'tour-001',
     name: 'Giải tối thứ sáu',
-    tournamentType: 'normal',
     buyIn: 150000,
     ticketPriceWithDrink: 85000,
     ticketPriceWithoutDrink: 60000,
@@ -29,7 +28,6 @@ const mockRows: TournamentRow[] = [
   {
     id: 'tour-002',
     name: 'Giải chủ nhật',
-    tournamentType: 'normal',
     buyIn: 500000,
     ticketPriceWithDrink: 85000,
     ticketPriceWithoutDrink: 60000,

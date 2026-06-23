@@ -152,7 +152,7 @@ export function TournamentRegistrationPage() {
   const finalizeMutation = useMutation({
     mutationFn: () => finalizeTournamentRewards(selectedTournamentId as string),
     onSuccess: async () => {
-      toast.success('Đã finalize và cộng BP theo reward profile.');
+      toast.success('Đã finalize và cộng BP theo mẫu cấu hình.');
       await invalidateRegistrations();
       await queryClient.invalidateQueries({ queryKey: userQueryKeys.all });
       await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.all });

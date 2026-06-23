@@ -19,7 +19,6 @@ import type {
   TournamentFormValues,
   TournamentRow,
   TournamentStatus,
-  TournamentType,
 } from '@/admin/modules/tournament/types/tournament.type';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 
@@ -41,13 +40,6 @@ const statusLabels: Record<TournamentStatus, string> = {
   published: 'Đã công bố',
   running: 'Đang diễn ra',
   completed: 'Đã hoàn tất',
-};
-
-const tournamentTypeLabels: Record<TournamentType, string> = {
-  normal: 'Thường',
-  deepstack: 'DeepStack',
-  turbo: 'Turbo',
-  sitngo: 'Sit & Go',
 };
 
 const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}đ`;
@@ -80,16 +72,10 @@ export function TournamentPage() {
       key: 'name',
     },
     {
-      title: 'Reward profile',
+      title: 'Mẫu cấu hình',
       dataIndex: 'rewardProfile',
       key: 'rewardProfile',
       render: (_, record) => record.rewardProfile?.name ?? '-',
-    },
-    {
-      title: 'Loại giải',
-      dataIndex: 'tournamentType',
-      key: 'tournamentType',
-      render: (value: TournamentType) => <Tag>{tournamentTypeLabels[value] ?? value}</Tag>,
     },
     {
       title: 'Vé + đồ uống',
@@ -129,7 +115,7 @@ export function TournamentPage() {
     <div className="page-stack">
       <PageHeader
         title="Giải đấu"
-        subtitle="Quản lý lịch giải đấu, reward profile và sức chứa người chơi."
+        subtitle="Quản lý lịch diễn ra, mẫu cấu hình áp dụng, giá vé và sức chứa người chơi."
         extra={
           <AppButton type="primary" onClick={() => setModalOpen(true)}>
             Tạo giải đấu

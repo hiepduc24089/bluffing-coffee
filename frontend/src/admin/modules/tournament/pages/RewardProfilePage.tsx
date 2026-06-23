@@ -82,7 +82,7 @@ export function RewardProfilePage() {
   const createMutation = useMutation({
     mutationFn: createRewardProfile,
     onSuccess: async () => {
-      toast.success('Đã tạo reward profile.');
+      toast.success('Đã tạo mẫu cấu hình.');
       setModalOpen(false);
       await invalidateRewardProfiles();
     },
@@ -92,7 +92,7 @@ export function RewardProfilePage() {
     mutationFn: ({ id, values }: { id: number; values: RewardProfileFormValues }) =>
       updateRewardProfile(id, values),
     onSuccess: async () => {
-      toast.success('Đã cập nhật reward profile.');
+      toast.success('Đã cập nhật mẫu cấu hình.');
       setModalOpen(false);
       setEditingProfile(null);
       await invalidateRewardProfiles();
@@ -102,14 +102,14 @@ export function RewardProfilePage() {
   const deleteMutation = useMutation({
     mutationFn: deleteRewardProfile,
     onSuccess: async () => {
-      toast.success('Đã xóa reward profile.');
+      toast.success('Đã xóa mẫu cấu hình.');
       await invalidateRewardProfiles();
     },
   });
 
   const columns: ColumnsType<RewardProfile> = [
     {
-      title: 'Tên profile',
+      title: 'Tên mẫu cấu hình',
       dataIndex: 'name',
       key: 'name',
     },
@@ -170,8 +170,8 @@ export function RewardProfilePage() {
             />
           </Tooltip>
           <Popconfirm
-            title="Xóa reward profile"
-            description="Các giải đang dùng profile này sẽ bị bỏ liên kết profile."
+            title="Xóa mẫu cấu hình"
+            description="Các giải đang dùng mẫu cấu hình này sẽ bị bỏ liên kết."
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
@@ -217,8 +217,8 @@ export function RewardProfilePage() {
   return (
     <div className="page-stack">
       <PageHeader
-        title="Cấu hình giải đấu"
-        subtitle="Quản lý reward profile để giải đấu tự cộng BP khi finalize."
+        title="Mẫu cấu hình giải"
+        subtitle="Thiết lập giá vé mặc định và BP thưởng theo thứ hạng để dùng lại khi tạo giải đấu."
         extra={
           <AppButton
             type="primary"
@@ -228,7 +228,7 @@ export function RewardProfilePage() {
               setModalOpen(true);
             }}
           >
-            Thêm profile
+            Thêm mẫu cấu hình
           </AppButton>
         }
       />
@@ -245,7 +245,7 @@ export function RewardProfilePage() {
 
       <AppModal
         isOpen={modalOpen}
-        title={editingProfile ? 'Chỉnh sửa reward profile' : 'Thêm reward profile'}
+        title={editingProfile ? 'Chỉnh sửa mẫu cấu hình' : 'Thêm mẫu cấu hình'}
         onClose={closeModal}
         footer={null}
         maxWidth="max-w-3xl"
@@ -253,8 +253,8 @@ export function RewardProfilePage() {
         <Form form={form} layout="vertical" initialValues={defaultFormValues} onFinish={handleSubmit}>
           <Form.Item
             name="name"
-            label="Tên profile"
-            rules={[{ required: true, message: 'Vui lòng nhập tên profile' }]}
+            label="Tên mẫu cấu hình"
+            rules={[{ required: true, message: 'Vui lòng nhập tên mẫu cấu hình' }]}
           >
             <AppTextField placeholder="Default DeepStack" />
           </Form.Item>

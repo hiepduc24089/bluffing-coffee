@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Admin\AdminAuthController;
 use App\Http\Controllers\Api\Admin\BadgeController;
 use App\Http\Controllers\Api\Admin\BpTransactionController;
 use App\Http\Controllers\Api\Admin\LeaderboardController;
+use App\Http\Controllers\Api\Admin\LiveTableController;
 use App\Http\Controllers\Api\Admin\RewardProfileController;
 use App\Http\Controllers\Api\Admin\TournamentBpTransactionController;
 use App\Http\Controllers\Api\Admin\TournamentRegistrationController;
@@ -79,6 +80,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
         });
 
         Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+
+        Route::prefix('live-tables')->name('live-tables.')->group(function () {
+            Route::get('tournaments/today', [LiveTableController::class, 'todayTournaments'])
+                ->name('tournaments.today');
+            Route::get('{tableKey}', [LiveTableController::class, 'show'])->name('show');
+            Route::put('{tableKey}/tournament', [LiveTableController::class, 'selectTournament'])
+                ->name('tournament.update');
+            Route::post('{tableKey}/seats/move', [LiveTableController::class, 'move'])->name('seats.move');
+            Route::delete('{tableKey}/seats/{seatNumber}', [LiveTableController::class, 'clear'])
+                ->name('seats.clear');
+            Route::post('{tableKey}/seats/{seatNumber}/eliminate', [LiveTableController::class, 'eliminate'])
+                ->name('seats.eliminate');
+            Route::post('registrations/{registration}/rebuy', [LiveTableController::class, 'rebuy'])
+                ->name('registrations.rebuy');
+        });
+
         Route::apiResource('users', UserController::class);
         Route::apiResource('badges', BadgeController::class)->except(['show']);
     });

@@ -20,7 +20,7 @@ services:
       SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
       DB_CONNECTION: ${DB_CONNECTION:-mysql}
       DB_HOST: ${DB_HOST:-mysql}
-      DB_PORT: ${DB_PORT:-3306}
+      DB_PORT: ${DOCKER_DB_PORT:-3306}
       DB_DATABASE: ${DB_DATABASE:-bluffing_coffee}
       DB_USERNAME: ${DB_USERNAME:-bluffing_coffee}
       DB_PASSWORD: ${DB_PASSWORD:-bluffing_coffee}

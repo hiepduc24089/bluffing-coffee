@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\TournamentRegistrationStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TournamentRegistration extends Model
 {
@@ -36,6 +37,16 @@ class TournamentRegistration extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function liveSeat(): HasOne
+    {
+        return $this->hasOne(LiveTableSeat::class, 'tournament_registration_id');
+    }
+
+    public function liveState(): HasOne
+    {
+        return $this->hasOne(LiveTournamentPlayerState::class, 'tournament_registration_id');
     }
 
 }

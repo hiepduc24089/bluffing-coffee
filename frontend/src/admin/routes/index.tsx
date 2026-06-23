@@ -5,6 +5,7 @@ import { RequireAdminAuth } from '@/admin/modules/auth/components/require-admin-
 import { AdminLoginPage } from '@/admin/modules/auth/pages/AdminLoginPage';
 import { DashboardPage } from '@/admin/modules/dashboard/pages/DashboardPage';
 import { LeaderboardPage } from '@/admin/modules/leaderboard/pages/LeaderboardPage';
+import { LiveTablePage } from '@/admin/modules/live-table/pages/LiveTablePage';
 import { RewardProfilePage } from '@/admin/modules/tournament/pages/RewardProfilePage';
 import { TournamentPage } from '@/admin/modules/tournament/pages/TournamentPage';
 import { TournamentRegistrationPage } from '@/admin/modules/tournament/pages/TournamentRegistrationPage';
@@ -58,6 +59,10 @@ export const adminRoutes: RouteObject[] = [
           {
             path: 'leaderboard',
             element: <LeaderboardPage />,
+          },
+          {
+            path: 'live-tables/:tableKey',
+            element: <LiveTablePage />,
           },
         ],
       },

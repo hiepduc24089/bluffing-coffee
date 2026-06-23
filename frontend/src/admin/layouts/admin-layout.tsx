@@ -6,6 +6,7 @@ import {
   TrophyOutlined,
   UserAddOutlined,
   BarChartOutlined,
+  TableOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, Typography } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -24,19 +25,9 @@ const menuItems = [
     label: <Link to="/admin/users">Thành viên</Link>,
   },
   {
-    key: '/admin/badges',
-    icon: <TagsOutlined />,
-    label: <Link to="/admin/badges">Huy hiệu</Link>,
-  },
-  {
-    key: '/admin/leaderboard',
-    icon: <BarChartOutlined />,
-    label: <Link to="/admin/leaderboard">Leaderboard</Link>,
-  },
-  {
     key: '/admin/reward-profiles',
     icon: <GiftOutlined />,
-    label: <Link to="/admin/reward-profiles">Cấu hình giải đấu</Link>,
+    label: <Link to="/admin/reward-profiles">Mẫu cấu hình giải</Link>,
   },
   {
     key: '/admin/tournaments',
@@ -47,6 +38,35 @@ const menuItems = [
     key: '/admin/tournament-registrations',
     icon: <UserAddOutlined />,
     label: <Link to="/admin/tournament-registrations">Đăng ký giải</Link>,
+  },
+  {
+    key: '/admin/badges',
+    icon: <TagsOutlined />,
+    label: <Link to="/admin/badges">Huy hiệu</Link>,
+  },
+  {
+    key: '/admin/leaderboard',
+    icon: <BarChartOutlined />,
+    label: <Link to="/admin/leaderboard">Leaderboard</Link>,
+  },
+  {
+    key: '/admin/live-tables',
+    icon: <TableOutlined />,
+    label: 'Live Table',
+    children: [
+      {
+        key: '/admin/live-tables/green',
+        label: <Link to="/admin/live-tables/green">Bàn Xanh Lá</Link>,
+      },
+      {
+        key: '/admin/live-tables/red',
+        label: <Link to="/admin/live-tables/red">Bàn Đỏ</Link>,
+      },
+      {
+        key: '/admin/live-tables/blue',
+        label: <Link to="/admin/live-tables/blue">Bàn Xanh Dương</Link>,
+      },
+    ],
   },
 ];
 
@@ -64,6 +84,8 @@ export function AdminLayout() {
       ? ['/admin/badges']
     : location.pathname.startsWith('/admin/leaderboard')
       ? ['/admin/leaderboard']
+    : location.pathname.startsWith('/admin/live-tables')
+      ? [location.pathname]
     : ['/admin/dashboard'];
 
   return (
@@ -75,7 +97,12 @@ export function AdminLayout() {
           </Typography.Title>
           <Typography.Text type="secondary">Trang quản trị</Typography.Text>
         </div>
-        <Menu mode="inline" selectedKeys={selectedKeys} items={menuItems} />
+        <Menu
+          mode="inline"
+          selectedKeys={selectedKeys}
+          defaultOpenKeys={location.pathname.startsWith('/admin/live-tables') ? ['/admin/live-tables'] : undefined}
+          items={menuItems}
+        />
       </Sider>
       <Layout>
         <Header className="app-header">

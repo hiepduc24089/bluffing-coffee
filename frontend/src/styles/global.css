@@ -92,6 +92,28 @@ body {
   color: #ffffff;
 }
 
+.app-sider .ant-menu-submenu-title {
+  height: 42px;
+  margin: 4px 0;
+  color: #d8e6e5 !important;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.app-sider .ant-menu-submenu-title .anticon {
+  color: #94d3cb;
+}
+
+.app-sider .ant-menu-submenu-title:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.app-sider .ant-menu-sub {
+  background: transparent !important;
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -352,6 +374,302 @@ body {
   width: 100%;
 }
 
+.live-table-tournament-select {
+  min-width: 360px;
+}
+
+.live-table-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+}
+
+.live-table-workspace {
+  display: grid;
+  grid-template-columns: minmax(680px, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+
+.live-table-board-area {
+  min-width: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.live-poker-table {
+  position: relative;
+  width: min(860px, 100%);
+  min-width: 680px;
+  aspect-ratio: 1.58;
+  margin: 0 auto;
+}
+
+.live-poker-table__felt {
+  position: absolute;
+  inset: 13% 12%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  border: 14px solid #40281a;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.16), transparent 28%),
+    linear-gradient(135deg, #0f766e, #14532d);
+  box-shadow:
+    inset 0 0 0 5px rgba(255, 255, 255, 0.12),
+    0 26px 60px rgba(15, 23, 42, 0.22);
+}
+
+.live-poker-table--red .live-poker-table__felt {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.16), transparent 28%),
+    linear-gradient(135deg, #991b1b, #5f1212);
+}
+
+.live-poker-table--blue .live-poker-table__felt {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.16), transparent 28%),
+    linear-gradient(135deg, #075985, #1e3a8a);
+}
+
+.live-poker-table__dealer {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 82px;
+  height: 82px;
+  color: #1f2937;
+  font-weight: 800;
+  border: 8px solid #f8fafc;
+  border-radius: 999px;
+  background: #facc15;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.22);
+}
+
+.live-poker-table__title {
+  max-width: 420px;
+  margin-top: 16px;
+  color: #ecfeff;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.live-seat {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 166px;
+  min-height: 104px;
+  padding: 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.live-seat:hover {
+  border-color: #0f766e;
+  transform: translateY(-2px);
+}
+
+.live-seat--5:hover {
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.live-seat--occupied {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
+.live-seat__number {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: #ffffff;
+  font-weight: 800;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #0f172a;
+}
+
+.live-seat__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 74px;
+  color: #64748b;
+  font-weight: 700;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.live-seat__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.live-seat--1 {
+  top: 1%;
+  right: 17%;
+}
+
+.live-seat--2 {
+  top: 26%;
+  right: 4%;
+}
+
+.live-seat--3 {
+  top: 54%;
+  right: 0;
+}
+
+.live-seat--4 {
+  right: 10%;
+  bottom: 4%;
+}
+
+.live-seat--5 {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.live-seat--6 {
+  bottom: 4%;
+  left: 10%;
+}
+
+.live-seat--7 {
+  top: 54%;
+  left: 0;
+}
+
+.live-seat--8 {
+  top: 26%;
+  left: 4%;
+}
+
+.live-seat--9 {
+  top: 1%;
+  left: 17%;
+}
+
+.live-player-chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 8px;
+  cursor: grab;
+  border: 1px solid #d7e4e2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.live-player-chip:active {
+  cursor: grabbing;
+}
+
+.live-player-chip__avatar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #0f766e;
+  border-radius: 999px;
+  background: #ccfbf1;
+}
+
+.live-player-chip__content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.live-player-chip__content strong,
+.live-player-chip__content small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-player-chip__content small {
+  color: #64748b;
+}
+
+.live-table-sidebars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.live-player-list {
+  display: flex;
+  max-height: 340px;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.live-eliminated-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.live-event-list {
+  display: flex;
+  max-height: 320px;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.live-event-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 130px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+@media (max-width: 1200px) {
+  .live-table-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .live-table-sidebars {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 992px) {
   .app-shell.ant-layout {
     flex-direction: column;
@@ -380,5 +698,17 @@ body {
 
   .login-brand-title.ant-typography {
     font-size: 40px;
+  }
+
+  .live-table-tournament-select {
+    min-width: 100%;
+  }
+
+  .live-table-sidebars {
+    grid-template-columns: 1fr;
+  }
+
+  .live-event-row {
+    grid-template-columns: 1fr;
   }
 }

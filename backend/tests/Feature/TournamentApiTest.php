@@ -40,6 +40,8 @@ class TournamentApiTest extends TestCase
         $response = $this->postJson('/api/admin/tournaments', [
             'name' => 'Friday Deep Stack',
             'buyIn' => 150000,
+            'ticketPriceWithDrink' => 85000,
+            'ticketPriceWithoutDrink' => 60000,
             'capacity' => 60,
             'status' => 'published',
             'startAt' => '2026-05-16 19:00',
@@ -69,6 +71,8 @@ class TournamentApiTest extends TestCase
         $response = $this->putJson('/api/admin/tournaments/'.$tournament->id, [
             'name' => 'Updated Main Event',
             'buyIn' => 500000,
+            'ticketPriceWithDrink' => 85000,
+            'ticketPriceWithoutDrink' => 60000,
             'capacity' => 120,
             'status' => 'running',
             'startAt' => '2026-05-18 14:00',

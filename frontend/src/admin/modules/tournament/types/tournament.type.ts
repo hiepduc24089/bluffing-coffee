@@ -1,10 +1,8 @@
 export type TournamentStatus = 'draft' | 'published' | 'running' | 'completed';
-export type TournamentType = 'normal' | 'deepstack' | 'turbo' | 'sitngo';
 
 export type TournamentRow = {
   id: string;
   name: string;
-  tournamentType: TournamentType;
   buyIn: number;
   ticketPriceWithDrink: number;
   ticketPriceWithoutDrink: number;
@@ -24,7 +22,6 @@ export type TournamentFilter = {
 
 export type TournamentFormValues = {
   name: string;
-  tournamentType: TournamentType;
   buyIn: number;
   ticketPriceWithDrink: number;
   ticketPriceWithoutDrink: number;

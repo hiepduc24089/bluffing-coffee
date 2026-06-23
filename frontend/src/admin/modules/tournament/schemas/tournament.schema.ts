@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 export const tournamentFormSchema = z.object({
   name: z.string().min(1, 'Vui lòng nhập tên giải đấu'),
-  tournamentType: z.enum(['normal', 'deepstack', 'turbo', 'sitngo']),
   buyIn: z.number().min(0, 'Phí tham gia phải lớn hơn hoặc bằng 0'),
   ticketPriceWithDrink: z.number().min(0, 'Giá vé phải lớn hơn hoặc bằng 0'),
   ticketPriceWithoutDrink: z.number().min(0, 'Giá vé phải lớn hơn hoặc bằng 0'),
