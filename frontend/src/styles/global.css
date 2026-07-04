@@ -175,6 +175,17 @@ body {
   margin-bottom: 16px;
 }
 
+.toolbar .ant-space-item:has(.user-search-input) {
+  flex: 0 1 360px;
+  min-width: 320px;
+  max-width: 100%;
+}
+
+.user-search-input.ant-input {
+  width: 100%;
+  max-width: 100%;
+}
+
 .app-toast-notice.ant-notification-notice {
   padding: 0 !important;
   overflow: hidden;
@@ -1279,7 +1290,83 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .live-event-row {
-    grid-template-columns: 1fr;
+.live-event-row {
+  grid-template-columns: 1fr;
   }
+}
+
+.rich-content-editor {
+  min-height: 320px;
+  padding: 14px 16px;
+  overflow: auto;
+  line-height: 1.7;
+  color: #0f172a;
+  border: 1px solid #d9e6e4;
+  border-radius: 8px;
+  background: #ffffff;
+  outline: none;
+}
+
+.rich-content-editor:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.rich-content-editor:empty::before {
+  color: #94a3b8;
+  content: "Nhập nội dung hoặc paste hình ảnh vào đây";
+}
+
+.rich-content-editor img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px 0;
+  border-radius: 8px;
+}
+
+.setting-cover-preview,
+.setting-banner-preview,
+.badge-icon-preview {
+  display: block;
+  max-height: 260px;
+  object-fit: cover;
+  border: 1px solid #d9e6e4;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.setting-cover-preview,
+.setting-banner-preview {
+  width: 100%;
+}
+
+.badge-icon-preview {
+  width: 96px;
+  height: 96px;
+}
+
+.setting-table-thumb,
+.setting-banner-table-thumb,
+.badge-icon-table-thumb {
+  display: block;
+  object-fit: cover;
+  border: 1px solid #d9e6e4;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.setting-table-thumb {
+  width: 84px;
+  height: 56px;
+}
+
+.setting-banner-table-thumb {
+  width: 140px;
+  height: 70px;
+}
+
+.badge-icon-table-thumb {
+  width: 40px;
+  height: 40px;
 }

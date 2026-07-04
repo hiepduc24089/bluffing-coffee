@@ -3,6 +3,7 @@ export type BadgeRow = {
   name: string;
   code: string;
   icon?: string | null;
+  iconUrl?: string | null;
   description?: string | null;
   isSystem: boolean;
   earnedAt?: string | null;
@@ -20,4 +21,10 @@ export type BadgeFormValues = {
   code: string;
   icon?: string | null;
   description?: string | null;
+};
+
+export type UploadedBadgeIcon = {
+  path: string;
+  publicPath: string;
+  url: string;
 };

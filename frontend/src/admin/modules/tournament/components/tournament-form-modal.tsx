@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Form } from 'antd';
 import dayjs from 'dayjs';
 import AppButton from '@/shared/components/atoms/AppButton';
@@ -12,6 +12,10 @@ import type {
   TournamentFormValues,
   TournamentRow,
 } from '@/admin/modules/tournament/types/tournament.type';
+import {
+  stableSerialize,
+  useUnsavedChangesGuard,
+} from '@/shared/hooks/use-unsaved-changes-guard';
 
 type TournamentFormModalProps = {
   open: boolean;
@@ -31,32 +35,50 @@ export function TournamentFormModal({
   onSubmit,
 }: TournamentFormModalProps) {
   const [form] = Form.useForm();
+  const watchedValues = Form.useWatch([], form);
+  const [initialSnapshot, setInitialSnapshot] = useState('');
 
   useEffect(() => {
     if (!open) return;
 
     if (initialValues) {
-      form.setFieldsValue({
+      const nextValues = {
         ...initialValues,
         startAt: dayjs(initialValues.startAt),
-      });
+      };
+
+      form.setFieldsValue(nextValues);
+      setInitialSnapshot(stableSerialize(normalizeTournamentFormValues(nextValues)));
       return;
     }
 
-    form.setFieldsValue({
+    const nextValues = {
       status: 'draft',
       buyIn: 0,
       ticketPriceWithDrink: 0,
       ticketPriceWithoutDrink: 0,
       capacity: 9,
-    });
+    };
+
+    form.setFieldsValue(nextValues);
+    setInitialSnapshot(stableSerialize(normalizeTournamentFormValues(nextValues)));
   }, [form, initialValues, open]);
+
+  const currentSnapshot = useMemo(
+    () => stableSerialize(normalizeTournamentFormValues(form.getFieldsValue(true))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [form, watchedValues],
+  );
+  const hasUnsavedChanges = Boolean(open && initialSnapshot && initialSnapshot !== currentSnapshot);
+  const confirmUnsavedChanges = useUnsavedChangesGuard({
+    enabled: hasUnsavedChanges && !submitting,
+  });
 
   return (
     <AppModal
       isOpen={open}
       title={initialValues ? 'Chỉnh sửa giải đấu' : 'Tạo giải đấu'}
-      onClose={onCancel}
+      onClose={() => confirmUnsavedChanges(onCancel)}
       footer={null}
     >
       <Form
@@ -168,7 +190,7 @@ export function TournamentFormModal({
         </Form.Item>
 
         <div className="modal-actions">
-          <AppButton onClick={onCancel}>Hủy</AppButton>
+          <AppButton onClick={() => confirmUnsavedChanges(onCancel)}>Hủy</AppButton>
           <AppButton type="primary" htmlType="submit" loading={submitting}>
             Lưu
           </AppButton>
@@ -176,4 +198,17 @@ export function TournamentFormModal({
       </Form>
     </AppModal>
   );
+}
+
+function normalizeTournamentFormValues(values: Record<string, unknown>) {
+  return {
+    name: values.name ?? '',
+    buyIn: Number(values.buyIn ?? 0),
+    ticketPriceWithDrink: Number(values.ticketPriceWithDrink ?? 0),
+    ticketPriceWithoutDrink: Number(values.ticketPriceWithoutDrink ?? 0),
+    capacity: Number(values.capacity ?? 9),
+    status: values.status ?? 'draft',
+    rewardProfileId: values.rewardProfileId ?? null,
+    startAt: values.startAt ?? null,
+  };
 }

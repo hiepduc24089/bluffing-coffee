@@ -1,7 +1,12 @@
 import { http } from '@/shared/lib/http';
 import type { PaginatedResponse } from '@/shared/types/api';
 import { getAdminAuthHeaders } from '@/admin/modules/auth/utils/admin-auth-storage';
-import type { BadgeFilter, BadgeFormValues, BadgeRow } from '@/admin/modules/badge/types/badge.type';
+import type {
+  BadgeFilter,
+  BadgeFormValues,
+  BadgeRow,
+  UploadedBadgeIcon,
+} from '@/admin/modules/badge/types/badge.type';
 
 export const badgeQueryKeys = {
   all: ['badges'] as const,
@@ -41,4 +46,19 @@ export async function deleteBadge(id: string): Promise<void> {
   await http.delete(`/admin/badges/${id}`, {
     headers: getAdminAuthHeaders(),
   });
+}
+
+export async function uploadBadgeIcon(image: File): Promise<UploadedBadgeIcon> {
+  const formData = new FormData();
+  formData.append('image', image);
+  formData.append('directory', 'badges');
+
+  const response = await http.post<{ data: UploadedBadgeIcon }>('/admin/setting-images', formData, {
+    headers: {
+      ...getAdminAuthHeaders(),
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data.data;
 }

@@ -7,6 +7,8 @@ import { DashboardPage } from '@/admin/modules/dashboard/pages/DashboardPage';
 import { LeaderboardPage } from '@/admin/modules/leaderboard/pages/LeaderboardPage';
 import { LiveTablePage } from '@/admin/modules/live-table/pages/LiveTablePage';
 import { RewardProfilePage } from '@/admin/modules/tournament/pages/RewardProfilePage';
+import { BannerSettingPage } from '@/admin/modules/setting/pages/BannerSettingPage';
+import { ContentPageSettingPage } from '@/admin/modules/setting/pages/ContentPageSettingPage';
 import { TournamentPage } from '@/admin/modules/tournament/pages/TournamentPage';
 import { TournamentRegistrationPage } from '@/admin/modules/tournament/pages/TournamentRegistrationPage';
 import { UserDetailPage } from '@/admin/modules/user/pages/UserDetailPage';
@@ -63,6 +65,30 @@ export const adminRoutes: RouteObject[] = [
           {
             path: 'live-tables/:tableKey',
             element: <LiveTablePage />,
+          },
+          {
+            path: 'settings/posts',
+            element: (
+              <ContentPageSettingPage
+                type="post"
+                title="Bài viết"
+                subtitle="Quản lý bài viết, tiêu đề, banner."
+              />
+            ),
+          },
+          {
+            path: 'settings/banners',
+            element: <BannerSettingPage />,
+          },
+          {
+            path: 'settings/events',
+            element: (
+              <ContentPageSettingPage
+                type="event"
+                title="Sự kiện"
+                subtitle="Quản lý sự kiện, nội dung."
+              />
+            ),
           },
         ],
       },

@@ -27,6 +27,7 @@ import type {
   TournamentRow,
 } from '@/admin/modules/tournament/types/tournament.type';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
+import { useUnsavedChangesGuard } from '@/shared/hooks/use-unsaved-changes-guard';
 
 const statusLabels: Record<TournamentRegistrationStatus, string> = {
   registered: 'Đã đăng ký',
@@ -80,6 +81,22 @@ export function TournamentRegistrationPage() {
     () => tournaments?.data.find((tournament) => tournament.id === selectedTournamentId),
     [selectedTournamentId, tournaments?.data],
   );
+
+  const hasRegistrationDraftChanges = useMemo(
+    () =>
+      registrations.some((registration) => {
+        const draftPosition = draftPositions[registration.id];
+        const draftStatus = draftStatuses[registration.id];
+
+        return (
+          (registration.id in draftPositions && draftPosition !== registration.finalPosition) ||
+          (registration.id in draftStatuses && draftStatus !== registration.status)
+        );
+      }),
+    [draftPositions, draftStatuses, registrations],
+  );
+  const hasCreateDraftChanges = Boolean(selectedUserId || selectedEntryType);
+  const hasUnsavedChanges = hasRegistrationDraftChanges || hasCreateDraftChanges;
 
   const registeredUserIds = useMemo(
     () => new Set(registrations.map((registration) => registration.userId)),
@@ -135,8 +152,18 @@ export function TournamentRegistrationPage() {
         finalPosition,
         status,
       }),
-    onSuccess: async () => {
+    onSuccess: async (_data, variables) => {
       toast.success('Đã cập nhật đăng ký.');
+      setDraftPositions((current) => {
+        const next = { ...current };
+        delete next[variables.registration.id];
+        return next;
+      });
+      setDraftStatuses((current) => {
+        const next = { ...current };
+        delete next[variables.registration.id];
+        return next;
+      });
       await invalidateRegistrations();
     },
   });
@@ -159,6 +186,10 @@ export function TournamentRegistrationPage() {
       await queryClient.invalidateQueries({ queryKey: ['tournament-reward-preview', selectedTournamentId] });
       setPreviewOpen(false);
     },
+  });
+
+  const confirmUnsavedChanges = useUnsavedChangesGuard({
+    enabled: hasUnsavedChanges && !createMutation.isPending && !updateMutation.isPending,
   });
 
   const previewColumns: ColumnsType<TournamentRewardPreviewRow> = [
@@ -356,11 +387,13 @@ export function TournamentRegistrationPage() {
               };
             })}
             onChange={(value) => {
-              setSelectedTournamentId(value as string | undefined);
-              setSelectedUserId(undefined);
-              setSelectedEntryType(undefined);
-              setDraftPositions({});
-              setDraftStatuses({});
+              confirmUnsavedChanges(() => {
+                setSelectedTournamentId(value as string | undefined);
+                setSelectedUserId(undefined);
+                setSelectedEntryType(undefined);
+                setDraftPositions({});
+                setDraftStatuses({});
+              });
             }}
           />
 

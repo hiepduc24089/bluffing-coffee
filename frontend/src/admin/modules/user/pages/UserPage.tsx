@@ -182,6 +182,7 @@ export function UserPage() {
       <Card>
         <Space wrap size={12} className="toolbar">
           <AppTextField
+            className="user-search-input"
             placeholder="Tìm theo tên hoặc số điện thoại"
             allowClear
             size="large"

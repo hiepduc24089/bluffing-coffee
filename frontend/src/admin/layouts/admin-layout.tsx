@@ -7,6 +7,10 @@ import {
   UserAddOutlined,
   BarChartOutlined,
   TableOutlined,
+  SettingOutlined,
+  FileTextOutlined,
+  PictureOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, Typography } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -68,6 +72,28 @@ const menuItems = [
       },
     ],
   },
+  {
+    key: '/admin/settings',
+    icon: <SettingOutlined />,
+    label: 'Setting',
+    children: [
+      {
+        key: '/admin/settings/posts',
+        icon: <FileTextOutlined />,
+        label: <Link to="/admin/settings/posts">Bài viết</Link>,
+      },
+      {
+        key: '/admin/settings/banners',
+        icon: <PictureOutlined />,
+        label: <Link to="/admin/settings/banners">Banner</Link>,
+      },
+      {
+        key: '/admin/settings/events',
+        icon: <CalendarOutlined />,
+        label: <Link to="/admin/settings/events">Sự kiện</Link>,
+      },
+    ],
+  },
 ];
 
 export function AdminLayout() {
@@ -86,7 +112,14 @@ export function AdminLayout() {
       ? ['/admin/leaderboard']
     : location.pathname.startsWith('/admin/live-tables')
       ? [location.pathname]
+    : location.pathname.startsWith('/admin/settings')
+      ? [location.pathname]
     : ['/admin/dashboard'];
+
+  const defaultOpenKeys = [
+    ...(location.pathname.startsWith('/admin/live-tables') ? ['/admin/live-tables'] : []),
+    ...(location.pathname.startsWith('/admin/settings') ? ['/admin/settings'] : []),
+  ];
 
   return (
     <Layout className="app-shell">
@@ -100,7 +133,7 @@ export function AdminLayout() {
         <Menu
           mode="inline"
           selectedKeys={selectedKeys}
-          defaultOpenKeys={location.pathname.startsWith('/admin/live-tables') ? ['/admin/live-tables'] : undefined}
+          defaultOpenKeys={defaultOpenKeys}
           items={menuItems}
         />
       </Sider>

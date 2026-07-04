@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Card, Form, Popconfirm, Space, Tag, Tooltip } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -22,6 +22,10 @@ import type {
   RewardProfileFormValues,
 } from '@/admin/modules/tournament/types/tournament.type';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
+import {
+  stableSerialize,
+  useUnsavedChangesGuard,
+} from '@/shared/hooks/use-unsaved-changes-guard';
 
 const defaultFormValues: RewardProfileFormValues = {
   name: '',
@@ -42,8 +46,10 @@ export function RewardProfilePage() {
   const queryClient = useQueryClient();
   const toast = useAppToast();
   const [form] = Form.useForm<RewardProfileFormValues>();
+  const watchedValues = Form.useWatch([], form);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<RewardProfile | null>(null);
+  const [initialSnapshot, setInitialSnapshot] = useState('');
 
   const { data: rewardProfiles = [], isLoading } = useQuery({
     queryKey: tournamentQueryKeys.rewardProfiles,
@@ -54,7 +60,7 @@ export function RewardProfilePage() {
     if (!modalOpen) return;
 
     if (editingProfile) {
-      form.setFieldsValue({
+      const nextValues = {
         name: editingProfile.name,
         code: editingProfile.code,
         isActive: editingProfile.isActive,
@@ -67,12 +73,22 @@ export function RewardProfilePage() {
             position: item.position,
             bpReward: item.bpReward,
           })),
-      });
+      };
+
+      form.setFieldsValue(nextValues);
+      setInitialSnapshot(stableSerialize(normalizeRewardProfileFormValues(nextValues)));
       return;
     }
 
     form.setFieldsValue(defaultFormValues);
+    setInitialSnapshot(stableSerialize(normalizeRewardProfileFormValues(defaultFormValues)));
   }, [editingProfile, form, modalOpen]);
+
+  const currentSnapshot = useMemo(
+    () => stableSerialize(normalizeRewardProfileFormValues(form.getFieldsValue(true))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [form, watchedValues],
+  );
 
   const invalidateRewardProfiles = async () => {
     await queryClient.invalidateQueries({ queryKey: tournamentQueryKeys.rewardProfiles });
@@ -105,6 +121,12 @@ export function RewardProfilePage() {
       toast.success('Đã xóa mẫu cấu hình.');
       await invalidateRewardProfiles();
     },
+  });
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const hasUnsavedChanges = Boolean(modalOpen && initialSnapshot && initialSnapshot !== currentSnapshot);
+  const confirmUnsavedChanges = useUnsavedChangesGuard({
+    enabled: hasUnsavedChanges && !isSubmitting,
   });
 
   const columns: ColumnsType<RewardProfile> = [
@@ -212,6 +234,7 @@ export function RewardProfilePage() {
     setModalOpen(false);
     setEditingProfile(null);
     form.resetFields();
+    setInitialSnapshot('');
   };
 
   return (
@@ -246,7 +269,7 @@ export function RewardProfilePage() {
       <AppModal
         isOpen={modalOpen}
         title={editingProfile ? 'Chỉnh sửa mẫu cấu hình' : 'Thêm mẫu cấu hình'}
-        onClose={closeModal}
+        onClose={() => confirmUnsavedChanges(closeModal)}
         footer={null}
         maxWidth="max-w-3xl"
       >
@@ -321,11 +344,11 @@ export function RewardProfilePage() {
           </Form.List>
 
           <div className="modal-actions">
-            <AppButton onClick={closeModal}>Hủy</AppButton>
+            <AppButton onClick={() => confirmUnsavedChanges(closeModal)}>Hủy</AppButton>
             <AppButton
               type="primary"
               htmlType="submit"
-              loading={createMutation.isPending || updateMutation.isPending}
+              loading={isSubmitting}
             >
               Lưu
             </AppButton>
@@ -334,4 +357,18 @@ export function RewardProfilePage() {
       </AppModal>
     </div>
   );
+}
+
+function normalizeRewardProfileFormValues(values: Partial<RewardProfileFormValues>) {
+  return {
+    name: values.name ?? '',
+    code: values.code ?? '',
+    isActive: Boolean(values.isActive),
+    defaultPriceWithDrink: Number(values.defaultPriceWithDrink ?? 0),
+    defaultPriceWithoutDrink: Number(values.defaultPriceWithoutDrink ?? 0),
+    items: (values.items ?? []).map((item) => ({
+      position: Number(item?.position ?? 0),
+      bpReward: Number(item?.bpReward ?? 0),
+    })),
+  };
 }

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
 
-class BadgeResource extends JsonResource
+class BannerResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -15,14 +15,14 @@ class BadgeResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'code' => $this->code,
-            'icon' => $this->icon,
-            'iconUrl' => $this->publicUrl($this->icon),
-            'description' => $this->description,
-            'isSystem' => $this->is_system,
-            'earnedAt' => $this->whenPivotLoaded('user_badges', fn () => $this->pivot->earned_at),
+            'title' => $this->title,
+            'image' => $this->image,
+            'imageUrl' => $this->publicUrl($this->image),
+            'linkUrl' => $this->link_url,
+            'sortOrder' => $this->sort_order,
+            'isActive' => $this->is_active,
             'createdAt' => $this->created_at?->format('Y-m-d H:i'),
+            'updatedAt' => $this->updated_at?->format('Y-m-d H:i'),
         ];
     }
 

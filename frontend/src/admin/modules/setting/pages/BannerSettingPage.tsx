@@ -1,104 +1,102 @@
 import { useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Card, Popconfirm, Space, Tag, Tooltip } from 'antd';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import AppButton from '@/shared/components/atoms/AppButton';
 import AppTable from '@/shared/components/atoms/AppTable';
 import AppTextField from '@/shared/components/atoms/AppTextField';
 import { PageHeader } from '@/shared/components/layout/page-header';
 import {
-  badgeQueryKeys,
-  createBadge,
-  deleteBadge,
-  updateBadge,
-} from '@/admin/modules/badge/api/badge.api';
-import { BadgeFormModal } from '@/admin/modules/badge/components/badge-form-modal';
-import { useBadgeList } from '@/admin/modules/badge/hooks/use-badge-list';
-import type { BadgeFilter, BadgeFormValues, BadgeRow } from '@/admin/modules/badge/types/badge.type';
+  createBanner,
+  deleteBanner,
+  getBanners,
+  settingQueryKeys,
+  updateBanner,
+} from '@/admin/modules/setting/api/setting.api';
+import { BannerFormModal } from '@/admin/modules/setting/components/banner-form-modal';
+import type { BannerFilter, BannerFormValues, BannerRow } from '@/admin/modules/setting/types/setting.type';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 
-const defaultFilters: BadgeFilter = {
-  keyword: '',
-  page: 1,
-  perPage: 10,
-};
-
-export function BadgePage() {
+export function BannerSettingPage() {
   const queryClient = useQueryClient();
   const toast = useAppToast();
-  const [filters, setFilters] = useState<BadgeFilter>(defaultFilters);
-  const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
+  const [filters, setFilters] = useState<BannerFilter>({
+    keyword: '',
+    page: 1,
+    perPage: 10,
+  });
+  const [keywordInput, setKeywordInput] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingBadge, setEditingBadge] = useState<BadgeRow | null>(null);
-  const { data, isLoading } = useBadgeList(filters);
+  const [editingBanner, setEditingBanner] = useState<BannerRow | null>(null);
 
-  const invalidateBadges = () => queryClient.invalidateQueries({ queryKey: badgeQueryKeys.all });
+  const { data, isLoading } = useQuery({
+    queryKey: settingQueryKeys.banners(filters),
+    queryFn: () => getBanners(filters),
+  });
+
+  const invalidateBanners = () => queryClient.invalidateQueries({ queryKey: settingQueryKeys.all });
 
   const createMutation = useMutation({
-    mutationFn: createBadge,
+    mutationFn: createBanner,
     onSuccess: async () => {
-      toast.success('Đã thêm huy hiệu.');
+      toast.success('Đã thêm banner.');
       setModalOpen(false);
-      await invalidateBadges();
+      await invalidateBanners();
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, values }: { id: string; values: BadgeFormValues }) => updateBadge(id, values),
+    mutationFn: ({ id, values }: { id: number; values: BannerFormValues }) => updateBanner(id, values),
     onSuccess: async () => {
-      toast.success('Đã cập nhật huy hiệu.');
+      toast.success('Đã cập nhật banner.');
       setModalOpen(false);
-      setEditingBadge(null);
-      await invalidateBadges();
+      setEditingBanner(null);
+      await invalidateBanners();
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteBadge,
+    mutationFn: deleteBanner,
     onSuccess: async () => {
-      toast.success('Đã xóa huy hiệu.');
-      await invalidateBadges();
+      toast.success('Đã xóa banner.');
+      await invalidateBanners();
     },
   });
 
-  const columns: ColumnsType<BadgeRow> = [
+  const columns: ColumnsType<BannerRow> = [
     {
-      title: 'Tên huy hiệu',
-      dataIndex: 'name',
-      key: 'name',
+      title: 'Ảnh',
+      dataIndex: 'image',
+      key: 'image',
+      width: 180,
+      render: (_, record) => <img className="setting-banner-table-thumb" src={record.imageUrl ?? record.image} alt="" />,
     },
     {
-      title: 'Mã',
-      dataIndex: 'code',
-      key: 'code',
-      render: (value: string, record) => (
-        <Space size={6} wrap>
-          <Tag>{value}</Tag>
-          {record.isSystem ? <Tag color="blue">Hệ thống</Tag> : null}
-        </Space>
-      ),
+      title: 'Tiêu đề',
+      dataIndex: 'title',
+      key: 'title',
+      render: (value?: string | null) => value || '-',
     },
     {
-      title: 'Icon',
-      dataIndex: 'icon',
-      key: 'icon',
-      render: (_, record) =>
-        record.iconUrl ? <img className="badge-icon-table-thumb" src={record.iconUrl} alt="" /> : record.icon || '-',
-    },
-    {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
+      title: 'Link',
+      dataIndex: 'linkUrl',
+      key: 'linkUrl',
       ellipsis: true,
       render: (value?: string | null) => value || '-',
     },
     {
-      title: 'Ngày tạo',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (value?: string) => (value ? dayjs(value).format('DD/MM/YYYY') : ''),
+      title: 'Thứ tự',
+      dataIndex: 'sortOrder',
+      key: 'sortOrder',
+      width: 100,
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      width: 130,
+      render: (value: boolean) => <Tag color={value ? 'green' : 'default'}>{value ? 'Đang bật' : 'Đang tắt'}</Tag>,
     },
     {
       title: 'Thao tác',
@@ -110,27 +108,21 @@ export function BadgePage() {
             <AppButton
               icon={<EditOutlined />}
               onClick={() => {
-                setEditingBadge(record);
+                setEditingBanner(record);
                 setModalOpen(true);
               }}
             />
           </Tooltip>
           <Popconfirm
-            title="Xóa huy hiệu"
-            description="Huy hiệu này sẽ bị xóa khỏi danh sách và khỏi các thành viên đã nhận."
+            title="Xóa banner"
+            description="Banner này sẽ bị xóa khỏi hệ thống."
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
             onConfirm={() => deleteMutation.mutate(record.id)}
-            disabled={record.isSystem}
           >
             <Tooltip title="Xóa">
-              <AppButton
-                danger
-                icon={<DeleteOutlined />}
-                disabled={record.isSystem}
-                loading={deleteMutation.isPending}
-              />
+              <AppButton danger icon={<DeleteOutlined />} loading={deleteMutation.isPending} />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -145,9 +137,9 @@ export function BadgePage() {
       page: 1,
     }));
 
-  const handleSubmit = async (values: BadgeFormValues) => {
-    if (editingBadge) {
-      await updateMutation.mutateAsync({ id: editingBadge.id, values });
+  const handleSubmit = async (values: BannerFormValues) => {
+    if (editingBanner) {
+      await updateMutation.mutateAsync({ id: editingBanner.id, values });
       return;
     }
 
@@ -157,11 +149,18 @@ export function BadgePage() {
   return (
     <div className="page-stack">
       <PageHeader
-        title="Huy hiệu"
-        subtitle="Quản lý các huy hiệu được cấp theo thành tích tournament."
+        title="Banner"
+        subtitle="Quản lý nhiều ảnh banner hiển thị trên website hoặc các khu vực truyền thông."
         extra={
-          <AppButton type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-            Thêm huy hiệu
+          <AppButton
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setEditingBanner(null);
+              setModalOpen(true);
+            }}
+          >
+            Thêm banner
           </AppButton>
         }
       />
@@ -169,7 +168,7 @@ export function BadgePage() {
       <Card>
         <Space wrap size={12} className="toolbar">
           <AppTextField
-            placeholder="Tìm theo tên, mã hoặc mô tả"
+            placeholder="Tìm theo tiêu đề hoặc link"
             allowClear
             size="large"
             value={keywordInput}
@@ -181,7 +180,7 @@ export function BadgePage() {
           </AppButton>
         </Space>
 
-        <AppTable<BadgeRow>
+        <AppTable<BannerRow>
           rowKey="id"
           loading={isLoading}
           columns={columns}
@@ -200,13 +199,13 @@ export function BadgePage() {
         />
       </Card>
 
-      <BadgeFormModal
+      <BannerFormModal
         open={modalOpen}
-        initialValues={editingBadge}
+        initialValues={editingBanner}
         submitting={createMutation.isPending || updateMutation.isPending}
         onCancel={() => {
           setModalOpen(false);
-          setEditingBadge(null);
+          setEditingBanner(null);
         }}
         onSubmit={handleSubmit}
       />
