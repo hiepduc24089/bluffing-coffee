@@ -16,6 +16,8 @@ class TournamentResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'tournamentType' => $this->tournament_type?->value ?? 'normal',
+            'gameFormatId' => $this->game_format_id,
+            'gameFormat' => $this->whenLoaded('gameFormat', fn () => GameFormatResource::make($this->gameFormat)),
             'buyIn' => $this->buy_in,
             'ticketPriceWithDrink' => $this->ticket_price_with_drink,
             'ticketPriceWithoutDrink' => $this->ticket_price_without_drink,

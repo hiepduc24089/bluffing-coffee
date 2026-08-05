@@ -4,6 +4,7 @@ import { BadgePage } from '@/admin/modules/badge/pages/BadgePage';
 import { RequireAdminAuth } from '@/admin/modules/auth/components/require-admin-auth';
 import { AdminLoginPage } from '@/admin/modules/auth/pages/AdminLoginPage';
 import { DashboardPage } from '@/admin/modules/dashboard/pages/DashboardPage';
+import { GameFormatPage } from '@/admin/modules/game-format/pages/GameFormatPage';
 import { LeaderboardPage } from '@/admin/modules/leaderboard/pages/LeaderboardPage';
 import { LiveTablePage } from '@/admin/modules/live-table/pages/LiveTablePage';
 import { RewardProfilePage } from '@/admin/modules/tournament/pages/RewardProfilePage';
@@ -33,6 +34,10 @@ export const adminRoutes: RouteObject[] = [
           {
             path: 'dashboard',
             element: <DashboardPage />,
+          },
+          {
+            path: 'game-formats',
+            element: <GameFormatPage />,
           },
           {
             path: 'tournaments',

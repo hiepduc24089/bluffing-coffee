@@ -7,6 +7,11 @@ import AppInputNumber from '@/shared/components/atoms/AppInputNumber';
 import AppModal from '@/shared/components/atoms/AppModal';
 import AppSelect from '@/shared/components/atoms/AppSelect';
 import AppTextField from '@/shared/components/atoms/AppTextField';
+import type { GameFormatRow } from '@/admin/modules/game-format/types/game-format.type';
+import {
+  formatChips,
+  formatDuration,
+} from '@/admin/modules/game-format/utils/game-format.util';
 import type {
   RewardProfile,
   TournamentFormValues,
@@ -22,6 +27,7 @@ type TournamentFormModalProps = {
   initialValues?: TournamentRow;
   submitting?: boolean;
   rewardProfiles?: RewardProfile[];
+  gameFormats?: GameFormatRow[];
   onCancel: () => void;
   onSubmit: (values: TournamentFormValues) => Promise<void> | void;
 };
@@ -31,12 +37,17 @@ export function TournamentFormModal({
   initialValues,
   submitting,
   rewardProfiles = [],
+  gameFormats = [],
   onCancel,
   onSubmit,
 }: TournamentFormModalProps) {
   const [form] = Form.useForm();
   const watchedValues = Form.useWatch([], form);
+  const selectedGameFormatId = Form.useWatch('gameFormatId', form);
   const [initialSnapshot, setInitialSnapshot] = useState('');
+  const selectedGameFormat = gameFormats.find(
+    (gameFormat) => gameFormat.id === selectedGameFormatId,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -54,6 +65,7 @@ export function TournamentFormModal({
 
     const nextValues = {
       status: 'draft',
+      gameFormatId: null,
       buyIn: 0,
       ticketPriceWithDrink: 0,
       ticketPriceWithoutDrink: 0,
@@ -92,6 +104,7 @@ export function TournamentFormModal({
               }
             : {
                 status: 'draft',
+                gameFormatId: null,
                 buyIn: 0,
                 ticketPriceWithDrink: 0,
                 ticketPriceWithoutDrink: 0,
@@ -101,6 +114,7 @@ export function TournamentFormModal({
         onFinish={(values) =>
           onSubmit({
             name: values.name,
+            gameFormatId: values.gameFormatId ?? null,
             buyIn: values.buyIn,
             ticketPriceWithDrink: values.ticketPriceWithDrink,
             ticketPriceWithoutDrink: values.ticketPriceWithoutDrink,
@@ -113,6 +127,23 @@ export function TournamentFormModal({
       >
         <Form.Item name="name" label="Tên giải đấu" rules={[{ required: true, message: 'Vui lòng nhập tên giải đấu' }]}>
           <AppTextField placeholder="Giải tối thứ sáu" />
+        </Form.Item>
+
+        <Form.Item
+          name="gameFormatId"
+          label="Chế độ chơi"
+          extra={selectedGameFormat ? describeGameFormat(selectedGameFormat) : undefined}
+        >
+          <AppSelect
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Chọn chế độ chơi áp dụng"
+            options={gameFormats.map((gameFormat) => ({
+              label: `${gameFormat.name} (${gameFormat.code})`,
+              value: gameFormat.id,
+            }))}
+          />
         </Form.Item>
 
         <Form.Item name="rewardProfileId" label="Mẫu cấu hình áp dụng">
@@ -200,9 +231,18 @@ export function TournamentFormModal({
   );
 }
 
+function describeGameFormat(gameFormat: GameFormatRow) {
+  const lateReg = gameFormat.lateRegUntilLevel
+    ? `late reg đến hết level ${gameFormat.lateRegUntilLevel}`
+    : 'late reg không giới hạn';
+
+  return `Stack ${formatChips(gameFormat.startingStack)} · ${gameFormat.levelCount} level · ${lateReg} · ước tính ${formatDuration(gameFormat.totalDurationMinutes)}`;
+}
+
 function normalizeTournamentFormValues(values: Record<string, unknown>) {
   return {
     name: values.name ?? '',
+    gameFormatId: values.gameFormatId ?? null,
     buyIn: Number(values.buyIn ?? 0),
     ticketPriceWithDrink: Number(values.ticketPriceWithDrink ?? 0),
     ticketPriceWithoutDrink: Number(values.ticketPriceWithoutDrink ?? 0),

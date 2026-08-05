@@ -25,6 +25,7 @@ class Tournament extends Model
     protected $fillable = [
         'name',
         'tournament_type',
+        'game_format_id',
         'buy_in',
         'ticket_price_with_drink',
         'ticket_price_without_drink',
@@ -42,6 +43,7 @@ class Tournament extends Model
         return [
             'buy_in' => 'integer',
             'tournament_type' => TournamentTypeEnum::class,
+            'game_format_id' => 'integer',
             'ticket_price_with_drink' => 'integer',
             'ticket_price_without_drink' => 'integer',
             'capacity' => 'integer',
@@ -54,6 +56,11 @@ class Tournament extends Model
     public function rewardProfile(): BelongsTo
     {
         return $this->belongsTo(RewardProfile::class);
+    }
+
+    public function gameFormat(): BelongsTo
+    {
+        return $this->belongsTo(GameFormat::class);
     }
 
     public function registrations(): HasMany

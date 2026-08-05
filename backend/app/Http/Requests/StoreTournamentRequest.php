@@ -22,6 +22,7 @@ class StoreTournamentRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'tournamentType' => ['sometimes', 'string', Rule::in(TournamentTypeEnum::values())],
+            'gameFormatId' => ['nullable', 'integer', 'exists:game_formats,id'],
             'buyIn' => ['sometimes', 'integer', 'min:0'],
             'ticketPriceWithDrink' => ['required', 'integer', 'min:0'],
             'ticketPriceWithoutDrink' => ['required', 'integer', 'min:0'],

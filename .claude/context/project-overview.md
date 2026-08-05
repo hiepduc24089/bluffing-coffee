@@ -22,6 +22,7 @@ Architecture:
 - `frontend/` contains the React application with separate admin and main areas
 
 Core modules:
+- Game Format (chế độ chơi)
 - Tournament
 - Admin auth
 - Main/member auth
@@ -56,3 +57,5 @@ Current implementation notes:
 - Main/member routes live under `/main` in the API and `/login` in the frontend.
 - Tournament API supports public listing/detail through `/api/main/tournaments`.
 - Admin tournament CRUD uses Sanctum tokens with the `admin` ability.
+- Game formats own the blind structure (`game_formats` + `game_format_levels`) seeded from `docs/Quán Poker.xlsx`.
+- `tournaments.game_format_id` is optional and coexists with the legacy `tournaments.tournament_type` column; selecting a format syncs that coarse type so statistics and badges stay correct.

@@ -35,7 +35,7 @@ class TournamentRepository
     public function publicShowQuery(): Builder
     {
         return Tournament::query()
-            ->with('rewardProfile')
+            ->with(['rewardProfile', 'gameFormat.levels'])
             ->whereIn('status', [
                 TournamentStatusEnum::Published->value,
                 TournamentStatusEnum::Running->value,
@@ -65,7 +65,7 @@ class TournamentRepository
     private function baseListQuery(?string $search, ?string $status): Builder
     {
         return Tournament::query()
-            ->with('rewardProfile')
+            ->with(['rewardProfile', 'gameFormat.levels'])
             ->when($search, function ($query, string $search) {
                 $query->where('name', 'like', '%'.$search.'%');
             })

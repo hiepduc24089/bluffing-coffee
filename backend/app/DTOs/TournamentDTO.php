@@ -11,6 +11,7 @@ readonly class TournamentDTO
     public function __construct(
         public string $name,
         public TournamentTypeEnum $tournamentType,
+        public ?int $gameFormatId,
         public int $buyIn,
         public int $ticketPriceWithDrink,
         public int $ticketPriceWithoutDrink,
@@ -22,13 +23,14 @@ readonly class TournamentDTO
     }
 
     /**
-     * @param array{name: string, tournamentType?: string, buyIn?: int, capacity: int, status: string, rewardProfileId?: int|null, startAt: string} $payload
+     * @param array{name: string, tournamentType?: string, gameFormatId?: int|null, buyIn?: int, capacity: int, status: string, rewardProfileId?: int|null, startAt: string} $payload
      */
     public static function fromArray(array $payload): self
     {
         return new self(
             name: $payload['name'],
             tournamentType: TournamentTypeEnum::from($payload['tournamentType'] ?? TournamentTypeEnum::Normal->value),
+            gameFormatId: isset($payload['gameFormatId']) ? (int) $payload['gameFormatId'] : null,
             buyIn: (int) ($payload['buyIn'] ?? 0),
             ticketPriceWithDrink: (int) ($payload['ticketPriceWithDrink'] ?? 0),
             ticketPriceWithoutDrink: (int) ($payload['ticketPriceWithoutDrink'] ?? 0),
@@ -47,6 +49,7 @@ readonly class TournamentDTO
         return [
             'name' => $this->name,
             'tournament_type' => $this->tournamentType->value,
+            'game_format_id' => $this->gameFormatId,
             'buy_in' => $this->buyIn,
             'ticket_price_with_drink' => $this->ticketPriceWithDrink,
             'ticket_price_without_drink' => $this->ticketPriceWithoutDrink,

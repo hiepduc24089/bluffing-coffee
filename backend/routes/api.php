@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\BadgeController;
 use App\Http\Controllers\Api\Admin\BannerController;
 use App\Http\Controllers\Api\Admin\BpTransactionController;
 use App\Http\Controllers\Api\Admin\ContentPageController;
+use App\Http\Controllers\Api\Admin\GameFormatController;
 use App\Http\Controllers\Api\Admin\LeaderboardController;
 use App\Http\Controllers\Api\Admin\LiveTableController;
 use App\Http\Controllers\Api\Admin\RewardProfileController;
@@ -39,6 +40,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 ->name('update');
             Route::delete('{reward_profile}', [RewardProfileController::class, 'destroy'])->name('destroy');
         });
+
+        Route::post('game-formats/{game_format}/duplicate', [GameFormatController::class, 'duplicate'])
+            ->name('game-formats.duplicate');
+        Route::apiResource('game-formats', GameFormatController::class);
 
         Route::prefix('tournaments')->name('tournaments.')->group(function () {
             Route::get('/', [TournamentController::class, 'index'])->name('index');

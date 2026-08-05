@@ -1,8 +1,12 @@
+import type { GameFormatRow } from '@/admin/modules/game-format/types/game-format.type';
+
 export type TournamentStatus = 'draft' | 'published' | 'running' | 'completed';
 
 export type TournamentRow = {
   id: string;
   name: string;
+  gameFormatId?: number | null;
+  gameFormat?: GameFormatRow | null;
   buyIn: number;
   ticketPriceWithDrink: number;
   ticketPriceWithoutDrink: number;
@@ -22,6 +26,7 @@ export type TournamentFilter = {
 
 export type TournamentFormValues = {
   name: string;
+  gameFormatId?: number | null;
   buyIn: number;
   ticketPriceWithDrink: number;
   ticketPriceWithoutDrink: number;

@@ -8,6 +8,10 @@ import AppSelect from '@/shared/components/atoms/AppSelect';
 import AppTable from '@/shared/components/atoms/AppTable';
 import AppTextField from '@/shared/components/atoms/AppTextField';
 import { PageHeader } from '@/shared/components/layout/page-header';
+import {
+  gameFormatQueryKeys,
+  getActiveGameFormats,
+} from '@/admin/modules/game-format/api/game-format.api';
 import { TournamentFormModal } from '@/admin/modules/tournament/components/tournament-form-modal';
 import {
   createTournament,
@@ -59,6 +63,10 @@ export function TournamentPage() {
     queryKey: tournamentQueryKeys.rewardProfiles,
     queryFn: getRewardProfiles,
   });
+  const { data: gameFormats = [] } = useQuery({
+    queryKey: gameFormatQueryKeys.active,
+    queryFn: getActiveGameFormats,
+  });
 
   const createMutation = useMutation({
     mutationFn: createTournament,
@@ -92,6 +100,12 @@ export function TournamentPage() {
       title: 'Tên giải đấu',
       dataIndex: 'name',
       key: 'name',
+    },
+    {
+      title: 'Chế độ chơi',
+      dataIndex: 'gameFormat',
+      key: 'gameFormat',
+      render: (_, record) => record.gameFormat?.name ?? '-',
     },
     {
       title: 'Mẫu cấu hình',
@@ -264,6 +278,7 @@ export function TournamentPage() {
         initialValues={editingTournament ?? undefined}
         submitting={createMutation.isPending || updateMutation.isPending}
         rewardProfiles={rewardProfiles}
+        gameFormats={gameFormats}
         onCancel={closeModal}
         onSubmit={handleSubmit}
       />

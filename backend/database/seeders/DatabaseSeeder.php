@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             MemberSeeder::class,
             RewardProfileSeeder::class,
+            GameFormatSeeder::class,
             BadgeSeeder::class,
         ]);
     }

@@ -1,4 +1,5 @@
 import {
+  ControlOutlined,
   DashboardOutlined,
   GiftOutlined,
   TagsOutlined,
@@ -27,6 +28,11 @@ const menuItems = [
     key: '/admin/users',
     icon: <TeamOutlined />,
     label: <Link to="/admin/users">Thành viên</Link>,
+  },
+  {
+    key: '/admin/game-formats',
+    icon: <ControlOutlined />,
+    label: <Link to="/admin/game-formats">Chế độ chơi</Link>,
   },
   {
     key: '/admin/reward-profiles',
@@ -102,6 +108,8 @@ export function AdminLayout() {
     ? ['/admin/tournaments']
     : location.pathname.startsWith('/admin/tournament-registrations')
       ? ['/admin/tournament-registrations']
+    : location.pathname.startsWith('/admin/game-formats')
+      ? ['/admin/game-formats']
     : location.pathname.startsWith('/admin/reward-profiles')
       ? ['/admin/reward-profiles']
     : location.pathname.startsWith('/admin/users')
