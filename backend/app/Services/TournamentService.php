@@ -20,6 +20,16 @@ class TournamentService
         return $this->tournamentRepository->paginate($search, $status, $perPage);
     }
 
+    public function paginatePublic(?string $search, ?string $status, int $perPage): LengthAwarePaginator
+    {
+        return $this->tournamentRepository->paginatePublic($search, $status, $perPage);
+    }
+
+    public function findPublic(string $id): Tournament
+    {
+        return $this->tournamentRepository->publicShowQuery()->findOrFail($id);
+    }
+
     public function create(TournamentDTO $dto): Tournament
     {
         return DB::transaction(function () use ($dto) {

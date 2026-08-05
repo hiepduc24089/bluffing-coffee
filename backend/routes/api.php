@@ -20,7 +20,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::prefix('auth')->name('auth.')->group(function () {
-        Route::post('login', [AdminAuthController::class, 'login'])->name('login');
+        Route::post('login', [AdminAuthController::class, 'login'])
+            ->middleware('throttle:login')
+            ->name('login');
     });
 
     Route::middleware(['auth:sanctum', 'abilities:admin'])->group(function () {
@@ -111,7 +113,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 Route::prefix('main')->name('main.')->group(function () {
     Route::prefix('auth')->name('auth.')->group(function () {
-        Route::post('login', [MainAuthController::class, 'login'])->name('login');
+        Route::post('login', [MainAuthController::class, 'login'])
+            ->middleware('throttle:login')
+            ->name('login');
     });
 
     Route::prefix('tournaments')->name('tournaments.')->group(function () {

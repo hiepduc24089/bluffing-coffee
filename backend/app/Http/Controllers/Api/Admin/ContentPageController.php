@@ -8,6 +8,7 @@ use App\Http\Requests\StoreContentPageRequest;
 use App\Http\Requests\UpdateContentPageRequest;
 use App\Http\Resources\ContentPageResource;
 use App\Models\ContentPage;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpFoundation\Response;
@@ -42,7 +43,7 @@ class ContentPageController extends Controller
             'type' => $validated['type'],
             'title' => $validated['title'],
             'cover_image' => $validated['coverImage'] ?? null,
-            'content' => $validated['content'] ?? null,
+            'content' => HtmlSanitizer::clean($validated['content'] ?? null),
             'is_published' => $validated['isPublished'] ?? true,
         ]);
 
@@ -57,7 +58,7 @@ class ContentPageController extends Controller
             'type' => $validated['type'],
             'title' => $validated['title'],
             'cover_image' => $validated['coverImage'] ?? null,
-            'content' => $validated['content'] ?? null,
+            'content' => HtmlSanitizer::clean($validated['content'] ?? null),
             'is_published' => $validated['isPublished'] ?? true,
         ]);
 

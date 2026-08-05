@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Badge;
 
+use App\Rules\PublicImagePath;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,7 +26,7 @@ class UpdateBadgeRequest extends FormRequest
                 'max:100',
                 Rule::unique('badges', 'code')->ignore($this->route('badge')),
             ],
-            'icon' => ['nullable', 'string', 'max:255'],
+            'icon' => ['nullable', 'string', 'max:255', new PublicImagePath()],
             'description' => ['nullable', 'string'],
         ];
     }

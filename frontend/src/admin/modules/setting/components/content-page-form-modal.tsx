@@ -169,7 +169,7 @@ export function ContentPageFormModal({
 
 function toStorageUrl(path?: string | null) {
   if (!path) return null;
-  if (path.startsWith('http') || path.startsWith('/') || path.startsWith('data:')) return path;
+  if (path.startsWith('https://') || path.startsWith('/storage/')) return path;
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
   return `${apiUrl.replace(/\/api\/?$/, '')}/storage/${path}`;

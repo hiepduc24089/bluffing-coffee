@@ -24,8 +24,9 @@ class TournamentController extends Controller
     public function index(TournamentIndexRequest $request): AnonymousResourceCollection
     {
         $validated = $request->validated();
+        $paginate = $request->routeIs('main.*') ? 'paginatePublic' : 'paginate';
 
-        $tournaments = $this->tournamentService->paginate(
+        $tournaments = $this->tournamentService->{$paginate}(
             search: $validated['search'] ?? null,
             status: $validated['status'] ?? null,
             perPage: (int) ($validated['per_page'] ?? 10),
@@ -45,6 +46,10 @@ class TournamentController extends Controller
 
     public function show(Tournament $tournament): TournamentResource
     {
+        if (request()->routeIs('main.*')) {
+            $tournament = $this->tournamentService->findPublic($tournament->id);
+        }
+
         return TournamentResource::make($tournament);
     }
 

@@ -33,6 +33,26 @@ class TournamentApiTest extends TestCase
             ->assertJsonPath('meta.total', 1);
     }
 
+    public function test_public_tournament_routes_hide_drafts(): void
+    {
+        $published = Tournament::factory()->create([
+            'name' => 'Published Event',
+            'status' => TournamentStatusEnum::Published,
+        ]);
+        $draft = Tournament::factory()->create([
+            'name' => 'Draft Event',
+            'status' => TournamentStatusEnum::Draft,
+        ]);
+
+        $this->getJson('/api/main/tournaments')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $published->id);
+
+        $this->getJson('/api/main/tournaments/'.$published->id)->assertOk();
+        $this->getJson('/api/main/tournaments/'.$draft->id)->assertNotFound();
+    }
+
     public function test_it_creates_a_tournament(): void
     {
         $this->actingAsAdmin();

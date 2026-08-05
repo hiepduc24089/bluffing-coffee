@@ -32,7 +32,7 @@ class BadgeResource extends JsonResource
             return null;
         }
 
-        if (str_starts_with($path, 'http') || str_starts_with($path, '/') || str_starts_with($path, 'data:')) {
+        if (str_starts_with($path, 'https://') || str_starts_with($path, '/storage/')) {
             return $path;
         }
 

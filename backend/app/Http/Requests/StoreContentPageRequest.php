@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\PublicImagePath;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +21,7 @@ class StoreContentPageRequest extends FormRequest
         return [
             'type' => ['required', 'string', Rule::in(['post', 'event'])],
             'title' => ['required', 'string', 'max:255'],
-            'coverImage' => ['nullable', 'string', 'max:255'],
+            'coverImage' => ['nullable', 'string', 'max:255', new PublicImagePath()],
             'content' => ['nullable', 'string'],
             'isPublished' => ['nullable', 'boolean'],
         ];

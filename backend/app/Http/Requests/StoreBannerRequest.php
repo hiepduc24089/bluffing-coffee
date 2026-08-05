@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\PublicImagePath;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreBannerRequest extends FormRequest
@@ -18,8 +19,8 @@ class StoreBannerRequest extends FormRequest
     {
         return [
             'title' => ['nullable', 'string', 'max:255'],
-            'image' => ['required', 'string', 'max:255'],
-            'linkUrl' => ['nullable', 'string', 'max:255'],
+            'image' => ['required', 'string', 'max:255', new PublicImagePath()],
+            'linkUrl' => ['nullable', 'url:http,https', 'max:255'],
             'sortOrder' => ['nullable', 'integer', 'min:0'],
             'isActive' => ['nullable', 'boolean'],
         ];

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Badge;
 
 use App\Models\Badge;
+use App\Rules\PublicImagePath;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,7 +22,7 @@ class StoreBadgeRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:100', Rule::in(array_keys(Badge::SYSTEM_BADGES)), 'unique:badges,code'],
-            'icon' => ['nullable', 'string', 'max:255'],
+            'icon' => ['nullable', 'string', 'max:255', new PublicImagePath()],
             'description' => ['nullable', 'string'],
         ];
     }
