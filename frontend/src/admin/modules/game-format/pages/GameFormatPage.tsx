@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  CopyOutlined,
+  ClockCircleOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
@@ -17,7 +17,6 @@ import { PageHeader } from '@/shared/components/layout/page-header';
 import {
   createGameFormat,
   deleteGameFormat,
-  duplicateGameFormat,
   gameFormatQueryKeys,
   updateGameFormat,
 } from '@/admin/modules/game-format/api/game-format.api';
@@ -78,14 +77,6 @@ export function GameFormatPage() {
     onSuccess: async () => {
       toast.success('Đã cập nhật chế độ chơi.');
       closeModal();
-      await invalidateGameFormats();
-    },
-  });
-
-  const duplicateMutation = useMutation({
-    mutationFn: duplicateGameFormat,
-    onSuccess: async () => {
-      toast.success('Đã nhân bản chế độ chơi. Bản sao đang ở trạng thái tạm tắt.');
       await invalidateGameFormats();
     },
   });
@@ -174,6 +165,15 @@ export function GameFormatPage() {
       width: 150,
       render: (_, record) => (
         <Space size={8}>
+          <Tooltip title="Mở màn hình đồng hồ">
+            <AppButton
+              icon={<ClockCircleOutlined />}
+              href={`/clock/${record.code}`}
+              target="_blank"
+              rel="noreferrer"
+              disabled={!record.isActive || !record.levels.length}
+            />
+          </Tooltip>
           <Tooltip title="Chỉnh sửa">
             <AppButton
               icon={<EditOutlined />}
@@ -181,13 +181,6 @@ export function GameFormatPage() {
                 setEditingGameFormat(record);
                 setModalOpen(true);
               }}
-            />
-          </Tooltip>
-          <Tooltip title="Nhân bản">
-            <AppButton
-              icon={<CopyOutlined />}
-              loading={duplicateMutation.isPending}
-              onClick={() => duplicateMutation.mutate(record.id)}
             />
           </Tooltip>
           <Popconfirm

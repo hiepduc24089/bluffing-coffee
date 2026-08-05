@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Admin\TournamentBpTransactionController;
 use App\Http\Controllers\Api\Admin\TournamentRegistrationController;
 use App\Http\Controllers\Api\Admin\TournamentRewardController;
 use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\Main\GameFormatController as MainGameFormatController;
 use App\Http\Controllers\Api\Main\MainAuthController;
 use App\Http\Controllers\Api\Main\TournamentCheckInController;
 use App\Http\Controllers\Api\TournamentController;
@@ -126,6 +127,11 @@ Route::prefix('main')->name('main.')->group(function () {
     Route::prefix('tournaments')->name('tournaments.')->group(function () {
         Route::get('/', [TournamentController::class, 'index'])->name('index');
         Route::get('{tournament}', [TournamentController::class, 'show'])->name('show');
+    });
+
+    Route::prefix('game-formats')->name('game-formats.')->group(function () {
+        Route::get('/', [MainGameFormatController::class, 'index'])->name('index');
+        Route::get('{code}', [MainGameFormatController::class, 'show'])->name('show');
     });
 
     Route::middleware(['auth:sanctum', 'role:member'])->group(function () {
