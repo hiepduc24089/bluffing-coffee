@@ -5,7 +5,10 @@
 #
 # `--env-file` cần cho phần nội suy ${...} bên dưới, còn `env_file:` là để
 # đẩy biến vào trong container. Cả hai đều trỏ tới .env.production.
-name: bluffing-coffee
+#
+# Project name khác với compose dev (`bluffing-coffee`) để volume và container
+# của hai môi trường không đè lên nhau khi chạy chung một máy.
+name: bluffing-coffee-prod
 
 services:
   app:
@@ -13,7 +16,7 @@ services:
       context: .
       dockerfile: Dockerfile.prod
     image: bluffing-coffee-app:latest
-    container_name: bluffing_coffee_app
+    container_name: bluffing_coffee_prod_app
     restart: unless-stopped
     env_file:
       - .env.production
@@ -33,11 +36,11 @@ services:
       redis:
         condition: service_started
     networks:
-      - bluffing_coffee
+      - bluffing_coffee_prod
 
   mysql:
     image: mysql:8.4
-    container_name: bluffing_coffee_mysql
+    container_name: bluffing_coffee_prod_mysql
     restart: unless-stopped
     # Không mở port ra host: DB chỉ truy cập được từ trong network của compose.
     environment:
@@ -54,17 +57,17 @@ services:
       retries: 20
       start_period: 30s
     networks:
-      - bluffing_coffee
+      - bluffing_coffee_prod
 
   redis:
     image: redis:7.4-alpine
-    container_name: bluffing_coffee_redis
+    container_name: bluffing_coffee_prod_redis
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - redis_data:/data
     networks:
-      - bluffing_coffee
+      - bluffing_coffee_prod
 
 volumes:
   app_storage:
@@ -74,5 +77,5 @@ volumes:
   redis_data:
 
 networks:
-  bluffing_coffee:
+  bluffing_coffee_prod:
     driver: bridge

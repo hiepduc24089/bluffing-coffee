@@ -220,20 +220,40 @@ $COMPOSE run --rm app php artisan migrate --force
 $COMPOSE up -d
 ```
 
-Seed dữ liệu khởi tạo (game format, badge, reward profile, tài khoản admin):
+### Seed dữ liệu khởi tạo
+
+> ⚠️ **Không chạy `php artisan db:seed --force`** trên image production. Lệnh đó
+> sẽ lỗi `Call to undefined function Database\Factories\fake()`, vì image build
+> bằng `composer install --no-dev` nên không có `fakerphp/faker`, trong khi
+> `AdminSeeder` và `MemberSeeder` dùng model factory. Ngoài ra `MemberSeeder`
+> chỉ sinh dữ liệu giả, không nên chạy trên production.
+
+Seed ba seeder dữ liệu tham chiếu (không dùng factory nên chạy được bình thường):
 
 ```bash
-$COMPOSE exec -T app php artisan db:seed --force
+$COMPOSE exec -T app php artisan db:seed --class=RewardProfileSeeder --force
+$COMPOSE exec -T app php artisan db:seed --class=GameFormatSeeder --force
+$COMPOSE exec -T app php artisan db:seed --class=BadgeSeeder --force
 ```
 
-> ⚠️ `AdminSeeder` tạo tài khoản `admin@bluffing.coffee` với mật khẩu mặc định
-> là `password`. **Đổi ngay sau khi seed trên production**:
->
-> ```bash
-> $COMPOSE exec -T app php artisan tinker --execute="
->   \App\Models\Admin::where('email','admin@bluffing.coffee')
->     ->update(['password' => bcrypt('<mật-khẩu-mạnh>')]);"
-> ```
+Tạo tài khoản admin trực tiếp, đặt mật khẩu mạnh ngay từ đầu (model `Admin` có
+cast `password => hashed` nên truyền chuỗi thô, không cần `bcrypt()`):
+
+```bash
+$COMPOSE exec -T app php artisan tinker --execute='
+  App\Models\Admin::updateOrCreate(
+    ["email" => "admin@bluffing.coffee"],
+    ["name" => "Admin", "password" => "<mật-khẩu-mạnh>"]
+  );'
+```
+
+Kiểm tra đăng nhập được:
+
+```bash
+curl -s -X POST https://bluffing-api.duckdns.org/api/admin/auth/login \
+  -H "Content-Type: application/json" -H "Accept: application/json" \
+  -d '{"email":"admin@bluffing.coffee","password":"<mật-khẩu-mạnh>"}'
+```
 
 Kiểm tra:
 
