@@ -4,6 +4,7 @@ import { Result, Spin } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import AppButton from '@/shared/components/atoms/AppButton';
 import { clockQueryKeys, getClockGameFormat } from '@/main/modules/clock/api/clock.api';
+import { ClockBrandTheme } from '@/main/modules/clock/components/clock-brand-theme';
 import { ClockControls } from '@/main/modules/clock/components/clock-controls';
 import { ClockDisplay } from '@/main/modules/clock/components/clock-display';
 import { useControlsVisibility } from '@/main/modules/clock/hooks/use-controls-visibility';
@@ -46,61 +47,72 @@ export function ClockPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <Spin size="large" />
-      </div>
+      <ClockBrandTheme>
+        <div className="flex min-h-screen items-center justify-center bg-ink">
+          <Spin size="large" />
+        </div>
+      </ClockBrandTheme>
     );
   }
 
   if (isError || !gameFormat || !levels.length) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-        <Result
-          status="404"
-          title={<span className="text-white">Không tìm thấy chế độ chơi</span>}
-          subTitle={
-            <span className="text-slate-400">
-              Mã "{code}" không tồn tại, đang tắt, hoặc chưa có cấu trúc blind.
-            </span>
-          }
-          extra={
-            <Link to="/clock">
-              <AppButton type="primary">Chọn chế độ chơi khác</AppButton>
-            </Link>
-          }
-        />
-      </div>
+      <ClockBrandTheme>
+        <div className="flex min-h-screen items-center justify-center bg-ink px-4">
+          <Result
+            status="404"
+            title={<span className="text-white">Không tìm thấy chế độ chơi</span>}
+            subTitle={
+              <span className="text-neutral-400">
+                Mã "{code}" không tồn tại, đang tắt, hoặc chưa có cấu trúc blind.
+              </span>
+            }
+            extra={
+              <Link to="/clock">
+                <AppButton
+                  type="primary"
+                  className="!bg-brand !font-semibold !text-ink hover:!bg-brand-strong hover:!text-ink"
+                >
+                  Chọn chế độ chơi khác
+                </AppButton>
+              </Link>
+            }
+          />
+        </div>
+      </ClockBrandTheme>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col gap-[2vh] bg-slate-950 px-[4vw] py-[3vh] text-white">
-      <ClockDisplay
-        gameFormat={gameFormat}
-        currentLevel={clock.currentLevel}
-        nextLevel={clock.nextLevel}
-        levelIndex={clock.levelIndex}
-        remainingMs={clock.remainingMs}
-        progress={clock.progress}
-        isRunning={clock.isRunning}
-      />
-
-      <div
-        className={`transition-opacity duration-500 ${
-          areControlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
-      >
-        <ClockControls
+    <ClockBrandTheme>
+      <div className="flex min-h-screen flex-col gap-[2vh] bg-ink px-[4vw] py-[3vh] text-white">
+        <ClockDisplay
+          gameFormat={gameFormat}
+          currentLevel={clock.currentLevel}
+          nextLevel={clock.nextLevel}
+          levelIndex={clock.levelIndex}
+          remainingMs={clock.remainingMs}
+          progress={clock.progress}
           isRunning={clock.isRunning}
-          isFullscreen={isFullscreen}
-          onToggle={clock.toggle}
-          onPrevious={clock.goPrevious}
-          onNext={clock.goNext}
-          onAddMinutes={clock.addMinutes}
-          onReset={clock.reset}
-          onToggleFullscreen={() => void toggleFullscreen()}
         />
+
+        <div
+          className={`transition-opacity duration-500 ${
+            areControlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+          }`}
+        >
+          <ClockControls
+            isRunning={clock.isRunning}
+            isFullscreen={isFullscreen}
+            onToggle={clock.toggle}
+            onPrevious={clock.goPrevious}
+            onNext={clock.goNext}
+            onAddMinutes={clock.addMinutes}
+            onReset={clock.reset}
+            onToggleFullscreen={() => void toggleFullscreen()}
+          />
+        </div>
       </div>
-    </div>
+    </ClockBrandTheme>
   );
 }

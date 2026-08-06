@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons';
 import { Layout, Menu, Typography } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import brandIcon from '@/assets/images/logo/LOGO_BLUFFING_ICON_Y_512.png';
 
 const { Header, Sider, Content } = Layout;
 
@@ -133,10 +134,13 @@ export function AdminLayout() {
     <Layout className="app-shell">
       <Sider width={240} theme="light" className="app-sider">
         <div className="app-brand">
-          <Typography.Title level={4} className="app-brand__title">
-            Bluffing Coffee
-          </Typography.Title>
-          <Typography.Text type="secondary">Trang quản trị</Typography.Text>
+          <img src={brandIcon} alt="" className="app-brand__logo" />
+          <div>
+            <Typography.Title level={4} className="app-brand__title">
+              Bluffing Coffee
+            </Typography.Title>
+            <Typography.Text type="secondary">Trang quản trị</Typography.Text>
+          </div>
         </div>
         <Menu
           mode="inline"

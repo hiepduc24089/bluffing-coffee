@@ -13,7 +13,7 @@ import { Popconfirm } from 'antd';
 import AppButton from '@/shared/components/atoms/AppButton';
 
 const GHOST_BUTTON =
-  '!h-12 !min-w-12 !rounded-xl !border-white/20 !bg-white/10 !text-white hover:!border-white/40 hover:!bg-white/20 hover:!text-white';
+  '!h-12 !min-w-12 !rounded-xl !border-brand/30 !bg-brand/10 !text-brand hover:!border-brand/70 hover:!bg-brand/20 hover:!text-brand';
 
 type ClockControlsProps = {
   isRunning: boolean;
@@ -46,7 +46,7 @@ export function ClockControls({
       />
 
       <AppButton
-        className="!h-14 !rounded-xl !border-none !bg-emerald-500 !px-8 !text-base !font-semibold !text-white hover:!bg-emerald-400"
+        className="!h-14 !rounded-xl !border-none !bg-brand !px-8 !text-base !font-bold !text-ink hover:!bg-brand-strong hover:!text-ink"
         icon={isRunning ? <PauseOutlined /> : <PlayCircleFilled />}
         onClick={onToggle}
       >
