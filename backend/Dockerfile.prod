@@ -1,0 +1,69 @@
+# Image production cho backend.
+#
+# Khác với `Dockerfile` (dùng cho local dev, source code được mount qua volume),
+# image này bake luôn source + vendor vào bên trong nên mỗi lần deploy là một
+# image bất biến, rollback được bằng cách checkout commit cũ rồi build lại.
+#
+# Web server dùng FrankenPHP (Caddy + PHP trong một binary) thay cho cặp
+# nginx + php-fpm: chỉ còn một container, và Caddy tự xin/gia hạn chứng chỉ
+# Let's Encrypt nên API có HTTPS mà không cần cấu hình thêm.
+FROM dunglas/frankenphp:1-php8.3-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache \
+        $PHPIZE_DEPS \
+        bash \
+        curl \
+        icu-dev \
+        libzip-dev \
+        linux-headers \
+        mysql-client \
+        oniguruma-dev \
+    && docker-php-ext-install \
+        bcmath \
+        intl \
+        mbstring \
+        opcache \
+        pcntl \
+        pdo_mysql \
+        zip \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del $PHPIZE_DEPS
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Cài vendor trước khi copy source để layer này được cache lại khi chỉ đổi code.
+COPY composer.json composer.lock ./
+RUN composer install \
+        --no-dev \
+        --no-scripts \
+        --no-autoloader \
+        --prefer-dist \
+        --no-interaction \
+        --no-progress
+
+COPY . .
+
+RUN composer dump-autoload --no-dev --optimize --classmap-authoritative \
+    && php artisan package:discover --ansi
+
+COPY docker/php/php.prod.ini /usr/local/etc/php/conf.d/bluffing-coffee.ini
+COPY docker/frankenphp/Caddyfile /etc/caddy/Caddyfile
+COPY docker/php/entrypoint.prod.sh /usr/local/bin/bluffing-coffee-entrypoint
+
+RUN chmod +x /usr/local/bin/bluffing-coffee-entrypoint \
+    && mkdir -p \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/app/public \
+        storage/logs \
+        bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+EXPOSE 80 443 443/udp
+
+ENTRYPOINT ["bluffing-coffee-entrypoint"]
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]

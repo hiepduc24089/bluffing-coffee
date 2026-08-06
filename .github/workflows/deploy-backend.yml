@@ -1,0 +1,90 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  # Cho phép bấm deploy tay từ tab Actions (ví dụ để rollback hoặc deploy lại).
+  workflow_dispatch:
+
+# Không chạy hai lần deploy song song, và không hủy lần đang chạy giữa chừng.
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy lên Oracle Cloud VM
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy qua SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script_stop: true
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            echo "==> Kéo code mới"
+            git fetch --prune origin
+            git reset --hard "origin/${{ github.ref_name }}"
+
+            cd backend
+
+            if [ ! -f .env.production ]; then
+              echo "Thiếu backend/.env.production trên server." >&2
+              exit 1
+            fi
+
+            COMPOSE="docker compose -f docker-compose.prod.yml --env-file .env.production"
+
+            echo "==> Build image"
+            $COMPOSE build app
+
+            echo "==> Đảm bảo mysql/redis đang chạy"
+            $COMPOSE up -d mysql redis
+
+            # Chạy migration trong container tạm (entrypoint tự chờ MySQL sẵn
+            # sàng) để schema được cập nhật xong TRƯỚC khi code mới nhận traffic.
+            echo "==> Chạy migration"
+            $COMPOSE run --rm app php artisan migrate --force
+
+            echo "==> Khởi động lại app"
+            $COMPOSE up -d --remove-orphans
+
+            echo "==> Dọn image cũ"
+            docker image prune -f
+
+            echo "==> Trạng thái"
+            $COMPOSE ps
+
+      - name: Kiểm tra health endpoint
+        env:
+          HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+        run: |
+          if [ -z "${HEALTH_URL}" ]; then
+            echo "Chưa khai secret DEPLOY_HEALTH_URL — bỏ qua bước health check."
+            exit 0
+          fi
+
+          for attempt in $(seq 1 10); do
+            if curl -fsS --max-time 10 "${HEALTH_URL}" >/dev/null; then
+              echo "Backend đã sống."
+              exit 0
+            fi
+            echo "Chưa phản hồi, thử lại ($attempt/10)..."
+            sleep 10
+          done
+
+          echo "Health check thất bại sau 100s." >&2
+          exit 1

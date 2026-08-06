@@ -1,0 +1,78 @@
+# Compose dùng trên server production (Oracle Cloud VM).
+#
+# Chạy bằng:
+#   docker compose -f docker-compose.prod.yml --env-file .env.production <lệnh>
+#
+# `--env-file` cần cho phần nội suy ${...} bên dưới, còn `env_file:` là để
+# đẩy biến vào trong container. Cả hai đều trỏ tới .env.production.
+name: bluffing-coffee
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: bluffing-coffee-app:latest
+    container_name: bluffing_coffee_app
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      # File upload (Storage::disk('public')) phải sống ngoài image.
+      - app_storage:/app/storage
+      # Chứng chỉ Let's Encrypt của Caddy — mất volume này là phải xin lại cert.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - bluffing_coffee
+
+  mysql:
+    image: mysql:8.4
+    container_name: bluffing_coffee_mysql
+    restart: unless-stopped
+    # Không mở port ra host: DB chỉ truy cập được từ trong network của compose.
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - bluffing_coffee
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: bluffing_coffee_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - bluffing_coffee
+
+volumes:
+  app_storage:
+  caddy_data:
+  caddy_config:
+  mysql_data:
+  redis_data:
+
+networks:
+  bluffing_coffee:
+    driver: bridge

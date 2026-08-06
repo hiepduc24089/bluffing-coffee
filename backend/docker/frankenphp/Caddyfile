@@ -1,0 +1,27 @@
+{
+	frankenphp
+	order php_server before file_server
+
+	# Nơi truyền thêm option global, ví dụ `email you@domain.com` cho ACME.
+	{$CADDY_GLOBAL_OPTIONS}
+}
+
+# SERVER_NAME là domain của API, ví dụ `api.bluffing-coffee.com`.
+# Có domain -> Caddy tự xin chứng chỉ Let's Encrypt và bật HTTPS.
+# Chưa có domain -> để `:80`, chạy HTTP thuần (chỉ nên dùng khi test).
+{$SERVER_NAME::80} {
+	# Chỉ thư mục public được expose. Các file nhạy cảm (.env, source code)
+	# nằm ở /app nên vốn đã nằm ngoài web root.
+	root * /app/public
+
+	encode zstd gzip
+
+	# Khớp với upload_max_filesize / post_max_size trong php.prod.ini.
+	request_body {
+		max_size 32MB
+	}
+
+	php_server {
+		index index.php
+	}
+}
