@@ -1,4 +1,4 @@
-# Compose dùng trên server production (Oracle Cloud VM).
+# Compose dùng trên server production (Hetzner Cloud VPS).
 #
 # Chạy bằng:
 #   docker compose -f docker-compose.prod.yml --env-file .env.production <lệnh>

@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy lên Oracle Cloud VM
+    name: Deploy lên Hetzner VPS
     runs-on: ubuntu-latest
     environment: production
 

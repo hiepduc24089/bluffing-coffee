@@ -10,7 +10,7 @@
                                   │ XHR + Bearer token
                                   ▼
                    ┌────────────────────────────────────────┐
-                   │  Oracle Cloud VM (Always Free, ARM)    │
+                   │  Hetzner Cloud VPS (2 vCPU · 4GB RAM)  │
                    │  bluffing-api.duckdns.org              │
                    │                                        │
                    │  ┌──────────────────────────────────┐  │
@@ -50,91 +50,108 @@ nguyên cho local dev, không bị ảnh hưởng.
 
 ---
 
-## 1. Tạo VM trên Oracle Cloud
+## 1. Tạo server trên Hetzner Cloud
 
-Đăng ký tại [cloud.oracle.com](https://cloud.oracle.com). Cần thẻ tín dụng để
-xác minh nhưng tài khoản Always Free không bị trừ tiền. Sau khi hết 30 ngày
-trial, nhớ **không** nâng lên Pay As You Go nếu chỉ muốn dùng free.
+Đăng ký tại [console.hetzner.cloud](https://console.hetzner.cloud). Cần thẻ tín
+dụng hoặc PayPal. Tài khoản mới đôi khi bị giữ lại xác minh danh tính vài giờ —
+nên tạo tài khoản sớm để khỏi phải chờ đúng lúc cần dùng.
 
-Tạo instance:
+**New Project** → đặt tên `bluffing-coffee` → **Add Server**:
 
-- **Image**: Ubuntu 24.04 (chọn bản **aarch64**)
-- **Shape**: `VM.Standard.A1.Flex` — 4 OCPU, 24 GB RAM (hạn mức Always Free)
-- **Boot volume**: 50–100 GB
-- **SSH key**: upload public key của bạn
+- **Location**:
+  - `Singapore` — cách VN ~40ms, nên chọn cái này. Đổi lại có phụ phí khoảng
+    20–40% so với châu Âu và hạn mức traffic thấp hơn (vượt tính €7.40/TB).
+  - `Falkenstein` / `Nuremberg` (Đức) — rẻ nhất nhưng ~250ms từ VN.
+- **Image**: Ubuntu 24.04
+- **Type**: dòng **shared vCPU**, cấu hình **2 vCPU / 4GB RAM**. Ở châu Âu là
+  `CX22`/`CX23`; ở Singapore phải dùng dòng `CPX` vì `CX` chỉ có ở EU.
+- **Networking**: bật **IPv4**. Có phụ phí ~€0.50/tháng, nhưng bỏ IPv4 thì khá
+  nhiều mạng ở VN không vào được.
+- **SSH key**: dán public key của bạn, đừng dùng mật khẩu
+- **Firewall**: tạo mới, cấu hình ở bước 2
+- **Name**: `bluffing-prod`
 
-> **Hay gặp**: shape A1 báo *"Out of capacity"*. Đây là tình trạng thường xuyên ở
-> các region đông. Cách xử lý: đổi Availability Domain, thử lại vào giờ thấp
-> điểm, hoặc tạo ở region khác (Singapore / Osaka thường dễ hơn). Có thể phải
-> thử vài lần trong vài ngày.
+Giá tham khảo: ~€6/tháng ở Đức, ~€7.5/tháng ở Singapore (đã gồm IPv4). Hetzner
+đã điều chỉnh giá hai lần trong năm 2026, nên hãy đọc con số thật trong console
+trước khi bấm tạo.
 
-Ghi lại **Public IP** của instance.
+4GB RAM là dư dả cho stack này: không phải tinh chỉnh MySQL, không cần swap, và
+build image ngay trên server cũng thoải mái.
+
+Ghi lại **địa chỉ IPv4** của server.
 
 ## 2. Mở firewall
 
-Đây là chỗ dễ tưởng là hỏng nhất — Oracle chặn ở **hai tầng**, phải mở cả hai.
+Hetzner chỉ có **một tầng** firewall — ở mức network, nằm ngoài server — và
+image Ubuntu của họ không bật `ufw`, nên chỉ phải cấu hình một chỗ.
 
-**Tầng 1 — VCN Security List** (trên web console):
-Networking → Virtual Cloud Networks → VCN của bạn → Security Lists → Default →
-Add Ingress Rules:
+Console → **Firewalls** → tạo firewall, thêm các inbound rule sau rồi gán
+(**Apply to**) cho server `bluffing-prod`:
 
-| Source CIDR | Protocol | Destination Port |
+| Protocol | Port | Source |
 |---|---|---|
-| `0.0.0.0/0` | TCP | 80 |
-| `0.0.0.0/0` | TCP | 443 |
-| `0.0.0.0/0` | UDP | 443 |
+| TCP | 22 | `0.0.0.0/0`, `::/0` |
+| TCP | 80 | `0.0.0.0/0`, `::/0` |
+| TCP | 443 | `0.0.0.0/0`, `::/0` |
+| UDP | 443 | `0.0.0.0/0`, `::/0` |
 
-(UDP 443 dành cho HTTP/3. Bỏ qua cũng được, chỉ mất HTTP/3.)
+UDP 443 dành cho HTTP/3, bỏ qua cũng được, chỉ mất HTTP/3.
 
-**Tầng 2 — iptables trong VM**: image Ubuntu của Oracle mặc định chỉ cho SSH.
-SSH vào VM rồi chạy:
+Firewall Hetzner mặc định **chặn toàn bộ inbound** ngay khi được gán, nên quên
+mở port 22 là tự khoá mình ở ngoài. Nếu lỡ tay, vẫn vào được bằng **Console**
+(VNC trên web) để gỡ.
 
-```bash
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
-sudo iptables -I INPUT 6 -m state --state NEW -p udp --dport 443 -j ACCEPT
+## 3. Cài Docker và tạo user deploy
 
-sudo apt-get update && sudo apt-get install -y iptables-persistent
-sudo netfilter-persistent save
-```
-
-Không có bước `netfilter-persistent save` thì rule mất sau khi reboot.
-
-## 3. Cài Docker
+Hetzner cho đăng nhập bằng `root`. Cài Docker trước:
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl git
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+ssh root@<IPv4>
+
+apt-get update
+apt-get install -y ca-certificates curl git
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
   -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
 
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
 https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
-  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  > /etc/apt/sources.list.d/docker.list
 
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io \
   docker-buildx-plugin docker-compose-plugin
-
-# Để user chạy docker không cần sudo (CI/CD cần cái này).
-sudo usermod -aG docker "$USER"
 ```
 
-Đăng xuất và SSH lại, rồi kiểm tra `docker compose version`.
+Rồi tạo user riêng cho CI/CD — đừng để GitHub Actions SSH vào bằng `root`:
+
+```bash
+adduser --disabled-password --gecos "" deploy
+usermod -aG docker deploy
+
+mkdir -p /home/deploy/.ssh
+cp /root/.ssh/authorized_keys /home/deploy/.ssh/
+chown -R deploy:deploy /home/deploy/.ssh
+chmod 700 /home/deploy/.ssh
+chmod 600 /home/deploy/.ssh/authorized_keys
+```
+
+User `deploy` thuộc group `docker` nên chạy được `docker compose` mà không cần
+`sudo`, đúng thứ workflow deploy cần. Nó cũng **không** có quyền sudo, nên deploy
+key bị lộ cũng không leo lên được root.
+
+Thoát ra, SSH lại bằng `deploy@<IPv4>` rồi kiểm tra `docker compose version`.
 
 ## 4. Domain miễn phí bằng DuckDNS
 
 Frontend dùng luôn domain Vercel cấp (`<app>.vercel.app`), không phải làm gì.
 Backend cần một hostname có HTTPS, dùng DuckDNS là đủ và miễn phí.
 
-### Cố định IP của VM trước
+### IP của Hetzner đã cố định sẵn
 
-Public IP mặc định của Oracle là **ephemeral** — có thể đổi khi instance được
-stop/start. Vào Compute → Instances → instance của bạn → Attached VNICs →
-IPv4 Addresses → Edit → đổi Public IP từ *Ephemeral* sang **Reserved**. Làm
-bước này trước để khỏi phải cập nhật DNS liên tục.
+IPv4 gắn vào server Hetzner không đổi khi stop/start, nên không phải làm gì để
+giữ IP. Cron ở dưới chỉ là phòng hờ cho trường hợp sau này bạn dựng server mới.
 
 ### Tạo subdomain
 
@@ -157,7 +174,7 @@ EOF
 chmod 700 ~/duckdns/update.sh
 
 crontab -e
-# */5 * * * * /home/ubuntu/duckdns/update.sh >/dev/null 2>&1
+# */5 * * * * /home/deploy/duckdns/update.sh >/dev/null 2>&1
 ```
 
 Để trống `ip=` thì DuckDNS lấy IP của bên gọi request.
@@ -313,7 +330,7 @@ ssh-keygen -t ed25519 -C "github-actions-bluffing-coffee" -f ~/.ssh/bc_deploy -N
 Đưa public key lên VM:
 
 ```bash
-ssh-copy-id -i ~/.ssh/bc_deploy.pub ubuntu@<PUBLIC_IP>
+ssh-copy-id -i ~/.ssh/bc_deploy.pub deploy@<IPv4>
 ```
 
 ### Khai secrets
@@ -322,10 +339,10 @@ GitHub repo → Settings → Secrets and variables → Actions → New repositor
 
 | Secret | Giá trị ví dụ |
 |---|---|
-| `DEPLOY_HOST` | `<PUBLIC_IP>` |
-| `DEPLOY_USER` | `ubuntu` |
+| `DEPLOY_HOST` | `<IPv4>` |
+| `DEPLOY_USER` | `deploy` |
 | `DEPLOY_SSH_KEY` | Toàn bộ nội dung `~/.ssh/bc_deploy` (kể cả dòng `-----BEGIN...`/`-----END...`) |
-| `DEPLOY_PATH` | `/home/ubuntu/bluffing-coffee` |
+| `DEPLOY_PATH` | `/home/deploy/bluffing-coffee` |
 | `DEPLOY_HEALTH_URL` | `https://bluffing-api.duckdns.org/up` |
 | `DEPLOY_PORT` | *(tùy chọn, mặc định 22)* |
 
@@ -375,11 +392,11 @@ $COMPOSE exec -T mysql sh -c \
 ```bash
 mkdir -p ~/backups
 crontab -e
-# 0 3 * * * cd /home/ubuntu/bluffing-coffee/backend && docker compose -f docker-compose.prod.yml --env-file .env.production exec -T mysql sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction bluffing_coffee' | gzip > /home/ubuntu/backups/bc-$(date +\%F).sql.gz
+# 0 3 * * * cd /home/deploy/bluffing-coffee/backend && docker compose -f docker-compose.prod.yml --env-file .env.production exec -T mysql sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction bluffing_coffee' | gzip > /home/deploy/backups/bc-$(date +\%F).sql.gz
 ```
 
 Backup nằm cùng VM thì mất VM là mất luôn — nên sync định kỳ ra chỗ khác
-(Oracle Object Storage cũng có 20 GB Always Free).
+(Hetzner Storage Box, S3, hoặc `rsync` về máy bạn).
 
 **Rollback** về commit trước:
 
