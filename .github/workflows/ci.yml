@@ -65,8 +65,18 @@ jobs:
 
       # Biến môi trường thật được ưu tiên hơn giá trị trong .env,
       # nên không cần sửa file .env để trỏ về MySQL của CI.
+      #
+      # Bỏ qua khi chưa có test: `phpunit.xml` vẫn khai `tests/Unit` và
+      # `tests/Feature`, mà thư mục không tồn tại thì `php artisan test` thoát
+      # với mã 2 và làm đỏ cả pipeline deploy. Điều kiện dưới đây tự bật lại
+      # ngay khi có file `*Test.php` đầu tiên — không cần nhớ sửa lại workflow.
       - name: Chạy test
-        run: php artisan test
+        run: |
+          if [ -n "$(find tests -name '*Test.php' -print -quit 2>/dev/null)" ]; then
+            php artisan test
+          else
+            echo "Chưa có test nào trong backend/tests — bỏ qua."
+          fi
         env:
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
