@@ -233,8 +233,25 @@ Rồi tắt đăng nhập bằng mật khẩu cho an toàn — VPS có IPv4 publ
 SSH liên tục:
 
 ```bash
-sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config
-systemctl restart ssh
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+
+# Image cloud của Ubuntu 24.04 có sẵn /etc/ssh/sshd_config.d/50-cloud-init.conf
+# đặt `PasswordAuthentication yes`. File trong sshd_config.d/ được Include ở đầu
+# nên nó THẮNG — chỉ sửa sshd_config là mật khẩu vẫn bật mà không có dấu hiệu gì.
+sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' \
+  /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf
+
+sshd -t && systemctl restart ssh   # `sshd -t` chặn restart khi cú pháp sai
+
+# Đọc cấu hình sshd đang thực thi, không phải nội dung file:
+sshd -T | grep -i '^passwordauthentication'   # phải ra "no"
+```
+
+Kiểm tra từ máy local rằng mật khẩu thật sự đã bị chặn:
+
+```bash
+ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no root@<IPv4>
+# mong đợi: Permission denied (publickey).
 ```
 
 > Kiểm tra chắc chắn đã SSH được bằng key ở một cửa sổ terminal khác **trước
