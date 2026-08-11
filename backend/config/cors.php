@@ -1,8 +1,15 @@
 <?php
 
+// Production KHÔNG cần cấu hình này: Caddy serve frontend và API trên cùng một
+// domain (`/api/*` -> Laravel, còn lại -> SPA), nên request không phải
+// cross-origin và trình duyệt không gửi preflight.
+//
+// Phần dưới chỉ phục vụ local dev, lúc Vite chạy ở :5173 còn API ở :8000.
+// `FRONTEND_URL` để trống là bình thường; chỉ điền khi cần cho phép thêm origin
+// lạ (ví dụ mở app từ điện thoại trong LAN qua IP của máy dev).
 $frontendUrls = array_values(array_filter(array_map(
     'trim',
-    explode(',', env('FRONTEND_URL', 'http://localhost:5173'))
+    explode(',', (string) env('FRONTEND_URL', ''))
 )));
 
 return [

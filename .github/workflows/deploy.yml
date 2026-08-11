@@ -1,0 +1,217 @@
+name: Deploy
+
+# Deploy toàn bộ dự án (API + frontend) lên một VPS duy nhất.
+#
+# Luồng: test -> build image đẩy lên GHCR -> server chỉ pull + up -d.
+#
+# Server KHÔNG build image nữa. Lý do:
+#   - VPS đang phục vụ traffic, build ngay trên đó làm chậm site
+#   - image được tag theo commit SHA nên rollback chỉ là đổi tag + `up -d`
+#     (vài giây), không phải build lại commit cũ (vài phút, mà site đang chết)
+
+on:
+  # Không lọc theo path nữa: image chứa cả frontend nên thay đổi ở `frontend/`
+  # cũng phải deploy lại.
+  push:
+    branches: [main]
+  # Cho phép bấm deploy tay từ tab Actions (ví dụ để deploy lại).
+  workflow_dispatch:
+
+# Không chạy hai lần deploy song song, và không hủy lần đang chạy giữa chừng.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # Cổng chặn: test đỏ thì không build, không deploy.
+  test:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build và push image
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      tag: ${{ steps.meta.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # GHCR chỉ nhận tên repository viết thường.
+      - name: Xác định tên image
+        id: meta
+        run: |
+          name="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-app"
+          echo "image=${name}" >> "$GITHUB_OUTPUT"
+          echo "tag=${name}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build và push
+        uses: docker/build-push-action@v6
+        with:
+          # Context là gốc repo vì image chứa cả frontend đã build.
+          context: .
+          file: backend/Dockerfile.prod
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.image }}:latest
+          # Cache layer giữa các lần chạy để build không phải cài lại vendor.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+  deploy:
+    name: Deploy lên VPS
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy qua SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          APP_IMAGE: ${{ needs.build.outputs.tag }}
+          COMMIT_SHA: ${{ github.sha }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          # GITHUB_TOKEN có sẵn quyền đọc package của repo này, hết hạn ngay khi
+          # workflow kết thúc — không cần khai thêm secret nào.
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script_stop: true
+          command_timeout: 15m
+          envs: APP_IMAGE,COMMIT_SHA,DEPLOY_PATH,GHCR_USER,GHCR_TOKEN
+          script: |
+            set -euo pipefail
+
+            cd "$DEPLOY_PATH"
+
+            # Reset về đúng commit đã build image, để compose file và image
+            # luôn khớp nhau.
+            echo "==> Đồng bộ code về ${COMMIT_SHA}"
+            git fetch --prune origin
+            git reset --hard "$COMMIT_SHA"
+
+            cd backend
+
+            if [ ! -f .env.production ]; then
+              echo "Thiếu backend/.env.production trên server." >&2
+              exit 1
+            fi
+
+            echo "==> Kéo image ${APP_IMAGE}"
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            docker pull "$APP_IMAGE"
+            docker logout ghcr.io
+
+            # Giữ lại tag đang chạy để job rollback dùng khi health check hỏng.
+            if [ -f .env.deploy ]; then
+              cp .env.deploy .env.deploy.prev
+            fi
+            printf 'APP_IMAGE=%s\n' "$APP_IMAGE" > .env.deploy
+
+            COMPOSE="docker compose -f docker-compose.prod.yml --env-file .env.production --env-file .env.deploy"
+
+            echo "==> Đảm bảo mysql/redis đang chạy"
+            $COMPOSE up -d mysql redis
+
+            # Chạy migration trong container tạm (entrypoint tự chờ MySQL sẵn
+            # sàng) để schema được cập nhật xong TRƯỚC khi code mới nhận traffic.
+            # Hệ quả: migration phải tương thích ngược với code cũ trong vài
+            # giây đó — không drop/rename cột mà code đang chạy còn dùng.
+            echo "==> Chạy migration"
+            $COMPOSE run --rm app php artisan migrate --force
+
+            echo "==> Khởi động lại app"
+            $COMPOSE up -d --remove-orphans
+
+            # Chỉ dọn image treo cũ hơn 7 ngày, để các tag gần đây còn nằm lại
+            # trên máy cho việc rollback.
+            echo "==> Dọn image cũ"
+            docker image prune -f --filter "until=168h"
+
+            echo "==> Trạng thái"
+            $COMPOSE ps
+
+      - name: Kiểm tra health endpoint
+        env:
+          HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+        run: |
+          if [ -z "${HEALTH_URL}" ]; then
+            echo "Chưa khai secret DEPLOY_HEALTH_URL — bỏ qua bước health check."
+            exit 0
+          fi
+
+          for attempt in $(seq 1 10); do
+            if curl -fsS --max-time 10 "${HEALTH_URL}" >/dev/null; then
+              echo "Backend đã sống."
+              exit 0
+            fi
+            echo "Chưa phản hồi, thử lại ($attempt/10)..."
+            sleep 10
+          done
+
+          echo "Health check thất bại sau 100s." >&2
+          exit 1
+
+  # Deploy hỏng -> quay lại tag trước đó. Chỉ mất thời gian `up -d` vì image cũ
+  # vẫn còn trên máy.
+  #
+  # LƯU Ý: rollback này chỉ đổi image, KHÔNG rollback migration. Nếu bản lỗi đã
+  # chạy migration phá cấu trúc thì phải `migrate:rollback` hoặc restore backup
+  # bằng tay.
+  rollback:
+    name: Rollback về bản trước
+    needs: deploy
+    if: failure() && needs.deploy.result == 'failure'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Khôi phục image cũ qua SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script_stop: true
+          command_timeout: 10m
+          envs: DEPLOY_PATH
+          script: |
+            set -euo pipefail
+
+            cd "$DEPLOY_PATH/backend"
+
+            if [ ! -f .env.deploy.prev ]; then
+              echo "Không có .env.deploy.prev — có thể đây là lần deploy đầu." >&2
+              echo "Phải xử lý tay trên server." >&2
+              exit 1
+            fi
+
+            echo "==> Quay lại $(cat .env.deploy.prev)"
+            cp .env.deploy.prev .env.deploy
+
+            docker compose -f docker-compose.prod.yml \
+              --env-file .env.production --env-file .env.deploy up -d
+
+            echo "==> Migration KHÔNG được rollback tự động. Kiểm tra lại schema." >&2

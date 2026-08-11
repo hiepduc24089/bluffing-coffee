@@ -1,23 +1,41 @@
-# Compose dùng trên server production (Hetzner Cloud VPS).
+# Compose dùng trên server production (VPS Ubuntu, xem docs/deployment.md).
 #
 # Chạy bằng:
-#   docker compose -f docker-compose.prod.yml --env-file .env.production <lệnh>
+#   docker compose -f docker-compose.prod.yml \
+#     --env-file .env.production --env-file .env.deploy <lệnh>
 #
 # `--env-file` cần cho phần nội suy ${...} bên dưới, còn `env_file:` là để
-# đẩy biến vào trong container. Cả hai đều trỏ tới .env.production.
+# đẩy biến vào trong container.
+#
+# .env.deploy chỉ chứa một dòng `APP_IMAGE=...` — tag image đang chạy, do
+# workflow deploy ghi đè mỗi lần deploy. Rollback = sửa dòng đó rồi `up -d`.
 #
 # Project name khác với compose dev (`bluffing-coffee`) để volume và container
 # của hai môi trường không đè lên nhau khi chạy chung một máy.
 name: bluffing-coffee-prod
 
+# Docker mặc định KHÔNG giới hạn log container -> đầy disk là MySQL chết trước.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
+    # Bình thường image được CI build sẵn và đẩy lên GHCR, server chỉ pull.
+    # `build:` giữ lại cho trường hợp phải build tay ngay trên server
+    # (bootstrap lần đầu, hoặc CI hỏng): `$COMPOSE build app`.
+    #
+    # Context là thư mục gốc repo (`..`) chứ không phải `backend/`, vì image
+    # chứa cả frontend đã build. Xem đầu file backend/Dockerfile.prod.
     build:
-      context: .
-      dockerfile: Dockerfile.prod
-    image: bluffing-coffee-app:latest
+      context: ..
+      dockerfile: backend/Dockerfile.prod
+    image: ${APP_IMAGE:-bluffing-coffee-app:latest}
     container_name: bluffing_coffee_prod_app
     restart: unless-stopped
+    logging: *default-logging
     env_file:
       - .env.production
     ports:
@@ -42,6 +60,7 @@ services:
     image: mysql:8.4
     container_name: bluffing_coffee_prod_mysql
     restart: unless-stopped
+    logging: *default-logging
     # Không mở port ra host: DB chỉ truy cập được từ trong network của compose.
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
@@ -63,6 +82,7 @@ services:
     image: redis:7.4-alpine
     container_name: bluffing_coffee_prod_redis
     restart: unless-stopped
+    logging: *default-logging
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - redis_data:/data

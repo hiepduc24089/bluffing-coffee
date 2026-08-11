@@ -1,0 +1,41 @@
+# Build context của `backend/Dockerfile.prod` là thư mục gốc repo (image cần cả
+# backend/ lẫn frontend/), nên file này quyết định thứ gì được gửi sang Docker.
+#
+# `backend/.dockerignore` vẫn giữ nguyên cho `backend/Dockerfile` (local dev),
+# vì compose dev dùng context là `backend/`.
+
+.git
+.github
+.claude
+.agents
+.codex
+.vscode
+.idea
+docs
+
+# --- backend ---
+backend/vendor
+backend/node_modules
+backend/.env
+backend/.env.*
+backend/.phpunit.cache
+backend/.phpunit.result.cache
+backend/public/build
+backend/public/hot
+backend/public/storage
+backend/storage/logs/*.log
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/tests
+
+# --- frontend ---
+# node_modules và dist được tạo lại trong stage build, đừng gửi bản local sang.
+frontend/node_modules
+frontend/dist
+frontend/build
+frontend/.env
+frontend/.env.*
+frontend/*.tsbuildinfo
+frontend/.yarn/install-state.gz
+frontend/.yarn/sdks

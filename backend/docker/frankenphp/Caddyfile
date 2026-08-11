@@ -6,14 +6,10 @@
 	{$CADDY_GLOBAL_OPTIONS}
 }
 
-# SERVER_NAME là domain của API, ví dụ `api.bluffing-coffee.com`.
+# SERVER_NAME là domain của site, ví dụ `bluffing.duckdns.org`.
 # Có domain -> Caddy tự xin chứng chỉ Let's Encrypt và bật HTTPS.
 # Chưa có domain -> để `:80`, chạy HTTP thuần (chỉ nên dùng khi test).
 {$SERVER_NAME::80} {
-	# Chỉ thư mục public được expose. Các file nhạy cảm (.env, source code)
-	# nằm ở /app nên vốn đã nằm ngoài web root.
-	root * /app/public
-
 	encode zstd gzip
 
 	# Khớp với upload_max_filesize / post_max_size trong php.prod.ini.
@@ -21,7 +17,37 @@
 		max_size 32MB
 	}
 
-	php_server {
-		index index.php
+	# Ba nhóm đường dẫn thuộc về Laravel:
+	#   /api/*     — toàn bộ API
+	#   /up        — health check (khai trong bootstrap/app.php), workflow deploy gọi
+	#   /storage/* — file upload, qua symlink `php artisan storage:link`
+	@backend path /api/* /up /storage/*
+	handle @backend {
+		# Chỉ thư mục public được expose. Source code và .env nằm ở /app nên
+		# vốn đã nằm ngoài web root.
+		root * /app/public
+
+		php_server {
+			index index.php
+		}
+	}
+
+	# Còn lại là SPA. Frontend và API cùng origin nên trình duyệt không gửi
+	# preflight — không cần cấu hình CORS cho production.
+	handle {
+		root * /srv/frontend
+
+		# Asset của Vite có hash nội dung trong tên file nên cache vĩnh viễn được.
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+
+		# Mọi thứ còn lại đều trả về index.html, mà file này PHẢI luôn tươi:
+		# nếu client giữ bản cũ thì nó sẽ trỏ tới các file asset đã bị xóa sau
+		# lần deploy kế tiếp.
+		@shell not path /assets/*
+		header @shell Cache-Control "no-cache"
+
+		try_files {path} /index.html
+		file_server
 	}
 }

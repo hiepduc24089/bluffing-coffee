@@ -1,12 +1,43 @@
-# Image production cho backend.
+# Image production: MỘT image duy nhất chứa cả API lẫn frontend đã build.
 #
 # Khác với `Dockerfile` (dùng cho local dev, source code được mount qua volume),
-# image này bake luôn source + vendor vào bên trong nên mỗi lần deploy là một
-# image bất biến, rollback được bằng cách checkout commit cũ rồi build lại.
+# image này bake source + vendor + `frontend/dist` vào bên trong nên mỗi lần
+# deploy là một image bất biến, rollback được bằng cách trỏ về tag cũ.
+#
+# ⚠️ Build context là THƯ MỤC GỐC của repo, không phải `backend/`, vì image cần
+# cả `frontend/`. Xem `build.context: ..` trong docker-compose.prod.yml và
+# `context: .` trong .github/workflows/deploy-backend.yml.
 #
 # Web server dùng FrankenPHP (Caddy + PHP trong một binary) thay cho cặp
-# nginx + php-fpm: chỉ còn một container, và Caddy tự xin/gia hạn chứng chỉ
-# Let's Encrypt nên API có HTTPS mà không cần cấu hình thêm.
+# nginx + php-fpm: chỉ còn một container, Caddy vừa chạy Laravel dưới `/api`
+# vừa serve SPA ở các đường dẫn còn lại, và tự xin/gia hạn chứng chỉ
+# Let's Encrypt nên có HTTPS mà không cần cấu hình thêm.
+
+# --- Stage 1: build frontend -------------------------------------------------
+FROM node:20-alpine AS frontend
+
+WORKDIR /build
+
+# Yarn 4 được kích hoạt qua corepack theo field `packageManager`.
+# Tắt prompt xác nhận tải yarn, vì build chạy không có TTY.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
+
+# Cài dependency trước khi copy source để layer này được cache lại khi chỉ đổi code.
+COPY frontend/package.json frontend/yarn.lock frontend/.yarnrc.yml ./
+RUN yarn install --immutable
+
+COPY frontend/ ./
+
+# Frontend và API cùng origin (Caddy serve cả hai trên một domain) nên gọi API
+# bằng đường dẫn tương đối. Vite nhúng biến này vào bundle LÚC BUILD, không đọc
+# được lúc chạy — đổi giá trị thì phải build lại image.
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=${VITE_API_URL}
+
+RUN yarn build
+
+# --- Stage 2: runtime --------------------------------------------------------
 FROM dunglas/frankenphp:1-php8.3-alpine
 
 WORKDIR /app
@@ -35,7 +66,7 @@ RUN apk add --no-cache \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Cài vendor trước khi copy source để layer này được cache lại khi chỉ đổi code.
-COPY composer.json composer.lock ./
+COPY backend/composer.json backend/composer.lock ./
 RUN composer install \
         --no-dev \
         --no-scripts \
@@ -44,14 +75,17 @@ RUN composer install \
         --no-interaction \
         --no-progress
 
-COPY . .
+COPY backend/ .
 
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative \
     && php artisan package:discover --ansi
 
-COPY docker/php/php.prod.ini /usr/local/etc/php/conf.d/bluffing-coffee.ini
-COPY docker/frankenphp/Caddyfile /etc/caddy/Caddyfile
-COPY docker/php/entrypoint.prod.sh /usr/local/bin/bluffing-coffee-entrypoint
+# SPA đã build. Caddy serve thư mục này cho mọi đường dẫn không phải API.
+COPY --from=frontend /build/dist /srv/frontend
+
+COPY backend/docker/php/php.prod.ini /usr/local/etc/php/conf.d/bluffing-coffee.ini
+COPY backend/docker/frankenphp/Caddyfile /etc/caddy/Caddyfile
+COPY backend/docker/php/entrypoint.prod.sh /usr/local/bin/bluffing-coffee-entrypoint
 
 RUN chmod +x /usr/local/bin/bluffing-coffee-entrypoint \
     && mkdir -p \
