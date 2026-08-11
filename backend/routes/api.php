@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\BadgeController;
 use App\Http\Controllers\Api\Admin\BannerController;
 use App\Http\Controllers\Api\Admin\BpTransactionController;
 use App\Http\Controllers\Api\Admin\ContentPageController;
+use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\GameFormatController;
 use App\Http\Controllers\Api\Admin\LeaderboardController;
 use App\Http\Controllers\Api\Admin\LiveTableController;
@@ -90,6 +91,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('{user}/badges/{badge}', [UserController::class, 'detachBadge'])
                 ->name('badges.detach');
         });
+
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
         Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
 

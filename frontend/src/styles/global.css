@@ -51,26 +51,23 @@ body {
 .app-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 24px 20px 20px;
+  justify-content: center;
+  padding: 24px 20px 20px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.app-brand__link {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
 .app-brand__logo {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
+  width: 100%;
+  max-width: 180px;
+  height: auto;
   object-fit: contain;
-}
-
-.app-brand__title.ant-typography {
-  margin-bottom: 0;
-  color: #f8fafc;
-  letter-spacing: 0;
-}
-
-.app-brand .ant-typography-secondary {
-  color: #f3d680 !important;
 }
 
 .app-sider .ant-menu {

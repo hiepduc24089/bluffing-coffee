@@ -27,26 +27,16 @@ import type {
   TournamentRow,
   TournamentStatus,
 } from '@/admin/modules/tournament/types/tournament.type';
+import {
+  tournamentStatusColors,
+  tournamentStatusLabels,
+} from '@/admin/modules/tournament/utils/tournament-status';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const defaultFilters: TournamentFilter = {
   keyword: '',
   page: 1,
   perPage: 10,
-};
-
-const statusColors: Record<TournamentStatus, string> = {
-  draft: 'default',
-  published: 'blue',
-  running: 'green',
-  completed: 'gold',
-};
-
-const statusLabels: Record<TournamentStatus, string> = {
-  draft: 'Bản nháp',
-  published: 'Đã công bố',
-  running: 'Đang diễn ra',
-  completed: 'Đã hoàn tất',
 };
 
 const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}đ`;
@@ -134,7 +124,9 @@ export function TournamentPage() {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status: TournamentStatus) => <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>,
+      render: (status: TournamentStatus) => (
+        <Tag color={tournamentStatusColors[status]}>{tournamentStatusLabels[status]}</Tag>
+      ),
     },
     {
       title: 'Thời gian bắt đầu',

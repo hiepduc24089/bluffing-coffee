@@ -1,54 +1,63 @@
-import { Card, Col, Row, Statistic, Tag } from 'antd';
+import { Card, Col, Row, Statistic, Tag, Typography } from 'antd';
+import { useQuery } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import AppTable from '@/shared/components/atoms/AppTable';
 import { PageHeader } from '@/shared/components/layout/page-header';
+import {
+  dashboardQueryKeys,
+  getDashboardSummary,
+} from '@/admin/modules/dashboard/api/dashboard.api';
+import type { DashboardActivityRow } from '@/admin/modules/dashboard/types/dashboard.type';
+import type { TournamentStatus } from '@/admin/modules/tournament/types/tournament.type';
+import {
+  tournamentStatusColors,
+  tournamentStatusLabels,
+} from '@/admin/modules/tournament/utils/tournament-status';
 
-type ActivityRow = {
-  key: string;
-  event: string;
-  table: string;
-  status: 'upcoming' | 'running' | 'completed';
-};
-
-const activityColumns: ColumnsType<ActivityRow> = [
+const activityColumns: ColumnsType<DashboardActivityRow> = [
   {
-    title: 'Sự kiện',
-    dataIndex: 'event',
-    key: 'event',
+    title: 'Giải đấu',
+    dataIndex: 'name',
+    key: 'name',
+    render: (name: string, record) => (
+      <div>
+        <Typography.Text strong>{name}</Typography.Text>
+        <div>
+          <Typography.Text type="secondary">{record.startAt ?? 'Chưa đặt lịch'}</Typography.Text>
+        </div>
+      </div>
+    ),
   },
   {
     title: 'Bàn',
-    dataIndex: 'table',
-    key: 'table',
+    dataIndex: 'tables',
+    key: 'tables',
+    render: (tables: string[]) => (tables.length > 0 ? tables.join(', ') : '-'),
+  },
+  {
+    title: 'Người chơi',
+    key: 'players',
+    render: (_, record) =>
+      record.capacity ? `${record.registeredCount}/${record.capacity}` : record.registeredCount,
   },
   {
     title: 'Trạng thái',
     dataIndex: 'status',
     key: 'status',
-    render: (status: ActivityRow['status']) => {
-      const colorMap = {
-        upcoming: 'gold',
-        running: 'green',
-        completed: 'default',
-      } as const;
-      const labelMap = {
-        upcoming: 'Sắp diễn ra',
-        running: 'Đang diễn ra',
-        completed: 'Đã hoàn tất',
-      } as const;
-
-      return <Tag color={colorMap[status]}>{labelMap[status]}</Tag>;
-    },
+    render: (status: TournamentStatus) => (
+      <Tag color={tournamentStatusColors[status]}>{tournamentStatusLabels[status]}</Tag>
+    ),
   },
 ];
 
-const activityData: ActivityRow[] = [
-  { key: '1', event: 'Giải tối thứ sáu', table: 'A1', status: 'running' },
-  { key: '2', event: 'Giải nhanh', table: 'B2', status: 'upcoming' },
-  { key: '3', event: 'Giải cuối tuần', table: 'VIP', status: 'completed' },
-];
-
 export function DashboardPage() {
+  const { data, isLoading } = useQuery({
+    queryKey: dashboardQueryKeys.summary(),
+    queryFn: getDashboardSummary,
+  });
+
+  const stats = data?.stats;
+
   return (
     <div className="page-stack">
       <PageHeader
@@ -57,28 +66,46 @@ export function DashboardPage() {
       />
 
       <Row gutter={[16, 16]}>
-        <Col xs={24} md={8}>
+        <Col xs={24} md={12} xl={6}>
           <Card>
-            <Statistic title="Bàn đang hoạt động" value={12} />
+            <Statistic
+              title="Bàn đang hoạt động"
+              value={stats?.activeLiveTables ?? 0}
+              loading={isLoading}
+            />
           </Card>
         </Col>
-        <Col xs={24} md={8}>
+        <Col xs={24} md={12} xl={6}>
           <Card>
-            <Statistic title="Người chơi đã đăng ký" value={148} />
+            <Statistic
+              title="Giải đấu đang mở"
+              value={stats?.openTournaments ?? 0}
+              loading={isLoading}
+            />
           </Card>
         </Col>
-        <Col xs={24} md={8}>
+        <Col xs={24} md={12} xl={6}>
           <Card>
-            <Statistic title="Giải đấu đang mở" value={4} />
+            <Statistic
+              title="Người chơi đã đăng ký"
+              value={stats?.activeRegistrations ?? 0}
+              loading={isLoading}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} md={12} xl={6}>
+          <Card>
+            <Statistic title="Thành viên" value={stats?.totalMembers ?? 0} loading={isLoading} />
           </Card>
         </Col>
       </Row>
 
-      <Card>
-        <AppTable<ActivityRow>
-          rowKey="key"
+      <Card title="Giải đấu gần đây">
+        <AppTable<DashboardActivityRow>
+          rowKey="id"
           columns={activityColumns}
-          dataSource={activityData}
+          dataSource={data?.recentTournaments ?? []}
+          loading={isLoading}
           pagination={false}
         />
       </Card>

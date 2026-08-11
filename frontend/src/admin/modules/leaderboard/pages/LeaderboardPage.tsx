@@ -46,7 +46,6 @@ export function LeaderboardPage() {
       title: '#',
       key: 'rank',
       width: 64,
-      align: 'center',
       render: (_, __, index) => <Typography.Text strong>{index + 1}</Typography.Text>,
     },
     {
@@ -62,7 +61,6 @@ export function LeaderboardPage() {
     {
       title: leaderboardLabels[type],
       key: 'metric',
-      align: 'right',
       render: (_, record) => getMetricValue(record, type).toLocaleString('vi-VN'),
     },
     {

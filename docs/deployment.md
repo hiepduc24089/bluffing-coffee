@@ -103,10 +103,15 @@ hãy đọc bảng giá thật trước khi chốt.
 | FrankenPHP + Laravel (opcache 128MB) | ~250 MB | ~250 MB |
 | **Tổng lúc chạy** | **~1,1 GB** | **~880 MB** |
 
-Con số quyết định nằm ở chỗ khác: bước bootstrap ở §5 chạy `yarn build` ngay
-trên server, riêng nó ngốn **~2 GB**. Đó là lý do mốc 4GB — máy 2GB sẽ OOM ở
-bước đó và phải hoặc bật swap, hoặc bỏ hẳn việc build trên server (để CI build
-rồi chạy workflow deploy bằng tay).
+Bước bootstrap ở §5 chạy `yarn build` ngay trên server, và đây thường được coi
+là thứ quyết định mốc RAM. **Đo thực tế** trên gói 2 vCPU / 4GB (lấy mẫu 2
+giây/lần suốt lần build đầu): đỉnh RAM toàn máy chỉ **~1,3 GB**, lúc căng nhất
+vẫn còn trống ~2,6 GB, tổng thời gian build 6 phút 15 giây.
+
+Nghĩa là máy 2GB nhiều khả năng cũng build được — đừng dùng "`yarn build` cần
+2GB" làm lý do chọn gói, con số đó cao hơn thực tế. Lý do thật để chọn 4GB là
+biên an toàn khi vừa build vừa phục vụ traffic, và vì gói 4GB thường không đắt
+hơn gói 2GB bao nhiêu.
 
 Với 4GB thì không cần tune gì cả. Chỉ khi nào `free -h` báo available thường
 xuyên dưới 300MB mới cần hạ `innodb_buffer_pool_size` hoặc nâng gói.
@@ -144,17 +149,47 @@ gửi qua email.
 Làm trong lúc còn cửa sổ hoàn tiền, đừng đợi đến khi deploy xong mới phát hiện:
 
 ```bash
-# Băng thông quốc tế thực tế — con số quan trọng nhất, không phải con số quảng cáo
-time curl -o /dev/null https://speed.cloudflare.com/__down?bytes=104857600
+# 1. Công nghệ ảo hoá — PHẢI ra "kvm". Nếu ra "openvz"/"lxc"/"container" thì
+#    Docker sẽ không chạy tử tế: dừng lại và đòi hoàn tiền ngay.
+systemd-detect-virt
 
-# Disk I/O (MySQL sống chết vì cái này)
+# 2. Đúng cấu hình đã mua chưa (RAM 4GB thật hiện ~3.8Gi; nếu ~3.4Gi thì phần
+#    "+RAM khuyến mãi" chưa được cấp)
+nproc; free -h; df -h /; lsb_release -a
+
+# 3. Băng thông quốc tế — con số quan trọng nhất, không phải con số quảng cáo.
+#    Tải thẳng từ GitHub vì đó đúng là đường mà `docker pull` sẽ đi.
+#    Tham chiếu thực đo trên gói 200 Mbps: 60.8MB trong 3.4s (~17.8 MB/s).
+time curl -L -o /dev/null \
+  https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64
+
+# 4. Disk I/O (MySQL sống chết vì cái này). NVMe không bị bóp cho vài nghìn
+#    IOPS trở lên; vài trăm nghĩa là đang bị chặn dù nhãn ghi NVMe.
+#    Tham chiếu thực đo: IOPS=8848, BW=34.6MiB/s.
 apt-get install -y fio
 fio --name=w --rw=randwrite --bs=4k --size=1G --numjobs=4 --runtime=30 \
-    --group_reporting --direct=1
+    --time_based --group_reporting --direct=1
+rm -f w.*
 
-# Latency từ mạng của quán về VPS
+# 5. Latency từ mạng của quán về VPS
 ping -c 20 <IPv4>
 ```
+
+**Port 80/443 có thật sự vào được không.** Đừng quét port từ ngoài để kết luận:
+nhiều nhà cung cấp VN có lớp chống DDoS đứng trước, nó bắt tay TCP thay cho máy
+bạn rồi mới reset, nên port nào cũng trông như "mở". Phải dựng server thật:
+
+```bash
+# Trên VPS
+python3 -m http.server 80
+
+# Trên máy local
+curl -I http://<IPv4>          # phải ra "HTTP/1.0 200 OK"
+```
+
+Làm lại với port 443. Không có port 80 thì Let's Encrypt không cấp được chứng
+chỉ; không có 443 thì không ai vào được site. `Ctrl+C` tắt ngay sau khi thử —
+`http.server` đang liệt kê cả thư mục hiện tại ra Internet.
 
 ## 2. Mở firewall bằng `ufw`
 

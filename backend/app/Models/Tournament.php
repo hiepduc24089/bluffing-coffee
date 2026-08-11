@@ -68,4 +68,9 @@ class Tournament extends Model
         return $this->hasMany(TournamentRegistration::class);
     }
 
+    public function liveTables(): HasMany
+    {
+        return $this->hasMany(LiveTable::class, 'current_tournament_id');
+    }
+
 }

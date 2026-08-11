@@ -90,7 +90,6 @@ export function UserPage() {
       title: 'BP',
       dataIndex: 'bpBalance',
       key: 'bpBalance',
-      align: 'right',
       render: (value?: number) => (value ?? 0).toLocaleString('vi-VN'),
     },
     {

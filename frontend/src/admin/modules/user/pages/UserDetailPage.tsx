@@ -96,7 +96,6 @@ export function UserDetailPage() {
       title: 'BP',
       dataIndex: 'amount',
       key: 'amount',
-      align: 'right',
       render: (value: number) => formatNumber(value),
     },
     {
@@ -129,7 +128,6 @@ export function UserDetailPage() {
       title: 'Vị trí',
       dataIndex: 'finalPosition',
       key: 'finalPosition',
-      align: 'right',
       render: (value?: number | null) => value ?? '-',
     },
   ];

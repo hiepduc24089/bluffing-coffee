@@ -207,14 +207,12 @@ export function TournamentRegistrationPage() {
       title: 'Vị trí',
       dataIndex: 'finalPosition',
       key: 'finalPosition',
-      align: 'right',
       render: (value?: number | null) => value ?? '-',
     },
     {
       title: 'BP sẽ cộng',
       dataIndex: 'bpReward',
       key: 'bpReward',
-      align: 'right',
       render: (value: number, record) => (record.willReward ? value.toLocaleString('vi-VN') : '-'),
     },
     {
@@ -248,7 +246,6 @@ export function TournamentRegistrationPage() {
     {
       title: 'BP',
       key: 'bp',
-      align: 'right',
       render: (_, record) => (record.user?.bpBalance ?? 0).toLocaleString('vi-VN'),
     },
     {
