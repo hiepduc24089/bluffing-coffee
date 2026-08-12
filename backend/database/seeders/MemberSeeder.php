@@ -6,14 +6,21 @@ use App\Enums\UserRoleEnum;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
+/**
+ * Chạy được cả trên image production (composer --no-dev) nên không dùng factory,
+ * vì factory phụ thuộc fakerphp chỉ có ở môi trường dev.
+ */
 class MemberSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Member User',
-            'phone' => '0900000001',
-            'role' => UserRoleEnum::Member,
-        ]);
+        User::query()->firstOrCreate(
+            ['phone' => '0900000001'],
+            [
+                'name' => 'Member User',
+                'role' => UserRoleEnum::Member,
+                'password' => 'password',
+            ],
+        );
     }
 }
