@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\TournamentPhaseEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,15 +17,17 @@ class TournamentResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'tournamentType' => $this->tournament_type?->value ?? 'normal',
-            'gameFormatId' => $this->game_format_id,
-            'gameFormat' => $this->whenLoaded('gameFormat', fn () => GameFormatResource::make($this->gameFormat)),
+            'tournamentTemplateId' => $this->tournament_template_id,
+            'tournamentTemplate' => $this->whenLoaded(
+                'tournamentTemplate',
+                fn () => TournamentTemplateResource::make($this->tournamentTemplate),
+            ),
             'buyIn' => $this->buy_in,
             'ticketPriceWithDrink' => $this->ticket_price_with_drink,
             'ticketPriceWithoutDrink' => $this->ticket_price_without_drink,
             'capacity' => $this->capacity,
-            'status' => $this->status->value,
-            'rewardProfileId' => $this->reward_profile_id,
-            'rewardProfile' => $this->whenLoaded('rewardProfile', fn () => RewardProfileResource::make($this->rewardProfile)),
+            'phase' => TournamentPhaseEnum::for($this->resource)->value,
+            'finalizedAt' => $this->finalized_at?->format('Y-m-d H:i'),
             'startAt' => $this->start_at?->format('Y-m-d H:i'),
         ];
     }

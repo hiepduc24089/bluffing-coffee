@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\TournamentStatusEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +13,9 @@ return new class extends Migration
             $table->string('name');
             $table->unsignedInteger('buy_in')->default(0);
             $table->unsignedInteger('capacity');
-            $table->enum('status', TournamentStatusEnum::values())->default(TournamentStatusEnum::Draft->value);
+            // Giá trị viết thẳng: App\Enums\TournamentStatusEnum đã bị xoá ở migration
+            // 2026_08_12_000002, migration cũ không được phụ thuộc vào class ứng dụng.
+            $table->enum('status', ['draft', 'published', 'running', 'completed'])->default('draft');
             $table->dateTime('start_at');
             $table->timestamps();
 

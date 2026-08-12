@@ -7,7 +7,6 @@ export type ContentPageRow = {
   coverImage?: string | null;
   coverImageUrl?: string | null;
   content?: string | null;
-  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -24,7 +23,6 @@ export type ContentPageFormValues = {
   title: string;
   coverImage?: string | null;
   content?: string | null;
-  isPublished: boolean;
 };
 
 export type BannerRow = {
@@ -34,7 +32,6 @@ export type BannerRow = {
   imageUrl?: string | null;
   linkUrl?: string | null;
   sortOrder: number;
-  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -50,7 +47,6 @@ export type BannerFormValues = {
   image: string;
   linkUrl?: string | null;
   sortOrder: number;
-  isActive: boolean;
 };
 
 export type UploadedSettingImage = {

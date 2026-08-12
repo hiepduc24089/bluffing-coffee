@@ -1,4 +1,4 @@
-import type { TournamentStatus } from '@/admin/modules/tournament/types/tournament.type';
+import type { TournamentPhase } from '@/admin/modules/tournament/types/tournament.type';
 
 export type DashboardStats = {
   activeLiveTables: number;
@@ -10,7 +10,7 @@ export type DashboardStats = {
 export type DashboardActivityRow = {
   id: string;
   name: string;
-  status: TournamentStatus;
+  phase: TournamentPhase;
   startAt: string | null;
   capacity: number | null;
   registeredCount: number;

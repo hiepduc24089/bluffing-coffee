@@ -20,7 +20,6 @@ class BannerResource extends JsonResource
             'imageUrl' => $this->publicUrl($this->image),
             'linkUrl' => $this->link_url,
             'sortOrder' => $this->sort_order,
-            'isActive' => $this->is_active,
             'createdAt' => $this->created_at?->format('Y-m-d H:i'),
             'updatedAt' => $this->updated_at?->format('Y-m-d H:i'),
         ];

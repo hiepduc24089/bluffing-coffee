@@ -28,7 +28,7 @@ class TournamentController extends Controller
 
         $tournaments = $this->tournamentService->{$paginate}(
             search: $validated['search'] ?? null,
-            status: $validated['status'] ?? null,
+            phase: $validated['phase'] ?? null,
             perPage: (int) ($validated['per_page'] ?? 10),
         );
 

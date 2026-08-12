@@ -2,28 +2,27 @@
 
 namespace App\Repositories;
 
-use App\Enums\TournamentStatusEnum;
+use App\Enums\TournamentPhaseEnum;
 use App\Models\Tournament;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 class TournamentRepository
 {
-    public function paginate(?string $search, ?string $status, int $perPage): LengthAwarePaginator
+    public function paginate(?string $search, ?string $phase, int $perPage): LengthAwarePaginator
     {
-        return $this->baseListQuery($search, $status)
+        return $this->baseListQuery($search, $phase)
             ->orderByDesc('start_at')
             ->paginate($perPage)
             ->withQueryString();
     }
 
-    public function paginatePublic(?string $search, ?string $status, int $perPage): LengthAwarePaginator
+    /**
+     * Mọi giải đấu đều công khai ngay khi tạo: quán không có bước duyệt/công bố.
+     */
+    public function paginatePublic(?string $search, ?string $phase, int $perPage): LengthAwarePaginator
     {
-        return $this->baseListQuery($search, $status)
-            ->whereIn('status', [
-                TournamentStatusEnum::Published->value,
-                TournamentStatusEnum::Running->value,
-            ])
+        return $this->baseListQuery($search, $phase)
             ->orderByDesc('start_at')
             ->paginate($perPage)
             ->withQueryString();
@@ -35,11 +34,7 @@ class TournamentRepository
     public function publicShowQuery(): Builder
     {
         return Tournament::query()
-            ->with(['rewardProfile', 'gameFormat.levels'])
-            ->whereIn('status', [
-                TournamentStatusEnum::Published->value,
-                TournamentStatusEnum::Running->value,
-            ]);
+            ->with(['tournamentTemplate.levels', 'tournamentTemplate.rewards']);
     }
 
     public function create(array $payload): Tournament
@@ -62,15 +57,15 @@ class TournamentRepository
     /**
      * @return Builder<Tournament>
      */
-    private function baseListQuery(?string $search, ?string $status): Builder
+    private function baseListQuery(?string $search, ?string $phase): Builder
     {
         return Tournament::query()
-            ->with(['rewardProfile', 'gameFormat.levels'])
-            ->when($search, function ($query, string $search) {
+            ->with(['tournamentTemplate.levels', 'tournamentTemplate.rewards'])
+            ->when($search, function (Builder $query, string $search) {
                 $query->where('name', 'like', '%'.$search.'%');
             })
-            ->when($status, function ($query, string $status) {
-                $query->where('status', $status);
+            ->when($phase, function (Builder $query, string $phase) {
+                TournamentPhaseEnum::from($phase)->scope($query);
             });
     }
 }

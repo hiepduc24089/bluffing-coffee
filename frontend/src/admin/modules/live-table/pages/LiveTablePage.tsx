@@ -308,7 +308,7 @@ export function LiveTablePage() {
             }))}
           />
           {selectedTournament ? (
-            <Tag color="blue">{selectedTournament.status}</Tag>
+            <Tag color="blue">{selectedTournament.phase}</Tag>
           ) : null}
         </Space>
 

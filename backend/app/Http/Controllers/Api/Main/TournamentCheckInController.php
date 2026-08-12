@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\Main;
 
 use App\Enums\TournamentRegistrationStatusEnum;
-use App\Enums\TournamentStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TournamentRegistrationResource;
 use App\Http\Resources\TournamentResource;
@@ -21,12 +20,9 @@ class TournamentCheckInController extends Controller
     public function todayTournaments(): AnonymousResourceCollection
     {
         $tournaments = Tournament::query()
-            ->with('rewardProfile')
+            ->with('tournamentTemplate.rewards')
             ->whereBetween('start_at', [now()->startOfDay(), now()->endOfDay()])
-            ->whereIn('status', [
-                TournamentStatusEnum::Published->value,
-                TournamentStatusEnum::Running->value,
-            ])
+            ->whereNull('finalized_at')
             ->orderBy('start_at')
             ->get();
 
@@ -36,7 +32,7 @@ class TournamentCheckInController extends Controller
     public function current(Request $request): JsonResponse
     {
         $registration = $this->activeTodayRegistrationQuery($request)
-            ->with('tournament.rewardProfile')
+            ->with('tournament.tournamentTemplate.rewards')
             ->latest()
             ->first();
 
@@ -59,10 +55,7 @@ class TournamentCheckInController extends Controller
         $tournament = Tournament::query()
             ->whereKey($validated['tournamentId'])
             ->whereBetween('start_at', [now()->startOfDay(), now()->endOfDay()])
-            ->whereIn('status', [
-                TournamentStatusEnum::Published->value,
-                TournamentStatusEnum::Running->value,
-            ])
+            ->whereNull('finalized_at')
             ->first();
 
         if (! $tournament) {
@@ -109,7 +102,7 @@ class TournamentCheckInController extends Controller
         });
 
         return TournamentRegistrationResource::make(
-            $registration->refresh()->load(['tournament.rewardProfile', 'user']),
+            $registration->refresh()->load(['tournament.tournamentTemplate.rewards', 'user']),
         );
     }
 
@@ -121,10 +114,7 @@ class TournamentCheckInController extends Controller
             ->whereHas('tournament', function ($query) {
                 $query
                     ->whereBetween('start_at', [now()->startOfDay(), now()->endOfDay()])
-                    ->whereIn('status', [
-                        TournamentStatusEnum::Published->value,
-                        TournamentStatusEnum::Running->value,
-                    ]);
+                    ->whereNull('finalized_at');
             });
     }
 }

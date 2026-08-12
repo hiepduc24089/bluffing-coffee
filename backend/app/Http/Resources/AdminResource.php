@@ -5,6 +5,9 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin \App\Models\Admin
+ */
 class AdminResource extends JsonResource
 {
     /**
@@ -17,6 +20,8 @@ class AdminResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'role' => 'admin',
+            'isSuperAdmin' => (bool) $this->is_super_admin,
+            'permissions' => $this->permissionKeys(),
         ];
     }
 }

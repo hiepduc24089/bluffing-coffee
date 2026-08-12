@@ -26,6 +26,7 @@ import type {
   TournamentRewardPreviewRow,
   TournamentRow,
 } from '@/admin/modules/tournament/types/tournament.type';
+import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 import { useUnsavedChangesGuard } from '@/shared/hooks/use-unsaved-changes-guard';
 
@@ -46,6 +47,7 @@ const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString
 export function TournamentRegistrationPage() {
   const queryClient = useQueryClient();
   const toast = useAppToast();
+  const { can } = useAdminPermissions();
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>();
   const [selectedUserId, setSelectedUserId] = useState<number>();
   const [selectedEntryType, setSelectedEntryType] = useState<'with_drink' | 'without_drink'>();
@@ -427,29 +429,33 @@ export function TournamentRegistrationPage() {
             onChange={(value) => setSelectedEntryType(value as 'with_drink' | 'without_drink')}
           />
 
-          <AppButton
-            type="primary"
-            icon={<PlusOutlined />}
-            disabled={!canRegister}
-            loading={createMutation.isPending}
-            onClick={() => createMutation.mutate()}
-          >
-            Đăng ký
-          </AppButton>
+          {can('tournament_registration.create') && (
+            <AppButton
+              type="primary"
+              icon={<PlusOutlined />}
+              disabled={!canRegister}
+              loading={createMutation.isPending}
+              onClick={() => createMutation.mutate()}
+            >
+              Đăng ký
+            </AppButton>
+          )}
 
-          <AppButton
-            icon={<GiftOutlined />}
-            disabled={!selectedTournamentId}
-            loading={finalizeMutation.isPending}
-            onClick={() => setPreviewOpen(true)}
-          >
-            Preview finalize
-          </AppButton>
+          {can('special.finalize_rewards') && (
+            <AppButton
+              icon={<GiftOutlined />}
+              disabled={!selectedTournamentId}
+              loading={finalizeMutation.isPending}
+              onClick={() => setPreviewOpen(true)}
+            >
+              Preview finalize
+            </AppButton>
+          )}
         </Space>
 
         {selectedTournament ? (
           <div className="mb-4">
-            <Tag color="blue">{selectedTournament.status}</Tag>
+            <Tag color="blue">{selectedTournament.phase}</Tag>
             <span>{selectedTournament.name}</span>
           </div>
         ) : null}

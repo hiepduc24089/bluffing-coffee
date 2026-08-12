@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Result, Spin } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import AppButton from '@/shared/components/atoms/AppButton';
-import { clockQueryKeys, getClockGameFormat } from '@/main/modules/clock/api/clock.api';
+import { clockQueryKeys, getClockTournamentTemplate } from '@/main/modules/clock/api/clock.api';
 import { ClockBrandTheme } from '@/main/modules/clock/components/clock-brand-theme';
 import { ClockControls } from '@/main/modules/clock/components/clock-controls';
 import { ClockDisplay } from '@/main/modules/clock/components/clock-display';
@@ -15,13 +15,13 @@ export function ClockPage() {
   const { code = '' } = useParams<{ code: string }>();
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 
-  const { data: gameFormat, isLoading, isError } = useQuery({
+  const { data: tournamentTemplate, isLoading, isError } = useQuery({
     queryKey: clockQueryKeys.detail(code),
-    queryFn: () => getClockGameFormat(code),
+    queryFn: () => getClockTournamentTemplate(code),
     enabled: Boolean(code),
   });
 
-  const levels = useMemo(() => gameFormat?.levels ?? [], [gameFormat]);
+  const levels = useMemo(() => tournamentTemplate?.levels ?? [], [tournamentTemplate]);
   const clock = useTournamentClock(code, levels);
   const areControlsVisible = useControlsVisibility(clock.isRunning);
 
@@ -55,7 +55,7 @@ export function ClockPage() {
     );
   }
 
-  if (isError || !gameFormat || !levels.length) {
+  if (isError || !tournamentTemplate || !levels.length) {
     return (
       <ClockBrandTheme>
         <div className="flex min-h-screen items-center justify-center bg-ink px-4">
@@ -87,7 +87,7 @@ export function ClockPage() {
     <ClockBrandTheme>
       <div className="flex min-h-screen flex-col gap-[2vh] bg-ink px-[4vw] py-[3vh] text-white">
         <ClockDisplay
-          gameFormat={gameFormat}
+          tournamentTemplate={tournamentTemplate}
           currentLevel={clock.currentLevel}
           nextLevel={clock.nextLevel}
           levelIndex={clock.levelIndex}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Form, Space, Switch } from 'antd';
+import { Form, Space } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import AppButton from '@/shared/components/atoms/AppButton';
 import AppInputNumber from '@/shared/components/atoms/AppInputNumber';
@@ -30,7 +30,6 @@ export function BannerFormModal({ open, initialValues, submitting, onCancel, onS
     image: '',
     linkUrl: '',
     sortOrder: 0,
-    isActive: true,
   });
 
   useEffect(() => {
@@ -41,7 +40,6 @@ export function BannerFormModal({ open, initialValues, submitting, onCancel, onS
       image: initialValues?.image ?? '',
       linkUrl: initialValues?.linkUrl ?? '',
       sortOrder: initialValues?.sortOrder ?? 0,
-      isActive: initialValues?.isActive ?? true,
     };
 
     setFormValues(nextValues);
@@ -138,12 +136,6 @@ export function BannerFormModal({ open, initialValues, submitting, onCancel, onS
           />
         </Form.Item>
 
-        <Form.Item label="Hiển thị">
-          <Switch
-            checked={formValues.isActive}
-            onChange={(checked) => setFormValues((current) => ({ ...current, isActive: checked }))}
-          />
-        </Form.Item>
       </Form>
     </AppModal>
   );
@@ -163,6 +155,5 @@ function normalizeBannerFormValues(values: BannerFormValues) {
     image: values.image || '',
     linkUrl: values.linkUrl || null,
     sortOrder: Number(values.sortOrder ?? 0),
-    isActive: Boolean(values.isActive),
   };
 }

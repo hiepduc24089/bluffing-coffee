@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Form, Space, Switch } from 'antd';
+import { Form, Space } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import AppButton from '@/shared/components/atoms/AppButton';
 import AppModal from '@/shared/components/atoms/AppModal';
@@ -44,7 +44,6 @@ export function ContentPageFormModal({
     title: '',
     coverImage: null,
     content: '',
-    isPublished: true,
   });
 
   useEffect(() => {
@@ -55,7 +54,6 @@ export function ContentPageFormModal({
       title: initialValues?.title ?? '',
       coverImage: initialValues?.coverImage ?? null,
       content: initialValues?.content ?? '',
-      isPublished: initialValues?.isPublished ?? true,
     };
 
     setFormValues(nextValues);
@@ -156,12 +154,6 @@ export function ContentPageFormModal({
           </Space>
         </Form.Item>
 
-        <Form.Item label="Hiển thị">
-          <Switch
-            checked={formValues.isPublished}
-            onChange={(checked) => setFormValues((current) => ({ ...current, isPublished: checked }))}
-          />
-        </Form.Item>
       </Form>
     </AppModal>
   );
@@ -181,6 +173,5 @@ function normalizeContentPageFormValues(values: ContentPageFormValues) {
     title: values.title ?? '',
     coverImage: values.coverImage || null,
     content: values.content || '',
-    isPublished: Boolean(values.isPublished),
   };
 }

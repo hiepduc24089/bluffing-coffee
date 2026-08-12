@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\TournamentStatusEnum;
 use App\Enums\TournamentTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -22,13 +21,11 @@ class StoreTournamentRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'tournamentType' => ['sometimes', 'string', Rule::in(TournamentTypeEnum::values())],
-            'gameFormatId' => ['nullable', 'integer', 'exists:game_formats,id'],
+            'tournamentTemplateId' => ['nullable', 'integer', 'exists:tournament_templates,id'],
             'buyIn' => ['sometimes', 'integer', 'min:0'],
             'ticketPriceWithDrink' => ['required', 'integer', 'min:0'],
             'ticketPriceWithoutDrink' => ['required', 'integer', 'min:0'],
             'capacity' => ['required', 'integer', 'min:2'],
-            'status' => ['required', 'string', Rule::in(TournamentStatusEnum::values())],
-            'rewardProfileId' => ['nullable', 'integer', 'exists:reward_profiles,id'],
             'startAt' => ['required', 'date_format:Y-m-d H:i'],
         ];
     }

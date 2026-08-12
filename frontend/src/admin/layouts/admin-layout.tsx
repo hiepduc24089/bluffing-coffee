@@ -1,7 +1,6 @@
 import {
   ControlOutlined,
   DashboardOutlined,
-  GiftOutlined,
   TagsOutlined,
   TeamOutlined,
   TrophyOutlined,
@@ -12,58 +11,73 @@ import {
   FileTextOutlined,
   PictureOutlined,
   CalendarOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons';
+import type { ReactNode } from 'react';
 import { Layout, Menu, Typography } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import brandLogo from '@/assets/images/logo/LOGO_BLUFFING_OL_BLUFFING_LOGO_NGANG_W.png';
+import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 
 const { Header, Sider, Content } = Layout;
 
-const menuItems = [
+type MenuEntry = {
+  key: string;
+  icon?: ReactNode;
+  label: ReactNode;
+  /** Quyền tối thiểu để thấy mục này. Bỏ trống nghĩa là ai đăng nhập cũng thấy. */
+  permission?: string;
+  children?: MenuEntry[];
+};
+
+const menuEntries: MenuEntry[] = [
   {
     key: '/admin/dashboard',
     icon: <DashboardOutlined />,
     label: <Link to="/admin/dashboard">Tổng quan</Link>,
+    permission: 'dashboard.view',
   },
   {
     key: '/admin/users',
     icon: <TeamOutlined />,
     label: <Link to="/admin/users">Thành viên</Link>,
+    permission: 'user.view',
   },
   {
-    key: '/admin/game-formats',
+    key: '/admin/tournament-templates',
     icon: <ControlOutlined />,
-    label: <Link to="/admin/game-formats">Chế độ chơi</Link>,
-  },
-  {
-    key: '/admin/reward-profiles',
-    icon: <GiftOutlined />,
-    label: <Link to="/admin/reward-profiles">Mẫu cấu hình giải</Link>,
+    label: <Link to="/admin/tournament-templates">Mẫu giải đấu</Link>,
+    permission: 'tournament_template.view',
   },
   {
     key: '/admin/tournaments',
     icon: <TrophyOutlined />,
     label: <Link to="/admin/tournaments">Giải đấu</Link>,
+    permission: 'tournament.view',
   },
   {
     key: '/admin/tournament-registrations',
     icon: <UserAddOutlined />,
     label: <Link to="/admin/tournament-registrations">Đăng ký giải</Link>,
+    permission: 'tournament_registration.view',
   },
   {
     key: '/admin/badges',
     icon: <TagsOutlined />,
     label: <Link to="/admin/badges">Huy hiệu</Link>,
+    permission: 'badge.view',
   },
   {
     key: '/admin/leaderboard',
     icon: <BarChartOutlined />,
     label: <Link to="/admin/leaderboard">Leaderboard</Link>,
+    permission: 'leaderboard.view',
   },
   {
     key: '/admin/live-tables',
     icon: <TableOutlined />,
     label: 'Live Table',
+    permission: 'live_table.view',
     children: [
       {
         key: '/admin/live-tables/green',
@@ -88,31 +102,64 @@ const menuItems = [
         key: '/admin/settings/posts',
         icon: <FileTextOutlined />,
         label: <Link to="/admin/settings/posts">Bài viết</Link>,
+        permission: 'setting.view',
       },
       {
         key: '/admin/settings/banners',
         icon: <PictureOutlined />,
         label: <Link to="/admin/settings/banners">Banner</Link>,
+        permission: 'setting.view',
       },
       {
         key: '/admin/settings/events',
         icon: <CalendarOutlined />,
         label: <Link to="/admin/settings/events">Sự kiện</Link>,
+        permission: 'setting.view',
+      },
+      {
+        key: '/admin/settings/staff',
+        icon: <IdcardOutlined />,
+        label: <Link to="/admin/settings/staff">Nhân viên</Link>,
+        permission: 'special.manage_staff',
       },
     ],
   },
 ];
 
+/**
+ * Nhóm menu chỉ hiện khi còn ít nhất một mục con xem được, nếu không nhân viên
+ * sẽ thấy một nhóm rỗng bấm vào không ra gì.
+ */
+function filterMenuEntries(
+  entries: MenuEntry[],
+  can: (permission: string) => boolean,
+): MenuEntry[] {
+  return entries.reduce<MenuEntry[]>((visible, entry) => {
+    if (entry.permission && !can(entry.permission)) {
+      return visible;
+    }
+
+    if (!entry.children) {
+      return [...visible, entry];
+    }
+
+    const children = filterMenuEntries(entry.children, can);
+
+    return children.length ? [...visible, { ...entry, children }] : visible;
+  }, []);
+}
+
 export function AdminLayout() {
   const location = useLocation();
+  const { can } = useAdminPermissions();
+  const menuItems = filterMenuEntries(menuEntries, can).map(stripPermission);
+
   const selectedKeys = location.pathname.startsWith('/admin/tournaments')
     ? ['/admin/tournaments']
     : location.pathname.startsWith('/admin/tournament-registrations')
       ? ['/admin/tournament-registrations']
-    : location.pathname.startsWith('/admin/game-formats')
-      ? ['/admin/game-formats']
-    : location.pathname.startsWith('/admin/reward-profiles')
-      ? ['/admin/reward-profiles']
+    : location.pathname.startsWith('/admin/tournament-templates')
+      ? ['/admin/tournament-templates']
     : location.pathname.startsWith('/admin/users')
       ? ['/admin/users']
     : location.pathname.startsWith('/admin/badges')
@@ -157,4 +204,13 @@ export function AdminLayout() {
       </Layout>
     </Layout>
   );
+}
+
+type AntdMenuItem = Omit<MenuEntry, 'permission' | 'children'> & { children?: AntdMenuItem[] };
+
+function stripPermission({ permission: _permission, children, ...entry }: MenuEntry): AntdMenuItem {
+  return {
+    ...entry,
+    ...(children ? { children: children.map(stripPermission) } : {}),
+  };
 }

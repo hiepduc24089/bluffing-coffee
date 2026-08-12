@@ -1,67 +1,36 @@
-import type { GameFormatRow } from '@/admin/modules/game-format/types/game-format.type';
+import type { TournamentTemplateRow } from '@/admin/modules/tournament-template/types/tournament-template.type';
 
-export type TournamentStatus = 'draft' | 'published' | 'running' | 'completed';
+export type TournamentPhase = 'upcoming' | 'running' | 'completed';
 
 export type TournamentRow = {
   id: string;
   name: string;
-  gameFormatId?: number | null;
-  gameFormat?: GameFormatRow | null;
+  tournamentTemplateId?: number | null;
+  tournamentTemplate?: TournamentTemplateRow | null;
   buyIn: number;
   ticketPriceWithDrink: number;
   ticketPriceWithoutDrink: number;
   capacity: number;
-  status: TournamentStatus;
-  rewardProfileId?: number | null;
-  rewardProfile?: RewardProfile;
+  phase: TournamentPhase;
+  finalizedAt?: string | null;
   startAt: string;
 };
 
 export type TournamentFilter = {
   keyword: string;
-  status?: TournamentStatus;
+  phase?: TournamentPhase;
   page: number;
   perPage: number;
 };
 
 export type TournamentFormValues = {
   name: string;
-  gameFormatId?: number | null;
+  tournamentTemplateId?: number | null;
   buyIn: number;
   ticketPriceWithDrink: number;
   ticketPriceWithoutDrink: number;
   capacity: number;
-  status: TournamentStatus;
-  rewardProfileId?: number | null;
   startAt: string;
-};
-
-export type RewardProfileItem = {
-  id: number;
-  position: number;
-  bpReward: number;
-};
-
-export type RewardProfile = {
-  id: number;
-  name: string;
-  code: string;
-  isActive: boolean;
-  defaultPriceWithDrink: number;
-  defaultPriceWithoutDrink: number;
-  items: RewardProfileItem[];
-};
-
-export type RewardProfileFormValues = {
-  name: string;
-  code: string;
-  isActive: boolean;
-  defaultPriceWithDrink: number;
-  defaultPriceWithoutDrink: number;
-  items: Array<{
-    position: number;
-    bpReward: number;
-  }>;
 };
 
 export type TournamentRegistrationStatus = 'registered' | 'finished' | 'cancelled';

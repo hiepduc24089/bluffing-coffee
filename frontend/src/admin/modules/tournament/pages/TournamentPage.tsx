@@ -9,14 +9,13 @@ import AppTable from '@/shared/components/atoms/AppTable';
 import AppTextField from '@/shared/components/atoms/AppTextField';
 import { PageHeader } from '@/shared/components/layout/page-header';
 import {
-  gameFormatQueryKeys,
-  getActiveGameFormats,
-} from '@/admin/modules/game-format/api/game-format.api';
+  tournamentTemplateQueryKeys,
+  getTournamentTemplateOptions,
+} from '@/admin/modules/tournament-template/api/tournament-template.api';
 import { TournamentFormModal } from '@/admin/modules/tournament/components/tournament-form-modal';
 import {
   createTournament,
   deleteTournament,
-  getRewardProfiles,
   tournamentQueryKeys,
   updateTournament,
 } from '@/admin/modules/tournament/api/tournament.api';
@@ -24,13 +23,15 @@ import { useTournamentList } from '@/admin/modules/tournament/hooks/use-tourname
 import type {
   TournamentFilter,
   TournamentFormValues,
+  TournamentPhase,
   TournamentRow,
-  TournamentStatus,
 } from '@/admin/modules/tournament/types/tournament.type';
 import {
-  tournamentStatusColors,
-  tournamentStatusLabels,
-} from '@/admin/modules/tournament/utils/tournament-status';
+  tournamentPhaseColors,
+  tournamentPhaseLabels,
+  tournamentPhaseOptions,
+} from '@/admin/modules/tournament/utils/tournament-phase';
+import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const defaultFilters: TournamentFilter = {
@@ -44,18 +45,15 @@ const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString
 export function TournamentPage() {
   const queryClient = useQueryClient();
   const toast = useAppToast();
+  const { can } = useAdminPermissions();
   const [filters, setFilters] = useState<TournamentFilter>(defaultFilters);
   const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTournament, setEditingTournament] = useState<TournamentRow | null>(null);
   const { data, isLoading } = useTournamentList(filters);
-  const { data: rewardProfiles = [] } = useQuery({
-    queryKey: tournamentQueryKeys.rewardProfiles,
-    queryFn: getRewardProfiles,
-  });
-  const { data: gameFormats = [] } = useQuery({
-    queryKey: gameFormatQueryKeys.active,
-    queryFn: getActiveGameFormats,
+  const { data: tournamentTemplates = [] } = useQuery({
+    queryKey: tournamentTemplateQueryKeys.options,
+    queryFn: getTournamentTemplateOptions,
   });
 
   const createMutation = useMutation({
@@ -92,16 +90,10 @@ export function TournamentPage() {
       key: 'name',
     },
     {
-      title: 'Chế độ chơi',
-      dataIndex: 'gameFormat',
-      key: 'gameFormat',
-      render: (_, record) => record.gameFormat?.name ?? '-',
-    },
-    {
-      title: 'Mẫu cấu hình',
-      dataIndex: 'rewardProfile',
-      key: 'rewardProfile',
-      render: (_, record) => record.rewardProfile?.name ?? '-',
+      title: 'Mẫu giải đấu',
+      dataIndex: 'tournamentTemplate',
+      key: 'tournamentTemplate',
+      render: (_, record) => record.tournamentTemplate?.name ?? '-',
     },
     {
       title: 'Vé + đồ uống',
@@ -122,10 +114,10 @@ export function TournamentPage() {
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: TournamentStatus) => (
-        <Tag color={tournamentStatusColors[status]}>{tournamentStatusLabels[status]}</Tag>
+      dataIndex: 'phase',
+      key: 'phase',
+      render: (phase: TournamentPhase) => (
+        <Tag color={tournamentPhaseColors[phase]}>{tournamentPhaseLabels[phase]}</Tag>
       ),
     },
     {
@@ -139,15 +131,18 @@ export function TournamentPage() {
       width: 120,
       render: (_, record) => (
         <Space size={8}>
-          <Tooltip title="Chỉnh sửa">
-            <AppButton
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingTournament(record);
-                setModalOpen(true);
-              }}
-            />
-          </Tooltip>
+          {can('tournament.update') && (
+            <Tooltip title="Chỉnh sửa">
+              <AppButton
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setEditingTournament(record);
+                  setModalOpen(true);
+                }}
+              />
+            </Tooltip>
+          )}
+          {can('tournament.delete') && (
           <Popconfirm
             title="Xóa giải đấu"
             description="Giải đấu này và các đăng ký liên quan sẽ bị xóa."
@@ -160,6 +155,7 @@ export function TournamentPage() {
               <AppButton danger icon={<DeleteOutlined />} loading={deleteMutation.isPending} />
             </Tooltip>
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -185,15 +181,17 @@ export function TournamentPage() {
         title="Giải đấu"
         subtitle="Quản lý lịch diễn ra, mẫu cấu hình áp dụng, giá vé và sức chứa người chơi."
         extra={
-          <AppButton
-            type="primary"
-            onClick={() => {
-              setEditingTournament(null);
-              setModalOpen(true);
-            }}
-          >
-            Tạo giải đấu
-          </AppButton>
+          can('tournament.create') ? (
+            <AppButton
+              type="primary"
+              onClick={() => {
+                setEditingTournament(null);
+                setModalOpen(true);
+              }}
+            >
+              Tạo giải đấu
+            </AppButton>
+          ) : null
         }
       />
 
@@ -230,19 +228,14 @@ export function TournamentPage() {
             placeholder="Trạng thái"
             allowClear
             style={{ minWidth: 180 }}
-            onChange={(status) =>
+            onChange={(phase) =>
               setFilters((current) => ({
                 ...current,
-                status: status as TournamentStatus | undefined,
+                phase: phase as TournamentPhase | undefined,
                 page: 1,
               }))
             }
-            options={[
-              { label: 'Bản nháp', value: 'draft' },
-              { label: 'Đã công bố', value: 'published' },
-              { label: 'Đang diễn ra', value: 'running' },
-              { label: 'Đã hoàn tất', value: 'completed' },
-            ]}
+            options={tournamentPhaseOptions}
           />
         </Space>
 
@@ -269,8 +262,7 @@ export function TournamentPage() {
         open={modalOpen}
         initialValues={editingTournament ?? undefined}
         submitting={createMutation.isPending || updateMutation.isPending}
-        rewardProfiles={rewardProfiles}
-        gameFormats={gameFormats}
+        tournamentTemplates={tournamentTemplates}
         onCancel={closeModal}
         onSubmit={handleSubmit}
       />

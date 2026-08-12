@@ -22,7 +22,6 @@ class StoreBannerRequest extends FormRequest
             'image' => ['required', 'string', 'max:255', new PublicImagePath()],
             'linkUrl' => ['nullable', 'url:http,https', 'max:255'],
             'sortOrder' => ['nullable', 'integer', 'min:0'],
-            'isActive' => ['nullable', 'boolean'],
         ];
     }
 }

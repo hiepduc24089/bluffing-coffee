@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { Card, Popconfirm, Space, Tag, Tooltip } from 'antd';
+import { Card, Popconfirm, Space, Tooltip } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import AppButton from '@/shared/components/atoms/AppButton';
@@ -21,6 +21,7 @@ import type {
   ContentPageRow,
   ContentPageType,
 } from '@/admin/modules/setting/types/setting.type';
+import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 type ContentPageSettingPageProps = {
@@ -37,6 +38,7 @@ function stripHtml(value?: string | null) {
 export function ContentPageSettingPage({ type, title, subtitle }: ContentPageSettingPageProps) {
   const queryClient = useQueryClient();
   const toast = useAppToast();
+  const { can } = useAdminPermissions();
   const [filters, setFilters] = useState<ContentPageFilter>({
     type,
     keyword: '',
@@ -103,13 +105,6 @@ export function ContentPageSettingPage({ type, title, subtitle }: ContentPageSet
       render: (value?: string | null) => stripHtml(value),
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'isPublished',
-      key: 'isPublished',
-      width: 130,
-      render: (value: boolean) => <Tag color={value ? 'green' : 'default'}>{value ? 'Đang bật' : 'Đang tắt'}</Tag>,
-    },
-    {
       title: 'Cập nhật',
       dataIndex: 'updatedAt',
       key: 'updatedAt',
@@ -121,15 +116,18 @@ export function ContentPageSettingPage({ type, title, subtitle }: ContentPageSet
       width: 120,
       render: (_, record) => (
         <Space size={8}>
-          <Tooltip title="Chỉnh sửa">
-            <AppButton
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingPage(record);
-                setModalOpen(true);
-              }}
-            />
-          </Tooltip>
+          {can('setting.update') && (
+            <Tooltip title="Chỉnh sửa">
+              <AppButton
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setEditingPage(record);
+                  setModalOpen(true);
+                }}
+              />
+            </Tooltip>
+          )}
+          {can('setting.delete') && (
           <Popconfirm
             title={`Xóa ${title.toLowerCase()}`}
             description="Nội dung này sẽ bị xóa khỏi hệ thống."
@@ -142,6 +140,7 @@ export function ContentPageSettingPage({ type, title, subtitle }: ContentPageSet
               <AppButton danger icon={<DeleteOutlined />} loading={deleteMutation.isPending} />
             </Tooltip>
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -170,16 +169,18 @@ export function ContentPageSettingPage({ type, title, subtitle }: ContentPageSet
         title={title}
         subtitle={subtitle}
         extra={
-          <AppButton
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditingPage(null);
-              setModalOpen(true);
-            }}
-          >
-            Tạo {title.toLowerCase()}
-          </AppButton>
+          can('setting.create') ? (
+            <AppButton
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditingPage(null);
+                setModalOpen(true);
+              }}
+            >
+              Tạo {title.toLowerCase()}
+            </AppButton>
+          ) : null
         }
       />
 

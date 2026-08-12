@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\TournamentRegistrationStatusEnum;
-use App\Enums\TournamentStatusEnum;
 use App\Models\BpTransaction;
 use App\Models\Tournament;
 use Illuminate\Support\Facades\DB;
@@ -25,18 +24,24 @@ class TournamentRewardService
     {
         return DB::transaction(function () use ($tournament, $adminId) {
             $lockedTournament = Tournament::query()
-                ->with(['rewardProfile.items', 'registrations.user'])
+                ->with(['tournamentTemplate.rewards', 'registrations.user'])
                 ->whereKey($tournament->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (! $lockedTournament->rewardProfile) {
+            if ($lockedTournament->finalized_at !== null) {
                 throw ValidationException::withMessages([
-                    'rewardProfileId' => 'Giải đấu phải có cấu hình thưởng trước khi finalize.',
+                    'tournament' => 'Giải đấu này đã chốt thưởng rồi.',
                 ]);
             }
 
-            $rewardByPosition = $lockedTournament->rewardProfile->items
+            if (! $lockedTournament->tournamentTemplate) {
+                throw ValidationException::withMessages([
+                    'tournamentTemplateId' => 'Giải đấu phải có mẫu giải đấu trước khi finalize.',
+                ]);
+            }
+
+            $rewardByPosition = $lockedTournament->tournamentTemplate->rewards
                 ->keyBy('position');
 
             $transactions = [];
@@ -93,7 +98,7 @@ class TournamentRewardService
             }
 
             $lockedTournament->update([
-                'status' => TournamentStatusEnum::Completed->value,
+                'finalized_at' => now(),
             ]);
 
             return $transactions;
@@ -105,15 +110,15 @@ class TournamentRewardService
      */
     public function preview(Tournament $tournament): array
     {
-        $tournament->load(['rewardProfile.items', 'registrations.user']);
+        $tournament->load(['tournamentTemplate.rewards', 'registrations.user']);
 
-        if (! $tournament->rewardProfile) {
+        if (! $tournament->tournamentTemplate) {
             throw ValidationException::withMessages([
-                'rewardProfileId' => 'Giải đấu phải có cấu hình thưởng trước khi finalize.',
+                'tournamentTemplateId' => 'Giải đấu phải có mẫu giải đấu trước khi finalize.',
             ]);
         }
 
-        $rewardByPosition = $tournament->rewardProfile->items->keyBy('position');
+        $rewardByPosition = $tournament->tournamentTemplate->rewards->keyBy('position');
 
         return $tournament->registrations
             ->map(function ($registration) use ($tournament, $rewardByPosition) {

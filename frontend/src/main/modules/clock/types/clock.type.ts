@@ -10,7 +10,7 @@ export type ClockLevel = {
   note?: string | null;
 };
 
-export type ClockGameFormat = {
+export type ClockTournamentTemplate = {
   id: number;
   name: string;
   code: string;
