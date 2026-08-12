@@ -13,13 +13,6 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-<<<<<<< Updated upstream
-        Admin::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@bluffing.coffee',
-            'is_super_admin' => true,
-        ]);
-=======
         Admin::query()->firstOrCreate(
             ['email' => 'admin@bluffing.coffee'],
             [
@@ -28,6 +21,5 @@ class AdminSeeder extends Seeder
                 'is_super_admin' => true,
             ],
         );
->>>>>>> Stashed changes
     }
 }
