@@ -19,3 +19,11 @@ export const tournamentPhaseLabels: Record<TournamentPhase, string> = {
 export const tournamentPhaseOptions = (
   Object.keys(tournamentPhaseLabels) as TournamentPhase[]
 ).map((phase) => ({ label: tournamentPhaseLabels[phase], value: phase }));
+
+/** Giá trị giả cho lựa chọn "Tất cả" ở bộ lọc — không gửi lên API. */
+export const ALL_TOURNAMENT_PHASES = 'all';
+
+export const tournamentPhaseFilterOptions: Array<{
+  label: string;
+  value: TournamentPhase | typeof ALL_TOURNAMENT_PHASES;
+}> = [{ label: 'Tất cả', value: ALL_TOURNAMENT_PHASES }, ...tournamentPhaseOptions];

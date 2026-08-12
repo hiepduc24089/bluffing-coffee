@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { DeleteOutlined, FireOutlined, HistoryOutlined, ReloadOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  ClockCircleOutlined,
+  DeleteOutlined,
+  FireOutlined,
+  HistoryOutlined,
+  ReloadOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { Card, Empty, Popconfirm, Space, Spin, Tag, Tooltip, Typography } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router-dom';
@@ -16,6 +23,7 @@ import {
   rebuyLiveTablePlayer,
   selectLiveTableTournament,
 } from '@/admin/modules/live-table/api/live-table.api';
+import { LiveSeatPlayerModal } from '@/admin/modules/live-table/components/live-seat-player-modal';
 import type {
   LiveTableKey,
   LiveTableSeat,
@@ -87,6 +95,7 @@ function LiveSeat({
   seat,
   disabled,
   onDropRegistration,
+  onPickPlayer,
   onClear,
   onEliminate,
 }: {
@@ -94,14 +103,32 @@ function LiveSeat({
   seat?: LiveTableSeat;
   disabled?: boolean;
   onDropRegistration: (registrationId: number, seatNumber: number) => void;
+  onPickPlayer: (seatNumber: number) => void;
   onClear: (seatNumber: number) => void;
   onEliminate: (seatNumber: number) => void;
 }) {
   const registration = seat?.registration;
+  // Ghế trống bấm được để mở danh sách người chơi; ghế đã có người chỉ dùng nút thao tác
+  // để tránh thay người nhầm khi bấm vào bàn.
+  const isSelectable = !registration && !disabled;
 
   return (
     <div
-      className={`live-seat live-seat--${seatNumber} ${registration ? 'live-seat--occupied' : ''}`}
+      className={`live-seat live-seat--${seatNumber} ${registration ? 'live-seat--occupied' : ''} ${
+        isSelectable ? 'live-seat--selectable' : ''
+      }`}
+      role={isSelectable ? 'button' : undefined}
+      tabIndex={isSelectable ? 0 : undefined}
+      onClick={() => {
+        if (!isSelectable) return;
+        onPickPlayer(seatNumber);
+      }}
+      onKeyDown={(event) => {
+        if (!isSelectable) return;
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        onPickPlayer(seatNumber);
+      }}
       onDragOver={(event) => {
         if (disabled) return;
         event.preventDefault();
@@ -167,6 +194,7 @@ export function LiveTablePage() {
   const routeTableKey = params.tableKey;
   const tableKey: LiveTableKey = isLiveTableKey(routeTableKey) ? routeTableKey : 'green';
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>();
+  const [pickingSeatNumber, setPickingSeatNumber] = useState<number>();
 
   const todayTournamentsQuery = useQuery({
     queryKey: liveTableQueryKeys.todayTournaments,
@@ -199,6 +227,10 @@ export function LiveTablePage() {
       }, {}),
     [state?.seats],
   );
+
+  // Trang clock chạy theo mã mẫu giải đấu, nên bàn live mở đúng chế độ của giải đang chọn.
+  const clockTemplateCode =
+    state?.tournament?.tournamentTemplate?.code ?? selectedTournament?.tournamentTemplate?.code;
 
   const setStateCache = (nextState: LiveTableState) => {
     queryClient.setQueryData(liveTableQueryKeys.detail(tableKey, nextState.tournament?.id), nextState);
@@ -233,6 +265,7 @@ export function LiveTablePage() {
       }),
     onSuccess: (nextState) => {
       setStateCache(nextState);
+      setPickingSeatNumber(undefined);
       toast.success('Đã cập nhật ghế.');
     },
   });
@@ -280,13 +313,34 @@ export function LiveTablePage() {
         title={tableLabels[tableKey]}
         subtitle="Xếp người chơi vào bàn live, swap ghế, xử lý cháy và re-buy trong tournament."
         extra={
-          <AppButton
-            icon={<ReloadOutlined />}
-            onClick={() => invalidateState()}
-            loading={stateQuery.isFetching || todayTournamentsQuery.isFetching}
-          >
-            Tải lại
-          </AppButton>
+          <Space size={8} wrap>
+            <Tooltip
+              title={
+                clockTemplateCode
+                  ? 'Mở đồng hồ theo chế độ của giải đang chọn'
+                  : 'Giải đang chọn chưa gắn mẫu giải đấu'
+              }
+            >
+              <span>
+                <AppButton
+                  icon={<ClockCircleOutlined />}
+                  href={clockTemplateCode ? `/clock/${clockTemplateCode}` : undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  disabled={!clockTemplateCode}
+                >
+                  Mở đồng hồ
+                </AppButton>
+              </span>
+            </Tooltip>
+            <AppButton
+              icon={<ReloadOutlined />}
+              onClick={() => invalidateState()}
+              loading={stateQuery.isFetching || todayTournamentsQuery.isFetching}
+            >
+              Tải lại
+            </AppButton>
+          </Space>
         }
       />
 
@@ -334,6 +388,7 @@ export function LiveTablePage() {
                     onDropRegistration={(registrationId, toSeatNumber) =>
                       moveMutation.mutate({ tournamentRegistrationId: registrationId, toSeatNumber })
                     }
+                    onPickPlayer={(targetSeatNumber) => setPickingSeatNumber(targetSeatNumber)}
                     onClear={(targetSeatNumber) => clearMutation.mutate(targetSeatNumber)}
                     onEliminate={(targetSeatNumber) => eliminateMutation.mutate(targetSeatNumber)}
                   />
@@ -404,6 +459,21 @@ export function LiveTablePage() {
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có lịch sử" />
         )}
       </Card>
+
+      <LiveSeatPlayerModal
+        open={pickingSeatNumber !== undefined}
+        seatNumber={pickingSeatNumber}
+        registrations={state?.availableRegistrations ?? []}
+        submitting={moveMutation.isPending}
+        onSelect={(registrationId) => {
+          if (pickingSeatNumber === undefined) return;
+          moveMutation.mutate({
+            tournamentRegistrationId: registrationId,
+            toSeatNumber: pickingSeatNumber,
+          });
+        }}
+        onClose={() => setPickingSeatNumber(undefined)}
+      />
     </div>
   );
 }

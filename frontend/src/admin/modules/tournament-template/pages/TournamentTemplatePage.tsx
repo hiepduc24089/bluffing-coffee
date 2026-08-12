@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   ClockCircleOutlined,
-  CopyOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
@@ -18,7 +17,6 @@ import { PageHeader } from '@/shared/components/layout/page-header';
 import {
   createTournamentTemplate,
   deleteTournamentTemplate,
-  duplicateTournamentTemplate,
   tournamentTemplateQueryKeys,
   updateTournamentTemplate,
 } from '@/admin/modules/tournament-template/api/tournament-template.api';
@@ -32,11 +30,12 @@ import type {
   TournamentTypeValue,
 } from '@/admin/modules/tournament-template/types/tournament-template.type';
 import {
+  ALL_TOURNAMENT_TYPES,
   formatChips,
   formatCurrency,
   formatDuration,
   getTournamentTypeLabel,
-  tournamentTypeOptions,
+  tournamentTypeFilterOptions,
 } from '@/admin/modules/tournament-template/utils/tournament-template.util';
 import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
@@ -82,14 +81,6 @@ export function TournamentTemplatePage() {
     onSuccess: async () => {
       toast.success('Đã cập nhật mẫu giải đấu.');
       closeModal();
-      await invalidateTemplates();
-    },
-  });
-
-  const duplicateMutation = useMutation({
-    mutationFn: duplicateTournamentTemplate,
-    onSuccess: async () => {
-      toast.success('Đã nhân bản mẫu giải đấu.');
       await invalidateTemplates();
     },
   });
@@ -211,15 +202,6 @@ export function TournamentTemplatePage() {
               disabled={!record.levels.length}
             />
           </Tooltip>
-          {can('tournament_template.create') && (
-            <Tooltip title="Nhân bản">
-              <AppButton
-                icon={<CopyOutlined />}
-                loading={duplicateMutation.isPending}
-                onClick={() => duplicateMutation.mutate(record.id)}
-              />
-            </Tooltip>
-          )}
           {can('tournament_template.update') && (
             <Tooltip title="Chỉnh sửa">
               <AppButton
@@ -303,15 +285,15 @@ export function TournamentTemplatePage() {
             onPressEnter={applySearch}
           />
           <AppSelect
-            allowClear
             placeholder="Nhóm giải"
             style={{ minWidth: 180 }}
-            options={tournamentTypeOptions}
-            value={filters.tournamentType}
+            options={tournamentTypeFilterOptions}
+            value={filters.tournamentType ?? ALL_TOURNAMENT_TYPES}
             onChange={(value) =>
               setFilters((current) => ({
                 ...current,
-                tournamentType: value as TournamentTypeValue | undefined,
+                tournamentType:
+                  value === ALL_TOURNAMENT_TYPES ? undefined : (value as TournamentTypeValue),
                 page: 1,
               }))
             }

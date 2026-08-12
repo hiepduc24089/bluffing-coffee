@@ -31,7 +31,7 @@ là đơn *câm*: có trong doanh thu, không có bill giấy. Đổi lại, to�
 thu tại quầy — nếu sau này muốn cho thanh toán trong app thì phải thiết kế lại
 phần này.
 
-## Luồng dữ liệu
+## Luồng dữ liệu — hội viên lần đầu
 
 ```
    ┌──────────────────────────────────────────────────────────────┐
@@ -63,6 +63,102 @@ phần này.
 
 Độ trễ giữa bước 3 và bước 5 là 30–60 giây. UI phải hiển thị trạng thái "đang
 xác nhận thanh toán" để người chơi không hoang mang.
+
+## Luồng dữ liệu — hội viên đã có
+
+Từ lần thứ hai trở đi, **nhánh đẩy hội viên biến mất hoàn toàn**. Không gọi
+`POST /api/partners` nữa, không tra `getbycode` nữa. `users.pos365_partner_id`
+đã có giá trị nên chỉ còn đúng một chiều dữ liệu chạy: POS365 → Bluffing.
+
+```
+   ┌──────────────────────────────────────────────────────────────┐
+   │                         Bluffing                             │
+   │                                                              │
+   │  users (pos365_partner_id đã có) ── không gọi API gì cả      │
+   │                                                              │
+   │  1. Đăng ký giải ──► tournament_registrations                │
+   │                      status = pending_payment                │
+   │            ▲                                                 │
+   │            │ 4. khớp qua Partner.Code ──► registered + BP    │
+   │            │                                                 │
+   │      pos365_order_imports ◄── 3. cron 60s                    │
+   └──────────────────────────────────────────────────────────────┘
+                                          ▲
+   ┌──────────────────────────────────────┴───────────────────────┐
+   │                         POS365                               │
+   │  2. Thu ngân gõ SĐT ──► khách hiện ra ──► bán BUYIN-* ──► IN │
+   └──────────────────────────────────────────────────────────────┘
+```
+
+Đường thường ngày chỉ có vậy. Bốn tình huống còn lại mới là phần cần xử lý.
+
+### A. Hồ sơ đổi bên Bluffing
+
+Người chơi đổi tên hiển thị hoặc số điện thoại. Bắn lại `POST /api/partners`
+kèm `Id` (chính là `pos365_partner_id`) — cùng một endpoint tạo mới, có `Id` thì
+POS365 hiểu là cập nhật. Giữ nguyên `Code`, đừng đổi, vì `Code` là khoá ghép.
+
+Chỉ đẩy khi `name` hoặc `phone` thật sự đổi. So sánh trước khi gọi, đừng đẩy mù
+mỗi lần user bấm lưu hồ sơ.
+
+### B. Hội viên cũ nhưng chưa từng đẩy sang POS365
+
+Xảy ra với toàn bộ hội viên có trước ngày tích hợp, và với những ca đẩy lỗi
+(`pos365_synced_at IS NULL`). Không đợi họ ra quầy mới xử lý — chạy một job
+backfill một lần cho toàn bộ user cũ, rồi sau đó chỉ còn hàng đợi retry.
+
+Nếu người chơi ra quầy trước khi được đẩy: thu ngân không tìm thấy khách, sẽ tự
+tạo mới trên máy POS, và rơi vào ca D.
+
+### C. Rebuy / add-on giữa giải
+
+Đây là khác biệt lớn nhất của hội viên đã có, và **hệ thống hiện chưa mô hình
+hoá được**. `tournament_registrations` chỉ có ba trạng thái `registered` /
+`finished` / `cancelled`, mỗi người một dòng cho một giải, một `entry_price` duy
+nhất. Không có chỗ nào ghi "người này mua thêm 2 rebuy".
+
+Người chơi đã `registered`, đang ngồi bàn, hết chip, ra quầy mua rebuy. Đơn về
+mang mã `REBUY` chứ không phải `BUYIN-*`. Luật khớp phải khác hẳn nhánh buy-in:
+tìm registration đang `registered` của user đó ở giải chạy trong ngày, rồi ghi
+thêm một dòng mua — chứ không đổi trạng thái gì cả.
+
+Cần thêm bảng `tournament_registration_purchases` (`registration_id`, `kind` ∈
+`buyin`/`rebuy`/`addon`, `amount`, `pos365_order_import_id`) và chuyển
+`entry_price` thành tổng cộng dồn từ bảng này. **Việc này phải làm trước khi
+tích hợp POS365**, không phải sau — nếu không thì rebuy kéo về sẽ không có chỗ
+để ghi và rơi hết vào `unmatched`.
+
+Nếu quán chưa bán rebuy thì bỏ qua mục này và đừng khai mã `REBUY` / `ADDON`
+trong POS365 — thà thiếu còn hơn có mã mà không xử lý được.
+
+### D. Khách được tạo thẳng trên máy POS
+
+Thu ngân tạo khách mới ngay tại quầy, POS365 sinh `Code` dạng `KH-10341`. Người
+này có thể đã là hội viên Bluffing (chỉ là thu ngân tìm không ra), hoặc là khách
+vãng lai chưa bao giờ đăng ký.
+
+Đơn kéo về có `Partner` nhưng `Code` không bắt đầu bằng `BC-` → `unmatched`,
+vào hàng đợi đối soát. Admin chọn một trong hai:
+
+- **Gắn vào hội viên có sẵn** → ghi `pos365_partner_id`, rồi gọi `PartnerSave`
+  ghi đè `Code` thành `BC-000042`. Từ lần sau khách này khớp tự động.
+- **Là khách vãng lai** → tạo user mới bên Bluffing rồi làm y hệt trên, hoặc
+  đánh dấu `ignored` nếu họ không muốn thành hội viên.
+
+Ca này sẽ xảy ra thường xuyên trong tuần đầu và thưa dần. Việc ghi đè `Code`
+ngược lại POS365 là thứ khiến nó tự thu hẹp — mỗi lần đối soát tay là vĩnh viễn
+cho khách đó, không phải làm lại.
+
+### E. Khách không gắn với ai
+
+Đơn thuần F&B, hoặc buy-in mà thu ngân quên chọn khách. Không có `PartnerId` →
+`ignored` nếu không chứa mã buy-in, `unmatched` nếu có.
+
+Buy-in mà quên chọn khách là ca tệ nhất: không có manh mối nào ngoài giờ mua và
+số tiền. Đối soát tay dựa vào giờ đơn so với giờ check-in. Cách phòng tốt hơn là
+đặt mã buy-in vào một nhóm hàng riêng và nhờ POS365 bật ràng buộc bắt buộc chọn
+khách cho nhóm đó — cần hỏi hỗ trợ xem có làm được không (mục 10 trong
+checklist).
 
 ## API POS365 — phần đã kiểm chứng
 
@@ -373,6 +469,13 @@ thiết kế này sập và phải đổi nhà cung cấp.
    in nên gần như chắc là không, nhưng thử một lần cho dứt điểm: nếu bất ngờ
    *có*, thiết kế đảo lại được — Bluffing đẩy đơn buy-in sang, quầy chỉ thu tiền
    — và toàn bộ phần khớp đơn ở trên biến mất.
+10. POS365 có bắt buộc chọn khách hàng cho một nhóm hàng cụ thể được không (xem
+    ca E). Nếu được thì số đơn `unmatched` giảm hẳn.
+11. `PartnerSave` có cho ghi đè `Code` của khách đã tồn tại không, hay `Code` là
+    bất biến sau khi tạo. **Ca D phụ thuộc hoàn toàn vào việc này.** Nếu không
+    ghi đè được thì phải lưu ánh xạ ngược ở phía Bluffing
+    (`users.pos365_partner_id` trỏ tới `KH-xxxxx`) và khớp bằng `PartnerId` thay
+    vì `Code` — vẫn chạy được, chỉ là mất tính "nhìn mã biết hội viên".
 
 ## Rủi ro đã biết
 

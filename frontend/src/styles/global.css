@@ -1072,6 +1072,16 @@ body {
   background: #f0fdfa;
 }
 
+.live-seat--selectable {
+  cursor: pointer;
+}
+
+.live-seat--selectable:hover .live-seat__empty {
+  color: #8a6d1f;
+  border-color: #c9a227;
+  background: #fffdf5;
+}
+
 .live-seat__number {
   position: absolute;
   top: -10px;
@@ -1210,6 +1220,46 @@ body {
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
+}
+
+.live-seat-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.live-seat-picker__list {
+  display: flex;
+  max-height: 46vh;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.live-seat-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px;
+  cursor: pointer;
+  text-align: left;
+  border: 1px solid #e6e0d2;
+  border-radius: 8px;
+  background: #ffffff;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.live-seat-picker__item:hover:not(:disabled) {
+  border-color: #c9a227;
+  background: #fffdf5;
+}
+
+.live-seat-picker__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .live-eliminated-row {

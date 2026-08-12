@@ -13,6 +13,14 @@ export const tournamentTypeOptions: Array<{
   { label: 'Sit & Go', value: 'sitngo' },
 ];
 
+/** Giá trị giả cho lựa chọn "Tất cả" ở bộ lọc — không gửi lên API. */
+export const ALL_TOURNAMENT_TYPES = 'all';
+
+export const tournamentTypeFilterOptions: Array<{
+  label: string;
+  value: TournamentTypeValue | typeof ALL_TOURNAMENT_TYPES;
+}> = [{ label: 'Tất cả', value: ALL_TOURNAMENT_TYPES }, ...tournamentTypeOptions];
+
 export function getTournamentTypeLabel(value: TournamentTypeValue) {
   return tournamentTypeOptions.find((option) => option.value === value)?.label ?? value;
 }

@@ -27,9 +27,10 @@ import type {
   TournamentRow,
 } from '@/admin/modules/tournament/types/tournament.type';
 import {
+  ALL_TOURNAMENT_PHASES,
   tournamentPhaseColors,
+  tournamentPhaseFilterOptions,
   tournamentPhaseLabels,
-  tournamentPhaseOptions,
 } from '@/admin/modules/tournament/utils/tournament-phase';
 import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
@@ -226,16 +227,16 @@ export function TournamentPage() {
           </AppButton>
           <AppSelect
             placeholder="Trạng thái"
-            allowClear
             style={{ minWidth: 180 }}
+            value={filters.phase ?? ALL_TOURNAMENT_PHASES}
             onChange={(phase) =>
               setFilters((current) => ({
                 ...current,
-                phase: phase as TournamentPhase | undefined,
+                phase: phase === ALL_TOURNAMENT_PHASES ? undefined : (phase as TournamentPhase),
                 page: 1,
               }))
             }
-            options={tournamentPhaseOptions}
+            options={tournamentPhaseFilterOptions}
           />
         </Space>
 

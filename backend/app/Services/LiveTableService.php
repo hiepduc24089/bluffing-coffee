@@ -27,6 +27,7 @@ class LiveTableService
     public function todayTournaments(): Collection
     {
         return Tournament::query()
+            ->with('tournamentTemplate')
             ->whereBetween('start_at', [now()->startOfDay(), now()->endOfDay()])
             ->orderBy('start_at')
             ->get();
@@ -40,7 +41,7 @@ class LiveTableService
         $table = $this->ensureTable($tableKey);
         $resolvedTournamentId = $tournamentId ?? $table->current_tournament_id;
         $tournament = $resolvedTournamentId
-            ? Tournament::query()->find($resolvedTournamentId)
+            ? Tournament::query()->with('tournamentTemplate')->find($resolvedTournamentId)
             : null;
 
         $seats = collect();
