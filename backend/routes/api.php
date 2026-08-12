@@ -6,18 +6,18 @@ use App\Http\Controllers\Api\Admin\BannerController;
 use App\Http\Controllers\Api\Admin\BpTransactionController;
 use App\Http\Controllers\Api\Admin\ContentPageController;
 use App\Http\Controllers\Api\Admin\DashboardController;
-use App\Http\Controllers\Api\Admin\GameFormatController;
 use App\Http\Controllers\Api\Admin\LeaderboardController;
 use App\Http\Controllers\Api\Admin\LiveTableController;
-use App\Http\Controllers\Api\Admin\RewardProfileController;
 use App\Http\Controllers\Api\Admin\SettingImageController;
+use App\Http\Controllers\Api\Admin\StaffController;
 use App\Http\Controllers\Api\Admin\TournamentBpTransactionController;
 use App\Http\Controllers\Api\Admin\TournamentRegistrationController;
 use App\Http\Controllers\Api\Admin\TournamentRewardController;
+use App\Http\Controllers\Api\Admin\TournamentTemplateController;
 use App\Http\Controllers\Api\Admin\UserController;
-use App\Http\Controllers\Api\Main\GameFormatController as MainGameFormatController;
 use App\Http\Controllers\Api\Main\MainAuthController;
 use App\Http\Controllers\Api\Main\TournamentCheckInController;
+use App\Http\Controllers\Api\Main\TournamentTemplateController as MainTournamentTemplateController;
 use App\Http\Controllers\Api\TournamentController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,89 +34,160 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
         });
 
-        Route::prefix('reward-profiles')->name('reward-profiles.')->group(function () {
-            Route::get('/', [RewardProfileController::class, 'index'])->name('index');
-            Route::post('/', [RewardProfileController::class, 'store'])->name('store');
-            Route::get('{reward_profile}', [RewardProfileController::class, 'show'])->name('show');
-            Route::match(['put', 'patch'], '{reward_profile}', [RewardProfileController::class, 'update'])
-                ->name('update');
-            Route::delete('{reward_profile}', [RewardProfileController::class, 'destroy'])->name('destroy');
+        Route::prefix('staff')->name('staff.')
+            ->middleware('permission:special.manage_staff')
+            ->group(function () {
+                Route::get('/', [StaffController::class, 'index'])->name('index');
+                Route::post('/', [StaffController::class, 'store'])->name('store');
+                Route::put('{staff}', [StaffController::class, 'update'])->name('update');
+                Route::put('{staff}/permissions', [StaffController::class, 'syncPermissions'])
+                    ->name('permissions.update');
+                Route::delete('{staff}', [StaffController::class, 'destroy'])->name('destroy');
+            });
+
+        Route::get('permissions/catalog', [StaffController::class, 'catalog'])
+            ->middleware('permission:special.manage_staff')
+            ->name('permissions.catalog');
+
+        Route::prefix('tournament-templates')->name('tournament-templates.')->group(function () {
+            Route::get('/', [TournamentTemplateController::class, 'index'])
+                ->middleware('permission:tournament_template.view')->name('index');
+            Route::post('/', [TournamentTemplateController::class, 'store'])
+                ->middleware('permission:tournament_template.create')->name('store');
+            Route::post('{tournament_template}/duplicate', [TournamentTemplateController::class, 'duplicate'])
+                ->middleware('permission:tournament_template.create')->name('duplicate');
+            Route::get('{tournament_template}', [TournamentTemplateController::class, 'show'])
+                ->middleware('permission:tournament_template.view')->name('show');
+            Route::match(['put', 'patch'], '{tournament_template}', [TournamentTemplateController::class, 'update'])
+                ->middleware('permission:tournament_template.update')->name('update');
+            Route::delete('{tournament_template}', [TournamentTemplateController::class, 'destroy'])
+                ->middleware('permission:tournament_template.delete')->name('destroy');
         });
 
-        Route::post('game-formats/{game_format}/duplicate', [GameFormatController::class, 'duplicate'])
-            ->name('game-formats.duplicate');
-        Route::apiResource('game-formats', GameFormatController::class);
-
         Route::prefix('tournaments')->name('tournaments.')->group(function () {
-            Route::get('/', [TournamentController::class, 'index'])->name('index');
-            Route::post('/', [TournamentController::class, 'store'])->name('store');
-            Route::get('{tournament}', [TournamentController::class, 'show'])->name('show');
+            Route::get('/', [TournamentController::class, 'index'])
+                ->middleware('permission:tournament.view')->name('index');
+            Route::post('/', [TournamentController::class, 'store'])
+                ->middleware('permission:tournament.create')->name('store');
+            Route::get('{tournament}', [TournamentController::class, 'show'])
+                ->middleware('permission:tournament.view')->name('show');
             Route::match(['put', 'patch'], '{tournament}', [TournamentController::class, 'update'])
-                ->name('update');
-            Route::delete('{tournament}', [TournamentController::class, 'destroy'])->name('destroy');
+                ->middleware('permission:tournament.update')->name('update');
+            Route::delete('{tournament}', [TournamentController::class, 'destroy'])
+                ->middleware('permission:tournament.delete')->name('destroy');
 
             Route::prefix('{tournament}/registrations')->name('registrations.')->group(function () {
-                Route::get('/', [TournamentRegistrationController::class, 'index'])->name('index');
-                Route::post('/', [TournamentRegistrationController::class, 'store'])->name('store');
+                Route::get('/', [TournamentRegistrationController::class, 'index'])
+                    ->middleware('permission:tournament_registration.view')->name('index');
+                Route::post('/', [TournamentRegistrationController::class, 'store'])
+                    ->middleware('permission:tournament_registration.create')->name('store');
             });
 
             Route::post('{tournament}/finalize-rewards', [TournamentRewardController::class, 'finalize'])
-                ->name('finalize-rewards');
+                ->middleware('permission:special.finalize_rewards')->name('finalize-rewards');
             Route::get('{tournament}/reward-preview', [TournamentRewardController::class, 'preview'])
-                ->name('reward-preview');
+                ->middleware('permission:tournament.view')->name('reward-preview');
 
             Route::get('{tournament}/bp-transactions', [TournamentBpTransactionController::class, 'index'])
-                ->name('bp-transactions.index');
+                ->middleware('permission:tournament.view')->name('bp-transactions.index');
         });
 
         Route::prefix('tournament-registrations')->name('tournament-registrations.')->group(function () {
-            Route::put('{registration}', [TournamentRegistrationController::class, 'update'])->name('update');
-            Route::delete('{registration}', [TournamentRegistrationController::class, 'destroy'])->name('destroy');
+            Route::put('{registration}', [TournamentRegistrationController::class, 'update'])
+                ->middleware('permission:tournament_registration.update')->name('update');
+            Route::delete('{registration}', [TournamentRegistrationController::class, 'destroy'])
+                ->middleware('permission:tournament_registration.delete')->name('destroy');
         });
 
-        Route::prefix('bp-transactions')->name('bp-transactions.')->group(function () {
-            Route::put('{transaction}', [TournamentBpTransactionController::class, 'update'])->name('update');
-            Route::delete('{transaction}', [TournamentBpTransactionController::class, 'destroy'])->name('destroy');
-        });
+        Route::prefix('bp-transactions')->name('bp-transactions.')
+            ->middleware('permission:special.adjust_bp')
+            ->group(function () {
+                Route::put('{transaction}', [TournamentBpTransactionController::class, 'update'])->name('update');
+                Route::delete('{transaction}', [TournamentBpTransactionController::class, 'destroy'])->name('destroy');
+            });
 
         Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/', [UserController::class, 'index'])
+                ->middleware('permission:user.view')->name('index');
+            Route::post('/', [UserController::class, 'store'])
+                ->middleware('permission:user.create')->name('store');
+            Route::get('{user}', [UserController::class, 'show'])
+                ->middleware('permission:user.view')->name('show');
+            Route::match(['put', 'patch'], '{user}', [UserController::class, 'update'])
+                ->middleware('permission:user.update')->name('update');
+            Route::delete('{user}', [UserController::class, 'destroy'])
+                ->middleware('permission:user.delete')->name('destroy');
+
             Route::get('{user}/bp-transactions', [BpTransactionController::class, 'index'])
-                ->name('bp-transactions.index');
+                ->middleware('permission:user.view')->name('bp-transactions.index');
             Route::post('{user}/bp-adjustments', [BpTransactionController::class, 'adjust'])
-                ->name('bp-adjustments.store');
+                ->middleware('permission:special.adjust_bp')->name('bp-adjustments.store');
             Route::post('{user}/reset-password', [UserController::class, 'resetPassword'])
-                ->name('reset-password');
+                ->middleware('permission:special.reset_member_password')->name('reset-password');
             Route::post('{user}/badges', [UserController::class, 'attachBadge'])
-                ->name('badges.attach');
+                ->middleware('permission:user.update')->name('badges.attach');
             Route::delete('{user}/badges/{badge}', [UserController::class, 'detachBadge'])
-                ->name('badges.detach');
+                ->middleware('permission:user.update')->name('badges.detach');
         });
 
-        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+        Route::get('dashboard', [DashboardController::class, 'index'])
+            ->middleware('permission:dashboard.view')->name('dashboard.index');
 
-        Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+        Route::get('leaderboard', [LeaderboardController::class, 'index'])
+            ->middleware('permission:leaderboard.view')->name('leaderboard.index');
 
         Route::prefix('live-tables')->name('live-tables.')->group(function () {
             Route::get('tournaments/today', [LiveTableController::class, 'todayTournaments'])
-                ->name('tournaments.today');
-            Route::get('{tableKey}', [LiveTableController::class, 'show'])->name('show');
+                ->middleware('permission:live_table.view')->name('tournaments.today');
+            Route::get('{tableKey}', [LiveTableController::class, 'show'])
+                ->middleware('permission:live_table.view')->name('show');
             Route::put('{tableKey}/tournament', [LiveTableController::class, 'selectTournament'])
-                ->name('tournament.update');
-            Route::post('{tableKey}/seats/move', [LiveTableController::class, 'move'])->name('seats.move');
+                ->middleware('permission:live_table.update')->name('tournament.update');
+            Route::post('{tableKey}/seats/move', [LiveTableController::class, 'move'])
+                ->middleware('permission:live_table.update')->name('seats.move');
             Route::delete('{tableKey}/seats/{seatNumber}', [LiveTableController::class, 'clear'])
-                ->name('seats.clear');
+                ->middleware('permission:live_table.update')->name('seats.clear');
             Route::post('{tableKey}/seats/{seatNumber}/eliminate', [LiveTableController::class, 'eliminate'])
-                ->name('seats.eliminate');
+                ->middleware('permission:live_table.update')->name('seats.eliminate');
             Route::post('registrations/{registration}/rebuy', [LiveTableController::class, 'rebuy'])
-                ->name('registrations.rebuy');
+                ->middleware('permission:live_table.update')->name('registrations.rebuy');
         });
 
-        Route::apiResource('users', UserController::class);
-        Route::apiResource('badges', BadgeController::class)->except(['show']);
-        Route::apiResource('content-pages', ContentPageController::class)->except(['show']);
-        Route::apiResource('banners', BannerController::class)->except(['show']);
+        Route::prefix('badges')->name('badges.')->group(function () {
+            Route::get('/', [BadgeController::class, 'index'])
+                ->middleware('permission:badge.view')->name('index');
+            Route::post('/', [BadgeController::class, 'store'])
+                ->middleware('permission:badge.create')->name('store');
+            Route::match(['put', 'patch'], '{badge}', [BadgeController::class, 'update'])
+                ->middleware('permission:badge.update')->name('update');
+            Route::delete('{badge}', [BadgeController::class, 'destroy'])
+                ->middleware('permission:badge.delete')->name('destroy');
+        });
+
+        Route::prefix('content-pages')->name('content-pages.')->group(function () {
+            Route::get('/', [ContentPageController::class, 'index'])
+                ->middleware('permission:setting.view')->name('index');
+            Route::post('/', [ContentPageController::class, 'store'])
+                ->middleware('permission:setting.create')->name('store');
+            Route::match(['put', 'patch'], '{content_page}', [ContentPageController::class, 'update'])
+                ->middleware('permission:setting.update')->name('update');
+            Route::delete('{content_page}', [ContentPageController::class, 'destroy'])
+                ->middleware('permission:setting.delete')->name('destroy');
+        });
+
+        Route::prefix('banners')->name('banners.')->group(function () {
+            Route::get('/', [BannerController::class, 'index'])
+                ->middleware('permission:setting.view')->name('index');
+            Route::post('/', [BannerController::class, 'store'])
+                ->middleware('permission:setting.create')->name('store');
+            Route::match(['put', 'patch'], '{banner}', [BannerController::class, 'update'])
+                ->middleware('permission:setting.update')->name('update');
+            Route::delete('{banner}', [BannerController::class, 'destroy'])
+                ->middleware('permission:setting.delete')->name('destroy');
+        });
+
         Route::post('setting-images', [SettingImageController::class, 'store'])
-            ->name('setting-images.store');
+            ->middleware('permission:setting.create')->name('setting-images.store');
     });
 });
 
@@ -132,9 +203,9 @@ Route::prefix('main')->name('main.')->group(function () {
         Route::get('{tournament}', [TournamentController::class, 'show'])->name('show');
     });
 
-    Route::prefix('game-formats')->name('game-formats.')->group(function () {
-        Route::get('/', [MainGameFormatController::class, 'index'])->name('index');
-        Route::get('{code}', [MainGameFormatController::class, 'show'])->name('show');
+    Route::prefix('tournament-templates')->name('tournament-templates.')->group(function () {
+        Route::get('/', [MainTournamentTemplateController::class, 'index'])->name('index');
+        Route::get('{code}', [MainTournamentTemplateController::class, 'show'])->name('show');
     });
 
     Route::middleware(['auth:sanctum', 'role:member'])->group(function () {

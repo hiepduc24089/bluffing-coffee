@@ -17,8 +17,8 @@ import type {
 
 const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}đ`;
 
-function getStatusLabel(status: CheckInTournament['status']) {
-  return status === 'running' ? 'Đang diễn ra' : 'Đã mở';
+function getPhaseLabel(phase: CheckInTournament['phase']) {
+  return phase === 'running' ? 'Đang diễn ra' : 'Sắp diễn ra';
 }
 
 export function CheckInPage() {
@@ -139,8 +139,8 @@ export function CheckInPage() {
                       <strong>{tournament.name}</strong>
                       <small>{tournament.startAt}</small>
                     </span>
-                    <Tag color={tournament.status === 'running' ? 'green' : 'blue'}>
-                      {checkedIn ? 'Đang tham gia' : getStatusLabel(tournament.status)}
+                    <Tag color={tournament.phase === 'running' ? 'green' : 'blue'}>
+                      {checkedIn ? 'Đang tham gia' : getPhaseLabel(tournament.phase)}
                     </Tag>
                   </button>
                 );

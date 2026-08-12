@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\TournamentPhaseEnum;
 use App\Models\LiveTable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -19,7 +20,7 @@ class DashboardActivityResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'status' => $this->status->value,
+            'phase' => TournamentPhaseEnum::for($this->resource)->value,
             'startAt' => $this->start_at?->format('Y-m-d H:i'),
             'capacity' => $this->capacity,
             'registeredCount' => (int) ($this->registered_count ?? 0),

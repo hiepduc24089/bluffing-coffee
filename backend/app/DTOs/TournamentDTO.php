@@ -2,7 +2,6 @@
 
 namespace App\DTOs;
 
-use App\Enums\TournamentStatusEnum;
 use App\Enums\TournamentTypeEnum;
 use Carbon\CarbonImmutable;
 
@@ -11,32 +10,28 @@ readonly class TournamentDTO
     public function __construct(
         public string $name,
         public TournamentTypeEnum $tournamentType,
-        public ?int $gameFormatId,
+        public ?int $tournamentTemplateId,
         public int $buyIn,
         public int $ticketPriceWithDrink,
         public int $ticketPriceWithoutDrink,
         public int $capacity,
-        public TournamentStatusEnum $status,
-        public ?int $rewardProfileId,
         public CarbonImmutable $startAt,
     ) {
     }
 
     /**
-     * @param array{name: string, tournamentType?: string, gameFormatId?: int|null, buyIn?: int, capacity: int, status: string, rewardProfileId?: int|null, startAt: string} $payload
+     * @param array{name: string, tournamentType?: string, tournamentTemplateId?: int|null, buyIn?: int, capacity: int, startAt: string} $payload
      */
     public static function fromArray(array $payload): self
     {
         return new self(
             name: $payload['name'],
             tournamentType: TournamentTypeEnum::from($payload['tournamentType'] ?? TournamentTypeEnum::Normal->value),
-            gameFormatId: isset($payload['gameFormatId']) ? (int) $payload['gameFormatId'] : null,
+            tournamentTemplateId: isset($payload['tournamentTemplateId']) ? (int) $payload['tournamentTemplateId'] : null,
             buyIn: (int) ($payload['buyIn'] ?? 0),
             ticketPriceWithDrink: (int) ($payload['ticketPriceWithDrink'] ?? 0),
             ticketPriceWithoutDrink: (int) ($payload['ticketPriceWithoutDrink'] ?? 0),
             capacity: (int) $payload['capacity'],
-            status: TournamentStatusEnum::from($payload['status']),
-            rewardProfileId: isset($payload['rewardProfileId']) ? (int) $payload['rewardProfileId'] : null,
             startAt: CarbonImmutable::parse($payload['startAt']),
         );
     }
@@ -49,13 +44,11 @@ readonly class TournamentDTO
         return [
             'name' => $this->name,
             'tournament_type' => $this->tournamentType->value,
-            'game_format_id' => $this->gameFormatId,
+            'tournament_template_id' => $this->tournamentTemplateId,
             'buy_in' => $this->buyIn,
             'ticket_price_with_drink' => $this->ticketPriceWithDrink,
             'ticket_price_without_drink' => $this->ticketPriceWithoutDrink,
             'capacity' => $this->capacity,
-            'status' => $this->status->value,
-            'reward_profile_id' => $this->rewardProfileId,
             'start_at' => $this->startAt,
         ];
     }

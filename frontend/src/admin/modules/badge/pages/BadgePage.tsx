@@ -17,6 +17,7 @@ import {
 import { BadgeFormModal } from '@/admin/modules/badge/components/badge-form-modal';
 import { useBadgeList } from '@/admin/modules/badge/hooks/use-badge-list';
 import type { BadgeFilter, BadgeFormValues, BadgeRow } from '@/admin/modules/badge/types/badge.type';
+import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const defaultFilters: BadgeFilter = {
@@ -28,6 +29,7 @@ const defaultFilters: BadgeFilter = {
 export function BadgePage() {
   const queryClient = useQueryClient();
   const toast = useAppToast();
+  const { can } = useAdminPermissions();
   const [filters, setFilters] = useState<BadgeFilter>(defaultFilters);
   const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
   const [modalOpen, setModalOpen] = useState(false);
@@ -106,15 +108,18 @@ export function BadgePage() {
       width: 120,
       render: (_, record) => (
         <Space size={8}>
-          <Tooltip title="Chỉnh sửa">
-            <AppButton
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingBadge(record);
-                setModalOpen(true);
-              }}
-            />
-          </Tooltip>
+          {can('badge.update') && (
+            <Tooltip title="Chỉnh sửa">
+              <AppButton
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setEditingBadge(record);
+                  setModalOpen(true);
+                }}
+              />
+            </Tooltip>
+          )}
+          {can('badge.delete') && (
           <Popconfirm
             title="Xóa huy hiệu"
             description="Huy hiệu này sẽ bị xóa khỏi danh sách và khỏi các thành viên đã nhận."
@@ -133,6 +138,7 @@ export function BadgePage() {
               />
             </Tooltip>
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -160,9 +166,11 @@ export function BadgePage() {
         title="Huy hiệu"
         subtitle="Quản lý các huy hiệu được cấp theo thành tích tournament."
         extra={
-          <AppButton type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-            Thêm huy hiệu
-          </AppButton>
+          can('badge.create') ? (
+            <AppButton type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
+              Thêm huy hiệu
+            </AppButton>
+          ) : null
         }
       />
 

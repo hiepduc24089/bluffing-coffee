@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\DTOs\TournamentDTO;
 use App\Models\Tournament;
-use App\Repositories\GameFormatRepository;
 use App\Repositories\TournamentRepository;
+use App\Repositories\TournamentTemplateRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -13,18 +13,18 @@ class TournamentService
 {
     public function __construct(
         private readonly TournamentRepository $tournamentRepository,
-        private readonly GameFormatRepository $gameFormatRepository,
+        private readonly TournamentTemplateRepository $tournamentTemplateRepository,
     ) {
     }
 
-    public function paginate(?string $search, ?string $status, int $perPage): LengthAwarePaginator
+    public function paginate(?string $search, ?string $phase, int $perPage): LengthAwarePaginator
     {
-        return $this->tournamentRepository->paginate($search, $status, $perPage);
+        return $this->tournamentRepository->paginate($search, $phase, $perPage);
     }
 
-    public function paginatePublic(?string $search, ?string $status, int $perPage): LengthAwarePaginator
+    public function paginatePublic(?string $search, ?string $phase, int $perPage): LengthAwarePaginator
     {
-        return $this->tournamentRepository->paginatePublic($search, $status, $perPage);
+        return $this->tournamentRepository->paginatePublic($search, $phase, $perPage);
     }
 
     public function findPublic(string $id): Tournament
@@ -36,7 +36,7 @@ class TournamentService
     {
         return DB::transaction(function () use ($dto) {
             return $this->tournamentRepository->create(
-                $this->syncTypeWithGameFormat($dto->toDatabasePayload()),
+                $this->syncTypeWithTemplate($dto->toDatabasePayload()),
             );
         });
     }
@@ -51,7 +51,7 @@ class TournamentService
 
             return $this->tournamentRepository->update(
                 $lockedTournament,
-                $this->syncTypeWithGameFormat($dto->toDatabasePayload()),
+                $this->syncTypeWithTemplate($dto->toDatabasePayload()),
             );
         });
     }
@@ -70,24 +70,24 @@ class TournamentService
 
     /**
      * The coarse tournament type still drives statistics and badges, so it must follow
-     * whichever game format staff selected instead of drifting apart from it.
+     * whichever template staff selected instead of drifting apart from it.
      *
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    private function syncTypeWithGameFormat(array $payload): array
+    private function syncTypeWithTemplate(array $payload): array
     {
-        if (empty($payload['game_format_id'])) {
+        if (empty($payload['tournament_template_id'])) {
             return $payload;
         }
 
-        $gameFormat = $this->gameFormatRepository->find((int) $payload['game_format_id']);
+        $template = $this->tournamentTemplateRepository->find((int) $payload['tournament_template_id']);
 
-        if ($gameFormat === null) {
+        if ($template === null) {
             return $payload;
         }
 
-        $payload['tournament_type'] = $gameFormat->tournament_type->value;
+        $payload['tournament_type'] = $template->tournament_type->value;
 
         return $payload;
     }

@@ -15,8 +15,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminSeeder::class,
             MemberSeeder::class,
-            RewardProfileSeeder::class,
-            GameFormatSeeder::class,
+            TournamentTemplateSeeder::class,
             BadgeSeeder::class,
         ]);
     }

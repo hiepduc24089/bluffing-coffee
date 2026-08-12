@@ -2,8 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enums\TournamentPhaseEnum;
 use App\Enums\TournamentRegistrationStatusEnum;
-use App\Enums\TournamentStatusEnum;
 use App\Enums\UserRoleEnum;
 use App\Models\LiveTable;
 use App\Models\Tournament;
@@ -18,7 +18,7 @@ class DashboardRepository
     {
         return LiveTable::query()
             ->whereHas('currentTournament', function (Builder $query) {
-                $query->where('status', TournamentStatusEnum::Running->value);
+                TournamentPhaseEnum::Running->scope($query);
             })
             ->count();
     }
@@ -26,7 +26,7 @@ class DashboardRepository
     public function countOpenTournaments(): int
     {
         return Tournament::query()
-            ->whereIn('status', $this->openStatuses())
+            ->whereNull('finalized_at')
             ->count();
     }
 
@@ -35,7 +35,7 @@ class DashboardRepository
         return TournamentRegistration::query()
             ->where('status', TournamentRegistrationStatusEnum::Registered->value)
             ->whereHas('tournament', function (Builder $query) {
-                $query->whereIn('status', $this->openStatuses());
+                $query->whereNull('finalized_at');
             })
             ->count();
     }
@@ -62,16 +62,5 @@ class DashboardRepository
             ->orderByDesc('start_at')
             ->limit($limit)
             ->get();
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function openStatuses(): array
-    {
-        return [
-            TournamentStatusEnum::Published->value,
-            TournamentStatusEnum::Running->value,
-        ];
     }
 }

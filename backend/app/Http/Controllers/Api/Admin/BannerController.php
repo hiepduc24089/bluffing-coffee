@@ -43,7 +43,6 @@ class BannerController extends Controller
             'image' => $validated['image'],
             'link_url' => $validated['linkUrl'] ?? null,
             'sort_order' => $validated['sortOrder'] ?? 0,
-            'is_active' => $validated['isActive'] ?? true,
         ]);
 
         return BannerResource::make($banner);
@@ -58,7 +57,6 @@ class BannerController extends Controller
             'image' => $validated['image'],
             'link_url' => $validated['linkUrl'] ?? null,
             'sort_order' => $validated['sortOrder'] ?? 0,
-            'is_active' => $validated['isActive'] ?? true,
         ]);
 
         return BannerResource::make($banner);

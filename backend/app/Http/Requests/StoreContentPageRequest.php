@@ -23,7 +23,6 @@ class StoreContentPageRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'coverImage' => ['nullable', 'string', 'max:255', new PublicImagePath()],
             'content' => ['nullable', 'string'],
-            'isPublished' => ['nullable', 'boolean'],
         ];
     }
 }

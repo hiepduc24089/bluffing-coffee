@@ -20,7 +20,6 @@ class ContentPageResource extends JsonResource
             'coverImage' => $this->cover_image,
             'coverImageUrl' => $this->publicUrl($this->cover_image),
             'content' => $this->content,
-            'isPublished' => $this->is_published,
             'createdAt' => $this->created_at?->format('Y-m-d H:i'),
             'updatedAt' => $this->updated_at?->format('Y-m-d H:i'),
         ];

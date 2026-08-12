@@ -7,13 +7,12 @@ import AppInputNumber from '@/shared/components/atoms/AppInputNumber';
 import AppModal from '@/shared/components/atoms/AppModal';
 import AppSelect from '@/shared/components/atoms/AppSelect';
 import AppTextField from '@/shared/components/atoms/AppTextField';
-import type { GameFormatRow } from '@/admin/modules/game-format/types/game-format.type';
+import type { TournamentTemplateRow } from '@/admin/modules/tournament-template/types/tournament-template.type';
 import {
   formatChips,
   formatDuration,
-} from '@/admin/modules/game-format/utils/game-format.util';
+} from '@/admin/modules/tournament-template/utils/tournament-template.util';
 import type {
-  RewardProfile,
   TournamentFormValues,
   TournamentRow,
 } from '@/admin/modules/tournament/types/tournament.type';
@@ -26,8 +25,7 @@ type TournamentFormModalProps = {
   open: boolean;
   initialValues?: TournamentRow;
   submitting?: boolean;
-  rewardProfiles?: RewardProfile[];
-  gameFormats?: GameFormatRow[];
+  tournamentTemplates?: TournamentTemplateRow[];
   onCancel: () => void;
   onSubmit: (values: TournamentFormValues) => Promise<void> | void;
 };
@@ -36,17 +34,16 @@ export function TournamentFormModal({
   open,
   initialValues,
   submitting,
-  rewardProfiles = [],
-  gameFormats = [],
+  tournamentTemplates = [],
   onCancel,
   onSubmit,
 }: TournamentFormModalProps) {
   const [form] = Form.useForm();
   const watchedValues = Form.useWatch([], form);
-  const selectedGameFormatId = Form.useWatch('gameFormatId', form);
+  const selectedTemplateId = Form.useWatch('tournamentTemplateId', form);
   const [initialSnapshot, setInitialSnapshot] = useState('');
-  const selectedGameFormat = gameFormats.find(
-    (gameFormat) => gameFormat.id === selectedGameFormatId,
+  const selectedTemplate = tournamentTemplates.find(
+    (template) => template.id === selectedTemplateId,
   );
 
   useEffect(() => {
@@ -64,8 +61,7 @@ export function TournamentFormModal({
     }
 
     const nextValues = {
-      status: 'draft',
-      gameFormatId: null,
+      tournamentTemplateId: null,
       buyIn: 0,
       ticketPriceWithDrink: 0,
       ticketPriceWithoutDrink: 0,
@@ -103,8 +99,7 @@ export function TournamentFormModal({
                 startAt: dayjs(initialValues.startAt),
               }
             : {
-                status: 'draft',
-                gameFormatId: null,
+                tournamentTemplateId: null,
                 buyIn: 0,
                 ticketPriceWithDrink: 0,
                 ticketPriceWithoutDrink: 0,
@@ -114,13 +109,11 @@ export function TournamentFormModal({
         onFinish={(values) =>
           onSubmit({
             name: values.name,
-            gameFormatId: values.gameFormatId ?? null,
+            tournamentTemplateId: values.tournamentTemplateId ?? null,
             buyIn: values.buyIn,
             ticketPriceWithDrink: values.ticketPriceWithDrink,
             ticketPriceWithoutDrink: values.ticketPriceWithoutDrink,
             capacity: values.capacity,
-            status: values.status,
-            rewardProfileId: values.rewardProfileId ?? null,
             startAt: values.startAt.format('YYYY-MM-DD HH:mm'),
           })
         }
@@ -130,37 +123,27 @@ export function TournamentFormModal({
         </Form.Item>
 
         <Form.Item
-          name="gameFormatId"
-          label="Chế độ chơi"
-          extra={selectedGameFormat ? describeGameFormat(selectedGameFormat) : undefined}
+          name="tournamentTemplateId"
+          label="Mẫu giải đấu"
+          extra={selectedTemplate ? describeTemplate(selectedTemplate) : undefined}
         >
           <AppSelect
             allowClear
             showSearch
             optionFilterProp="label"
-            placeholder="Chọn chế độ chơi áp dụng"
-            options={gameFormats.map((gameFormat) => ({
-              label: `${gameFormat.name} (${gameFormat.code})`,
-              value: gameFormat.id,
-            }))}
-          />
-        </Form.Item>
-
-        <Form.Item name="rewardProfileId" label="Mẫu cấu hình áp dụng">
-          <AppSelect
-            allowClear
-            options={rewardProfiles.map((profile) => ({
-              label: `${profile.name} (${profile.code})`,
-              value: profile.id,
+            placeholder="Chọn mẫu giải đấu áp dụng"
+            options={tournamentTemplates.map((template) => ({
+              label: `${template.name} (${template.code})`,
+              value: template.id,
             }))}
             onChange={(value) => {
-              const profile = rewardProfiles.find((item) => item.id === value);
+              const template = tournamentTemplates.find((item) => item.id === value);
 
-              if (!profile) return;
+              if (!template) return;
 
               form.setFieldsValue({
-                ticketPriceWithDrink: profile.defaultPriceWithDrink,
-                ticketPriceWithoutDrink: profile.defaultPriceWithoutDrink,
+                ticketPriceWithDrink: template.defaultPriceWithDrink,
+                ticketPriceWithoutDrink: template.defaultPriceWithoutDrink,
               });
             }}
           />
@@ -198,21 +181,6 @@ export function TournamentFormModal({
         </Form.Item>
 
         <Form.Item
-          name="status"
-          label="Trạng thái"
-          rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-        >
-          <AppSelect
-            options={[
-              { label: 'Bản nháp', value: 'draft' },
-              { label: 'Đã công bố', value: 'published' },
-              { label: 'Đang diễn ra', value: 'running' },
-              { label: 'Đã hoàn tất', value: 'completed' },
-            ]}
-          />
-        </Form.Item>
-
-        <Form.Item
           name="startAt"
           label="Thời gian bắt đầu"
           rules={[{ required: true, message: 'Vui lòng chọn thời gian bắt đầu' }]}
@@ -231,24 +199,30 @@ export function TournamentFormModal({
   );
 }
 
-function describeGameFormat(gameFormat: GameFormatRow) {
-  const lateReg = gameFormat.lateRegUntilLevel
-    ? `late reg đến hết level ${gameFormat.lateRegUntilLevel}`
+function describeTemplate(template: TournamentTemplateRow) {
+  const lateReg = template.lateRegUntilLevel
+    ? `late reg đến hết level ${template.lateRegUntilLevel}`
     : 'late reg không giới hạn';
 
-  return `Stack ${formatChips(gameFormat.startingStack)} · ${gameFormat.levelCount} level · ${lateReg} · ước tính ${formatDuration(gameFormat.totalDurationMinutes)}`;
+  const rewards = template.rewards.length
+    ? template.rewards
+        .slice()
+        .sort((a, b) => a.position - b.position)
+        .map((reward) => `#${reward.position} ${reward.bpReward} BP`)
+        .join(' · ')
+    : 'chưa cấu hình BP thưởng';
+
+  return `Stack ${formatChips(template.startingStack)} · ${template.levelCount} level · ${lateReg} · ước tính ${formatDuration(template.totalDurationMinutes)} — ${rewards}`;
 }
 
 function normalizeTournamentFormValues(values: Record<string, unknown>) {
   return {
     name: values.name ?? '',
-    gameFormatId: values.gameFormatId ?? null,
+    tournamentTemplateId: values.tournamentTemplateId ?? null,
     buyIn: Number(values.buyIn ?? 0),
     ticketPriceWithDrink: Number(values.ticketPriceWithDrink ?? 0),
     ticketPriceWithoutDrink: Number(values.ticketPriceWithoutDrink ?? 0),
     capacity: Number(values.capacity ?? 9),
-    status: values.status ?? 'draft',
-    rewardProfileId: values.rewardProfileId ?? null,
     startAt: values.startAt ?? null,
   };
 }

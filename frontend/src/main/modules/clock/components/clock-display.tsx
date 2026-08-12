@@ -1,5 +1,5 @@
 import { ClockBrandMark } from '@/main/modules/clock/components/clock-brand-mark';
-import type { ClockGameFormat, ClockLevel } from '@/main/modules/clock/types/clock.type';
+import type { ClockTournamentTemplate, ClockLevel } from '@/main/modules/clock/types/clock.type';
 import {
   describeLevel,
   formatChips,
@@ -9,7 +9,7 @@ import {
 } from '@/main/modules/clock/utils/clock.util';
 
 type ClockDisplayProps = {
-  gameFormat: ClockGameFormat;
+  tournamentTemplate: ClockTournamentTemplate;
   currentLevel: ClockLevel | null;
   nextLevel: ClockLevel | null;
   levelIndex: number;
@@ -19,7 +19,7 @@ type ClockDisplayProps = {
 };
 
 export function ClockDisplay({
-  gameFormat,
+  tournamentTemplate,
   currentLevel,
   nextLevel,
   levelIndex,
@@ -29,7 +29,7 @@ export function ClockDisplay({
 }: ClockDisplayProps) {
   const isBreak = Boolean(currentLevel?.isBreak);
   const isEndingSoon = remainingMs > 0 && remainingMs <= 60_000;
-  const minutesLeftInFormat = remainingFormatMinutes(gameFormat.levels, levelIndex + 1);
+  const minutesLeftInFormat = remainingFormatMinutes(tournamentTemplate.levels, levelIndex + 1);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-between gap-[2vh] text-center">
@@ -37,13 +37,13 @@ export function ClockDisplay({
         <span className="flex items-center gap-[clamp(0.5rem,1.4vw,1.2rem)]">
           <ClockBrandMark />
           <span className="text-[clamp(0.95rem,2.2vw,2rem)] font-semibold tracking-wide text-brand">
-            {gameFormat.name}
+            {tournamentTemplate.name}
           </span>
         </span>
         <span className="text-[clamp(0.8rem,1.8vw,1.6rem)] font-medium text-neutral-400">
           {isBreak
             ? 'Giải lao'
-            : `Level ${currentLevel?.levelNumber ?? '-'} / ${gameFormat.levelCount}`}
+            : `Level ${currentLevel?.levelNumber ?? '-'} / ${tournamentTemplate.levelCount}`}
         </span>
       </header>
 
@@ -93,9 +93,9 @@ export function ClockDisplay({
           Tiếp theo: <span className="text-white">{describeLevel(nextLevel)}</span>
         </span>
         <span className="text-[clamp(0.7rem,1.6vw,1.3rem)] text-neutral-400">
-          Stack {formatChips(gameFormat.startingStack)}
-          {gameFormat.lateRegUntilLevel
-            ? ` · Late reg hết level ${gameFormat.lateRegUntilLevel}`
+          Stack {formatChips(tournamentTemplate.startingStack)}
+          {tournamentTemplate.lateRegUntilLevel
+            ? ` · Late reg hết level ${tournamentTemplate.lateRegUntilLevel}`
             : ' · Late reg không giới hạn'}
           {minutesLeftInFormat ? ` · Còn khoảng ${formatDuration(minutesLeftInFormat)}` : ''}
         </span>

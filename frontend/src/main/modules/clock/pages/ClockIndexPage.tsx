@@ -1,15 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Empty, Spin } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import { clockQueryKeys, getClockGameFormats } from '@/main/modules/clock/api/clock.api';
+import { clockQueryKeys, getClockTournamentTemplates } from '@/main/modules/clock/api/clock.api';
 import { ClockBrandMark } from '@/main/modules/clock/components/clock-brand-mark';
 import { ClockBrandTheme } from '@/main/modules/clock/components/clock-brand-theme';
 import { formatChips, formatDuration } from '@/main/modules/clock/utils/clock.util';
 
 export function ClockIndexPage() {
-  const { data: gameFormats = [], isLoading } = useQuery({
+  const { data: tournamentTemplates = [], isLoading } = useQuery({
     queryKey: clockQueryKeys.all,
-    queryFn: getClockGameFormats,
+    queryFn: getClockTournamentTemplates,
   });
 
   return (
@@ -31,26 +31,26 @@ export function ClockIndexPage() {
           <div className="flex justify-center py-20">
             <Spin size="large" />
           </div>
-        ) : gameFormats.length ? (
+        ) : tournamentTemplates.length ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {gameFormats.map((gameFormat) => (
+            {tournamentTemplates.map((tournamentTemplate) => (
               <Link
-                key={gameFormat.id}
-                to={`/clock/${gameFormat.code}`}
+                key={tournamentTemplate.id}
+                to={`/clock/${tournamentTemplate.code}`}
                 className="rounded-2xl border border-brand/20 bg-brand/5 p-5 transition hover:border-brand/70 hover:bg-brand/10"
               >
                 <span className="block text-[clamp(1.1rem,2.4vw,1.6rem)] font-semibold text-brand">
-                  {gameFormat.name}
+                  {tournamentTemplate.name}
                 </span>
-                <span className="mt-1 block text-sm text-neutral-500">{gameFormat.code}</span>
+                <span className="mt-1 block text-sm text-neutral-500">{tournamentTemplate.code}</span>
                 <span className="mt-4 block text-sm text-neutral-300">
-                  Stack {formatChips(gameFormat.startingStack)} · {gameFormat.levelCount} level ·{' '}
-                  {gameFormat.breakCount} break
+                  Stack {formatChips(tournamentTemplate.startingStack)} · {tournamentTemplate.levelCount} level ·{' '}
+                  {tournamentTemplate.breakCount} break
                 </span>
                 <span className="mt-1 block text-sm text-neutral-400">
-                  Ước tính {formatDuration(gameFormat.totalDurationMinutes)}
-                  {gameFormat.lateRegUntilLevel
-                    ? ` · Late reg hết level ${gameFormat.lateRegUntilLevel}`
+                  Ước tính {formatDuration(tournamentTemplate.totalDurationMinutes)}
+                  {tournamentTemplate.lateRegUntilLevel
+                    ? ` · Late reg hết level ${tournamentTemplate.lateRegUntilLevel}`
                     : ''}
                 </span>
               </Link>

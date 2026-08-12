@@ -44,7 +44,6 @@ class ContentPageController extends Controller
             'title' => $validated['title'],
             'cover_image' => $validated['coverImage'] ?? null,
             'content' => HtmlSanitizer::clean($validated['content'] ?? null),
-            'is_published' => $validated['isPublished'] ?? true,
         ]);
 
         return ContentPageResource::make($page);
@@ -59,7 +58,6 @@ class ContentPageController extends Controller
             'title' => $validated['title'],
             'cover_image' => $validated['coverImage'] ?? null,
             'content' => HtmlSanitizer::clean($validated['content'] ?? null),
-            'is_published' => $validated['isPublished'] ?? true,
         ]);
 
         return ContentPageResource::make($contentPage);

@@ -8,11 +8,11 @@ import {
   getDashboardSummary,
 } from '@/admin/modules/dashboard/api/dashboard.api';
 import type { DashboardActivityRow } from '@/admin/modules/dashboard/types/dashboard.type';
-import type { TournamentStatus } from '@/admin/modules/tournament/types/tournament.type';
+import type { TournamentPhase } from '@/admin/modules/tournament/types/tournament.type';
 import {
-  tournamentStatusColors,
-  tournamentStatusLabels,
-} from '@/admin/modules/tournament/utils/tournament-status';
+  tournamentPhaseColors,
+  tournamentPhaseLabels,
+} from '@/admin/modules/tournament/utils/tournament-phase';
 
 const activityColumns: ColumnsType<DashboardActivityRow> = [
   {
@@ -42,10 +42,10 @@ const activityColumns: ColumnsType<DashboardActivityRow> = [
   },
   {
     title: 'Trạng thái',
-    dataIndex: 'status',
-    key: 'status',
-    render: (status: TournamentStatus) => (
-      <Tag color={tournamentStatusColors[status]}>{tournamentStatusLabels[status]}</Tag>
+    dataIndex: 'phase',
+    key: 'phase',
+    render: (phase: TournamentPhase) => (
+      <Tag color={tournamentPhaseColors[phase]}>{tournamentPhaseLabels[phase]}</Tag>
     ),
   },
 ];

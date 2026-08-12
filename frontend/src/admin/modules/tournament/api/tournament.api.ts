@@ -5,11 +5,9 @@ import type {
   TournamentFilter,
   TournamentFormValues,
   TournamentRow,
-  RewardProfile,
   TournamentRegistrationRow,
   TournamentRegistrationStatus,
   BpTransactionRow,
-  RewardProfileFormValues,
   TournamentRewardPreviewRow,
 } from '@/admin/modules/tournament/types/tournament.type';
 
@@ -21,8 +19,7 @@ const mockRows: TournamentRow[] = [
     ticketPriceWithDrink: 85000,
     ticketPriceWithoutDrink: 60000,
     capacity: 60,
-    status: 'published',
-    rewardProfileId: null,
+    phase: 'running',
     startAt: '2026-05-16 19:00',
   },
   {
@@ -32,8 +29,7 @@ const mockRows: TournamentRow[] = [
     ticketPriceWithDrink: 85000,
     ticketPriceWithoutDrink: 60000,
     capacity: 120,
-    status: 'draft',
-    rewardProfileId: null,
+    phase: 'upcoming',
     startAt: '2026-05-18 14:00',
   },
 ];
@@ -41,7 +37,6 @@ const mockRows: TournamentRow[] = [
 export const tournamentQueryKeys = {
   all: ['tournaments'] as const,
   list: (filters: TournamentFilter) => [...tournamentQueryKeys.all, filters] as const,
-  rewardProfiles: ['reward-profiles'] as const,
 };
 
 export async function getTournamentList(
@@ -52,7 +47,7 @@ export async function getTournamentList(
       headers: getAdminAuthHeaders(),
       params: {
         search: filters.keyword || undefined,
-        status: filters.status,
+        phase: filters.phase,
         page: filters.page,
         per_page: filters.perPage,
       },
@@ -64,9 +59,9 @@ export async function getTournamentList(
       const matchesKeyword =
         !filters.keyword ||
         row.name.toLowerCase().includes(filters.keyword.toLowerCase());
-      const matchesStatus = !filters.status || row.status === filters.status;
+      const matchesPhase = !filters.phase || row.phase === filters.phase;
 
-      return matchesKeyword && matchesStatus;
+      return matchesKeyword && matchesPhase;
     });
 
     return {
@@ -95,39 +90,6 @@ export async function updateTournament(id: string, payload: TournamentFormValues
 
 export async function deleteTournament(id: string): Promise<void> {
   await http.delete(`/admin/tournaments/${id}`, {
-    headers: getAdminAuthHeaders(),
-  });
-}
-
-export async function getRewardProfiles(): Promise<RewardProfile[]> {
-  const response = await http.get<{ data: RewardProfile[] }>('/admin/reward-profiles', {
-    headers: getAdminAuthHeaders(),
-  });
-
-  return response.data.data;
-}
-
-export async function createRewardProfile(payload: RewardProfileFormValues): Promise<RewardProfile> {
-  const response = await http.post<{ data: RewardProfile }>('/admin/reward-profiles', payload, {
-    headers: getAdminAuthHeaders(),
-  });
-
-  return response.data.data;
-}
-
-export async function updateRewardProfile(
-  id: number,
-  payload: RewardProfileFormValues,
-): Promise<RewardProfile> {
-  const response = await http.put<{ data: RewardProfile }>(`/admin/reward-profiles/${id}`, payload, {
-    headers: getAdminAuthHeaders(),
-  });
-
-  return response.data.data;
-}
-
-export async function deleteRewardProfile(id: number): Promise<void> {
-  await http.delete(`/admin/reward-profiles/${id}`, {
     headers: getAdminAuthHeaders(),
   });
 }

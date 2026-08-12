@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\TournamentStatusEnum;
 use App\Enums\TournamentTypeEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,13 +24,12 @@ class Tournament extends Model
     protected $fillable = [
         'name',
         'tournament_type',
-        'game_format_id',
+        'tournament_template_id',
         'buy_in',
         'ticket_price_with_drink',
         'ticket_price_without_drink',
         'capacity',
-        'status',
-        'reward_profile_id',
+        'finalized_at',
         'start_at',
     ];
 
@@ -43,24 +41,18 @@ class Tournament extends Model
         return [
             'buy_in' => 'integer',
             'tournament_type' => TournamentTypeEnum::class,
-            'game_format_id' => 'integer',
+            'tournament_template_id' => 'integer',
             'ticket_price_with_drink' => 'integer',
             'ticket_price_without_drink' => 'integer',
             'capacity' => 'integer',
-            'status' => TournamentStatusEnum::class,
-            'reward_profile_id' => 'integer',
+            'finalized_at' => 'datetime',
             'start_at' => 'datetime',
         ];
     }
 
-    public function rewardProfile(): BelongsTo
+    public function tournamentTemplate(): BelongsTo
     {
-        return $this->belongsTo(RewardProfile::class);
-    }
-
-    public function gameFormat(): BelongsTo
-    {
-        return $this->belongsTo(GameFormat::class);
+        return $this->belongsTo(TournamentTemplate::class);
     }
 
     public function registrations(): HasMany

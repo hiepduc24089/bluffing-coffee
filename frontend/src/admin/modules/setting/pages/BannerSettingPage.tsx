@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { Card, Popconfirm, Space, Tag, Tooltip } from 'antd';
+import { Card, Popconfirm, Space, Tooltip } from 'antd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import AppButton from '@/shared/components/atoms/AppButton';
@@ -16,11 +16,13 @@ import {
 } from '@/admin/modules/setting/api/setting.api';
 import { BannerFormModal } from '@/admin/modules/setting/components/banner-form-modal';
 import type { BannerFilter, BannerFormValues, BannerRow } from '@/admin/modules/setting/types/setting.type';
+import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 export function BannerSettingPage() {
   const queryClient = useQueryClient();
   const toast = useAppToast();
+  const { can } = useAdminPermissions();
   const [filters, setFilters] = useState<BannerFilter>({
     keyword: '',
     page: 1,
@@ -92,27 +94,23 @@ export function BannerSettingPage() {
       width: 100,
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'isActive',
-      key: 'isActive',
-      width: 130,
-      render: (value: boolean) => <Tag color={value ? 'green' : 'default'}>{value ? 'Đang bật' : 'Đang tắt'}</Tag>,
-    },
-    {
       title: 'Thao tác',
       key: 'actions',
       width: 120,
       render: (_, record) => (
         <Space size={8}>
-          <Tooltip title="Chỉnh sửa">
-            <AppButton
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingBanner(record);
-                setModalOpen(true);
-              }}
-            />
-          </Tooltip>
+          {can('setting.update') && (
+            <Tooltip title="Chỉnh sửa">
+              <AppButton
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setEditingBanner(record);
+                  setModalOpen(true);
+                }}
+              />
+            </Tooltip>
+          )}
+          {can('setting.delete') && (
           <Popconfirm
             title="Xóa banner"
             description="Banner này sẽ bị xóa khỏi hệ thống."
@@ -125,6 +123,7 @@ export function BannerSettingPage() {
               <AppButton danger icon={<DeleteOutlined />} loading={deleteMutation.isPending} />
             </Tooltip>
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -152,16 +151,18 @@ export function BannerSettingPage() {
         title="Banner"
         subtitle="Quản lý nhiều ảnh banner hiển thị trên website hoặc các khu vực truyền thông."
         extra={
-          <AppButton
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditingBanner(null);
-              setModalOpen(true);
-            }}
-          >
-            Thêm banner
-          </AppButton>
+          can('setting.create') ? (
+            <AppButton
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditingBanner(null);
+                setModalOpen(true);
+              }}
+            >
+              Thêm banner
+            </AppButton>
+          ) : null
         }
       />
 

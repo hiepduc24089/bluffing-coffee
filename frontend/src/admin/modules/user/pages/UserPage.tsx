@@ -19,6 +19,7 @@ import {
 import { UserFormModal } from '@/admin/modules/user/components/user-form-modal';
 import { useUserList } from '@/admin/modules/user/hooks/use-user-list';
 import type { UserFilter, UserFormValues, UserRow } from '@/admin/modules/user/types/user.type';
+import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const defaultFilters: UserFilter = {
@@ -31,6 +32,7 @@ export function UserPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useAppToast();
+  const { can } = useAdminPermissions();
   const [filters, setFilters] = useState<UserFilter>(defaultFilters);
   const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
   const [modalOpen, setModalOpen] = useState(false);
@@ -110,18 +112,21 @@ export function UserPage() {
       width: 190,
       render: (_, record) => (
         <Space size={8}>
-          <Tooltip title="Chỉnh sửa">
-            <AppButton
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingUser(record);
-                setModalOpen(true);
-              }}
-            />
-          </Tooltip>
+          {can('user.update') && (
+            <Tooltip title="Chỉnh sửa">
+              <AppButton
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setEditingUser(record);
+                  setModalOpen(true);
+                }}
+              />
+            </Tooltip>
+          )}
           <Tooltip title="Xem chi tiết">
             <AppButton icon={<EyeOutlined />} onClick={() => navigate(`/admin/users/${record.id}`)} />
           </Tooltip>
+          {can('special.reset_member_password') && (
           <Popconfirm
             title="Reset password"
             description="Password mới sẽ là số điện thoại hiện tại của thành viên."
@@ -133,6 +138,8 @@ export function UserPage() {
               <AppButton icon={<KeyOutlined />} loading={resetPasswordMutation.isPending} />
             </Tooltip>
           </Popconfirm>
+          )}
+          {can('user.delete') && (
           <Popconfirm
             title="Xóa thành viên"
             description="Thành viên này sẽ bị xóa khỏi hệ thống."
@@ -145,6 +152,7 @@ export function UserPage() {
               <AppButton danger icon={<DeleteOutlined />} loading={deleteMutation.isPending} />
             </Tooltip>
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -172,9 +180,11 @@ export function UserPage() {
         title="Thành viên"
         subtitle="Quản lý thành viên đăng nhập bằng số điện thoại và mật khẩu."
         extra={
-          <AppButton type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-            Thêm thành viên
-          </AppButton>
+          can('user.create') ? (
+            <AppButton type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
+              Thêm thành viên
+            </AppButton>
+          ) : null
         }
       />
 

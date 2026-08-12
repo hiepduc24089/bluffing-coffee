@@ -6,7 +6,7 @@ export type CheckInTournament = {
   ticketPriceWithDrink: number;
   ticketPriceWithoutDrink: number;
   capacity: number;
-  status: 'published' | 'running';
+  phase: 'upcoming' | 'running' | 'completed';
   startAt: string;
 };
 

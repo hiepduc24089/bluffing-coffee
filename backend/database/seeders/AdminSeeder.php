@@ -12,6 +12,7 @@ class AdminSeeder extends Seeder
         Admin::factory()->create([
             'name' => 'Admin User',
             'email' => 'admin@bluffing.coffee',
+            'is_super_admin' => true,
         ]);
     }
 }
