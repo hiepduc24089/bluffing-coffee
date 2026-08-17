@@ -26,7 +26,6 @@ const defaultFormValues: TournamentTemplateFormValues = {
   tournamentType: 'normal',
   startingStack: 20000,
   lateRegUntilLevel: null,
-  maxRebuy: null,
   rebuyStack: null,
   description: null,
   defaultPriceWithDrink: 0,
@@ -98,7 +97,6 @@ export function TournamentTemplateFormModal({
             ...values,
             startingStack: Number(values.startingStack),
             lateRegUntilLevel: values.lateRegUntilLevel ?? null,
-            maxRebuy: values.maxRebuy ?? null,
             rebuyStack: values.rebuyStack ?? null,
             description: values.description || null,
             defaultPriceWithDrink: Number(values.defaultPriceWithDrink ?? 0),
@@ -164,11 +162,6 @@ export function TournamentTemplateFormModal({
               extra="Bỏ trống nếu không giới hạn."
             >
               <AppInputNumber className="w-full" min={1} precision={0} />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={8}>
-            <Form.Item name="maxRebuy" label="Số lần rebuy tối đa" extra="Bỏ trống nếu không giới hạn.">
-              <AppInputNumber className="w-full" min={0} precision={0} />
             </Form.Item>
           </Col>
           <Col xs={24} md={8}>
@@ -276,7 +269,6 @@ function toFormValues(template?: TournamentTemplateRow | null): TournamentTempla
     tournamentType: template.tournamentType,
     startingStack: template.startingStack,
     lateRegUntilLevel: template.lateRegUntilLevel ?? null,
-    maxRebuy: template.maxRebuy ?? null,
     rebuyStack: template.rebuyStack ?? null,
     description: template.description ?? null,
     defaultPriceWithDrink: template.defaultPriceWithDrink,
@@ -307,7 +299,6 @@ function normalizeTournamentTemplateFormValues(values: Partial<TournamentTemplat
     tournamentType: values.tournamentType ?? 'normal',
     startingStack: Number(values.startingStack ?? 0),
     lateRegUntilLevel: values.lateRegUntilLevel ?? null,
-    maxRebuy: values.maxRebuy ?? null,
     rebuyStack: values.rebuyStack ?? null,
     description: values.description || null,
     defaultPriceWithDrink: Number(values.defaultPriceWithDrink ?? 0),

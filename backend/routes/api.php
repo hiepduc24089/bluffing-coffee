@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Admin\ContentPageController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\LeaderboardController;
 use App\Http\Controllers\Api\Admin\LiveTableController;
+use App\Http\Controllers\Api\Admin\Pos365PartnerImportController;
 use App\Http\Controllers\Api\Admin\SettingImageController;
 use App\Http\Controllers\Api\Admin\StaffController;
 use App\Http\Controllers\Api\Admin\TournamentBpTransactionController;
@@ -139,12 +140,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::prefix('live-tables')->name('live-tables.')->group(function () {
             Route::get('tournaments/today', [LiveTableController::class, 'todayTournaments'])
                 ->middleware('permission:live_table.view')->name('tournaments.today');
+            Route::get('tournaments/{tournament}/overview', [LiveTableController::class, 'overview'])
+                ->middleware('permission:live_table.view')->name('tournaments.overview');
             Route::get('{tableKey}', [LiveTableController::class, 'show'])
                 ->middleware('permission:live_table.view')->name('show');
             Route::put('{tableKey}/tournament', [LiveTableController::class, 'selectTournament'])
                 ->middleware('permission:live_table.update')->name('tournament.update');
             Route::post('{tableKey}/seats/move', [LiveTableController::class, 'move'])
                 ->middleware('permission:live_table.update')->name('seats.move');
+            Route::post('{tableKey}/merge', [LiveTableController::class, 'merge'])
+                ->middleware('permission:live_table.update')->name('merge');
             Route::delete('{tableKey}/seats/{seatNumber}', [LiveTableController::class, 'clear'])
                 ->middleware('permission:live_table.update')->name('seats.clear');
             Route::post('{tableKey}/seats/{seatNumber}/eliminate', [LiveTableController::class, 'eliminate'])
@@ -184,6 +189,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 ->middleware('permission:setting.update')->name('update');
             Route::delete('{banner}', [BannerController::class, 'destroy'])
                 ->middleware('permission:setting.delete')->name('destroy');
+        });
+
+        Route::prefix('pos365')->name('pos365.')->group(function () {
+            Route::get('status', [Pos365PartnerImportController::class, 'status'])
+                ->middleware('permission:pos365.view')->name('status');
+            Route::post('sync', [Pos365PartnerImportController::class, 'sync'])
+                ->middleware('permission:pos365.update')->name('sync');
+
+            Route::prefix('partner-imports')->name('partner-imports.')->group(function () {
+                Route::get('/', [Pos365PartnerImportController::class, 'index'])
+                    ->middleware('permission:pos365.view')->name('index');
+                Route::post('{partnerImport}/link', [Pos365PartnerImportController::class, 'link'])
+                    ->middleware('permission:pos365.update')->name('link');
+                Route::post('{partnerImport}/ignore', [Pos365PartnerImportController::class, 'ignore'])
+                    ->middleware('permission:pos365.update')->name('ignore');
+            });
         });
 
         Route::post('setting-images', [SettingImageController::class, 'store'])

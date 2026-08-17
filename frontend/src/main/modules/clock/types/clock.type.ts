@@ -16,7 +16,6 @@ export type ClockTournamentTemplate = {
   code: string;
   startingStack: number;
   lateRegUntilLevel?: number | null;
-  maxRebuy?: number | null;
   rebuyStack?: number | null;
   description?: string | null;
   levels: ClockLevel[];

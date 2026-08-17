@@ -46,7 +46,7 @@ const menuEntries: MenuEntry[] = [
   {
     key: '/admin/tournament-templates',
     icon: <ControlOutlined />,
-    label: <Link to="/admin/tournament-templates">Mẫu giải đấu</Link>,
+    label: <Link to="/admin/tournament-templates">Chế độ chơi</Link>,
     permission: 'tournament_template.view',
   },
   {

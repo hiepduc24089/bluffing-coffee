@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DeleteOutlined, EditOutlined, EyeOutlined, KeyOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { Card, Popconfirm, Space, Tooltip } from 'antd';
+import { Card, Popconfirm, Space, Tag, Tooltip } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -87,6 +87,23 @@ export function UserPage() {
       title: 'Số điện thoại',
       dataIndex: 'phone',
       key: 'phone',
+    },
+    {
+      title: 'Tài khoản',
+      key: 'account',
+      width: 150,
+      render: (_, record) => (
+        <Space direction="vertical" size={2}>
+          {record.isClaimed ? (
+            <Tag color="green">Đã kích hoạt</Tag>
+          ) : (
+            <Tooltip title="Kéo từ POS365 về, người chơi chưa nhận tài khoản nên chưa đăng nhập được.">
+              <Tag color="orange">Chưa kích hoạt</Tag>
+            </Tooltip>
+          )}
+          {record.fromPos365 ? <Tag>POS365</Tag> : null}
+        </Space>
+      ),
     },
     {
       title: 'BP',

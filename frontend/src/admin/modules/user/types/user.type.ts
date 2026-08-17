@@ -8,6 +8,9 @@ export type UserRow = {
   role: string;
   bpBalance: number;
   rankLevel?: string | null;
+  isClaimed: boolean;
+  claimedAt?: string | null;
+  fromPos365?: boolean;
   statistic?: UserStatistic | null;
   badges?: BadgeRow[];
   createdAt: string;

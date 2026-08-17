@@ -25,7 +25,6 @@ class StoreTournamentTemplateRequest extends FormRequest
             'tournamentType' => ['required', 'string', Rule::in(TournamentTypeEnum::values())],
             'startingStack' => ['required', 'integer', 'min:1'],
             'lateRegUntilLevel' => ['nullable', 'integer', 'min:1'],
-            'maxRebuy' => ['nullable', 'integer', 'min:0'],
             'rebuyStack' => ['nullable', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:2000'],
             'defaultPriceWithDrink' => ['required', 'integer', 'min:0'],

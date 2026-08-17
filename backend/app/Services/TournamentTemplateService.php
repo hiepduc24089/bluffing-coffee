@@ -71,7 +71,6 @@ class TournamentTemplateService
                     'tournament_type',
                     'starting_stack',
                     'late_reg_until_level',
-                    'max_rebuy',
                     'rebuy_stack',
                     'description',
                     'default_price_with_drink',

@@ -4,6 +4,7 @@ import {
   DeleteOutlined,
   FireOutlined,
   HistoryOutlined,
+  MergeCellsOutlined,
   ReloadOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -19,15 +20,18 @@ import {
   getLiveTableState,
   getTodayLiveTableTournaments,
   liveTableQueryKeys,
+  mergeLiveTables,
   moveLiveTableSeat,
   rebuyLiveTablePlayer,
   selectLiveTableTournament,
 } from '@/admin/modules/live-table/api/live-table.api';
 import { LiveSeatPlayerModal } from '@/admin/modules/live-table/components/live-seat-player-modal';
+import { MergeLiveTablesModal } from '@/admin/modules/live-table/components/merge-live-tables-modal';
 import type {
   LiveTableKey,
   LiveTableSeat,
   LiveTableState,
+  MergeLiveTablesPayload,
   TournamentLiveEvent,
 } from '@/admin/modules/live-table/types/live-table.type';
 import type { TournamentRegistrationRow } from '@/admin/modules/tournament/types/tournament.type';
@@ -49,6 +53,7 @@ const eventLabels: Record<string, string> = {
   seat_cleared: 'Bỏ khỏi ghế',
   player_eliminated: 'Cháy',
   player_rebuy: 'Re-buy',
+  tables_merged: 'Gom bàn',
 };
 
 function isLiveTableKey(value: string | undefined): value is LiveTableKey {
@@ -176,6 +181,20 @@ function LiveSeat({
 }
 
 function describeEvent(event: TournamentLiveEvent) {
+  if (event.eventType === 'tables_merged') {
+    const movedCount = Number(event.metadata?.movedCount ?? 0);
+    const sourceNames = (Array.isArray(event.metadata?.sourceTableKeys)
+      ? (event.metadata.sourceTableKeys as LiveTableKey[])
+      : []
+    )
+      .map((key) => tableLabels[key] ?? key)
+      .join(', ');
+
+    return `Gom ${movedCount} người từ ${sourceNames || 'bàn khác'} về ${
+      event.toTableKey ? tableLabels[event.toTableKey] : 'bàn đích'
+    }`;
+  }
+
   const playerName = event.user?.name ?? 'Hệ thống';
   const fromSeat = event.fromSeatNumber ? `ghế ${event.fromSeatNumber}` : null;
   const toSeat = event.toSeatNumber ? `ghế ${event.toSeatNumber}` : null;
@@ -195,6 +214,7 @@ export function LiveTablePage() {
   const tableKey: LiveTableKey = isLiveTableKey(routeTableKey) ? routeTableKey : 'green';
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>();
   const [pickingSeatNumber, setPickingSeatNumber] = useState<number>();
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
 
   const todayTournamentsQuery = useQuery({
     queryKey: liveTableQueryKeys.todayTournaments,
@@ -287,6 +307,18 @@ export function LiveTablePage() {
     },
   });
 
+  const mergeMutation = useMutation({
+    mutationFn: (payload: Omit<MergeLiveTablesPayload, 'tournamentId'>) =>
+      mergeLiveTables(tableKey, { ...payload, tournamentId: selectedTournamentId as string }),
+    onSuccess: async (nextState) => {
+      setStateCache(nextState);
+      setIsMergeModalOpen(false);
+      toast.success('Đã gom bàn về bàn này.');
+      // Bàn nguồn vừa mất người và bị trả về rảnh, cache của chúng đã cũ.
+      await invalidateState();
+    },
+  });
+
   const rebuyMutation = useMutation({
     mutationFn: (registrationId: number) => rebuyLiveTablePlayer(selectedTournamentId as string, registrationId),
     onSuccess: async () => {
@@ -300,6 +332,7 @@ export function LiveTablePage() {
     moveMutation.isPending ||
     clearMutation.isPending ||
     eliminateMutation.isPending ||
+    mergeMutation.isPending ||
     rebuyMutation.isPending;
   const hasTournament = Boolean(selectedTournamentId || state?.tournament);
 
@@ -330,6 +363,23 @@ export function LiveTablePage() {
                   disabled={!clockTemplateCode}
                 >
                   Mở đồng hồ
+                </AppButton>
+              </span>
+            </Tooltip>
+            <Tooltip
+              title={
+                selectedTournamentId
+                  ? 'Gom người chơi từ bàn khác của giải này về bàn đang mở'
+                  : 'Chọn giải đấu trước khi gom bàn'
+              }
+            >
+              <span>
+                <AppButton
+                  icon={<MergeCellsOutlined />}
+                  onClick={() => setIsMergeModalOpen(true)}
+                  disabled={!selectedTournamentId || isBusy}
+                >
+                  Gom bàn
                 </AppButton>
               </span>
             </Tooltip>
@@ -473,6 +523,16 @@ export function LiveTablePage() {
           });
         }}
         onClose={() => setPickingSeatNumber(undefined)}
+      />
+
+      <MergeLiveTablesModal
+        open={isMergeModalOpen}
+        targetTableKey={tableKey}
+        targetTableName={tableLabels[tableKey]}
+        tournamentId={selectedTournamentId}
+        submitting={mergeMutation.isPending}
+        onSubmit={(payload) => mergeMutation.mutate(payload)}
+        onClose={() => setIsMergeModalOpen(false)}
       />
     </div>
   );

@@ -25,7 +25,6 @@ export type TournamentTemplateRow = {
   tournamentType: TournamentTypeValue;
   startingStack: number;
   lateRegUntilLevel?: number | null;
-  maxRebuy?: number | null;
   rebuyStack?: number | null;
   description?: string | null;
   defaultPriceWithDrink: number;
@@ -66,7 +65,6 @@ export type TournamentTemplateFormValues = {
   tournamentType: TournamentTypeValue;
   startingStack: number;
   lateRegUntilLevel?: number | null;
-  maxRebuy?: number | null;
   rebuyStack?: number | null;
   description?: string | null;
   defaultPriceWithDrink: number;
