@@ -58,4 +58,9 @@ fi
 # Bỏ stdout: từ khi `pos365:sync-partners` chạy mỗi phút thì lượt nào cũng in ra
 # tên lệnh, giữ lại chỉ để đầy log. Stderr vẫn chảy ra ngoài cho crontab ghi
 # lại — đó là chỗ lỗi thật hiện ra.
-exec "${compose[@]}" exec -T app php artisan schedule:run >/dev/null
+#
+# `</dev/null` không phải cho vui: `docker compose exec -T` kế thừa stdin, nên
+# gọi script này từ trong một script khác (hoặc qua `ssh 'bash -s' <<EOF`) là nó
+# ăn luôn phần còn lại của file gọi nó. Cron không đưa stdin nên không sao,
+# nhưng người chạy tay thì gặp ngay.
+exec "${compose[@]}" exec -T app php artisan schedule:run >/dev/null </dev/null
