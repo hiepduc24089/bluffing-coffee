@@ -510,34 +510,76 @@ Xem danh sách thật đang chạy:
 $COMPOSE exec -T app php artisan schedule:list
 ```
 
+### Bật POS365 lần đầu: phải chạy `--full` một lượt
+
+Thứ tự bắt buộc, và bước 3 là chỗ dễ mất dữ liệu nhất mà không có lỗi nào báo:
+
+```bash
+# 1. Thêm bốn biến POS365_* vào .env.production (xem .env.production.example)
+# 2. Restart — config:cache đóng băng giá trị lúc khởi động
+$COMPOSE up -d --force-recreate app
+
+# 3. Nạp nền MỘT lượt, không bỏ được
+$COMPOSE exec -T app php artisan pos365:sync-partners --full </dev/null
+```
+
+Bỏ bước 3 thì hệ thống **không báo lỗi gì cả** nhưng mất sạch khách hàng cũ.
+`/api/partners/sync` của POS365 chỉ trả về thay đổi kể từ con trỏ; lượt đầu tiên
+không có con trỏ nên nó trả về 0 bản ghi **và ghi con trỏ thành thời điểm hiện
+tại**. Từ đó về sau chỉ khách tạo mới mới về, toàn bộ khách đã có trước khi bật
+tích hợp nằm ngoài vĩnh viễn. Triệu chứng là "sync chạy tốt, `last_success_at`
+nhích đều, mà danh sách thành viên trống" — nhìn như không có lỗi.
+
+Đo trên production: lượt đầu không `--full` ra `Nhận 0 bản ghi`; chạy `--full`
+ngay sau đó ra `Nhận 2 bản ghi` và tạo đủ 2 tài khoản.
+
 ### Kiểm tra
 
 ```bash
-# Chạy tay một lần, phải ra "Nhận N bản ghi từ POS365"
-$COMPOSE exec -T app php artisan pos365:sync-partners
+# 1. Script chạy được không: phải KHÔNG in gì và exit 0
+./docker/scripts/run-scheduler.sh; echo "exit=$?"
 
-# Cron có thật sự nổ không: đợi 2 phút rồi xem mốc thành công (phải nhích lên
-# mỗi phút; xem lại lần nữa để chắc là cron chứ không phải lần chạy tay ở trên)
-$COMPOSE exec -T app php artisan tinker --execute='
+# 2. Cron có thật sự nổ không — bằng chứng duy nhất không đánh lừa được.
+#    Theo dõi 145 giây để bắt ít nhất hai lượt cách nhau đúng ~60 giây.
+timeout 145 docker events \
+  --filter container=bluffing_coffee_prod_app \
+  --filter event=exec_start --format '{{.TimeNano}} {{.Action}}' \
+  | grep schedule:run
+
+# 3. Log lỗi phải rỗng
+cat ~/scheduler.log
+
+# 4. Khi POS365 đã bật: mốc thành công phải nhích lên mỗi phút
+$COMPOSE exec -T app php artisan pos365:sync-partners </dev/null   # "Nhận N bản ghi"
+$COMPOSE exec -T app php artisan tinker </dev/null --execute='
   echo App\Models\Pos365SyncState::where("key","partners")->value("last_success_at");'
 ```
 
-### Tốn bao nhiêu tài nguyên
+`crontab -l` **không phải** bước kiểm tra: nó chỉ chứng minh dòng đã được ghi,
+không chứng minh cron chạy được nó. Ba lỗi ở bảng trên đều cho `crontab -l` đẹp
+như thường.
 
-Đo thực tế: `schedule:run` lúc rỗng mất ~1,0 giây và ~29MB RAM đỉnh; lượt
-`pos365:sync-partners` gọi thật POS365 mất ~0,5 giây và ~28MB. RAM là **tức
-thời** — tiến trình sinh ra rồi chết trong một giây, không thường trú.
+`</dev/null` trong các lệnh trên là bắt buộc khi chạy từ script hoặc heredoc:
+`docker compose exec -T` kế thừa stdin và sẽ ăn luôn phần còn lại của file gọi
+nó, làm các lệnh sau đó im lặng không chạy.
+
+### Tốn bao nhiêu tài nguyên
 
 Điểm mấu chốt: 1440 lần boot mỗi ngày là chi phí **cố định**, phải trả ngay cả
 khi lịch rỗng, vì cron gọi `schedule:run` mỗi phút bất kể có việc hay không.
 Chuyển `pos365:sync-partners` từ 2 phút sang 1 phút chỉ thêm phần thân lệnh vào
-những lần boot vốn đã xảy ra. Đo lại sau khi đổi (3 lượt liên tiếp, có gọi thật
-sang POS365): **1,00 / 1,11 / 1,23 giây**, đỉnh ~29MB — nằm gọn trong khoảng
-của lượt rỗng trước đó, vì phần đắt nhất là bootstrap Laravel chứ không phải
+những lần boot vốn đã xảy ra — phần đắt nhất là bootstrap Laravel, không phải
 việc cần làm.
 
-Quy ra chừng 1 giây CPU mỗi phút, tức **1–2% của một core**. Trên gói 2 vCPU/4GB
-đang dùng ~880MB–1,1GB thì đây là nhiễu, không cần tính vào bài toán nâng gói.
+Đo trên **server production thật** (`run-scheduler.sh`, tính cả docker CLI bọc
+ngoài): **1,43 / 1,50 / 1,55 giây**, đỉnh ~40MB. Trước đó đo riêng
+`schedule:run` trong container ở máy dev, có gọi thật sang POS365: 1,00–1,23
+giây, đỉnh ~29MB. Chênh lệch là chi phí của `docker compose exec` chứ không phải
+của việc đồng bộ.
+
+Quy ra chừng 1,5 giây CPU mỗi phút, tức **2–3% của một core**. RAM là tức thời,
+tiến trình sinh ra rồi chết. Trên gói 2 vCPU/4GB đang dùng ~1,0GB thì đây là
+nhiễu, không cần tính vào bài toán nâng gói.
 
 Chi phí thật của nhịp dày hơn không nằm ở VPS mà ở **phía POS365**: 1440 request
 mỗi ngày thay vì 720. Phiên đăng nhập được cache 30 phút
