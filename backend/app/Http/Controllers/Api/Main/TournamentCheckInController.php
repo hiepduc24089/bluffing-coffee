@@ -8,6 +8,7 @@ use App\Http\Resources\TournamentRegistrationResource;
 use App\Http\Resources\TournamentResource;
 use App\Models\Tournament;
 use App\Models\TournamentRegistration;
+use App\Services\TournamentPurchaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,6 +18,11 @@ use Illuminate\Validation\ValidationException;
 
 class TournamentCheckInController extends Controller
 {
+    public function __construct(
+        private readonly TournamentPurchaseService $purchaseService,
+    ) {
+    }
+
     public function todayTournaments(): AnonymousResourceCollection
     {
         $tournaments = Tournament::query()
@@ -86,7 +92,7 @@ class TournamentCheckInController extends Controller
                 ? $tournament->ticket_price_with_drink
                 : $tournament->ticket_price_without_drink;
 
-            return TournamentRegistration::query()->updateOrCreate(
+            $registration = TournamentRegistration::query()->updateOrCreate(
                 [
                     'tournament_id' => $tournament->id,
                     'user_id' => $request->user()->id,
@@ -99,6 +105,13 @@ class TournamentCheckInController extends Controller
                     'finished_at' => null,
                 ],
             );
+
+            // Người chơi tự check-in nên không có admin nào đứng sau dòng tiền
+            // này. `updateOrCreate` ở trên có thể hồi sinh một lượt đăng ký cũ
+            // đã huỷ, nên `syncEntry` phải cập nhật lại giá chứ không tạo thêm.
+            $this->purchaseService->syncEntry($registration);
+
+            return $registration;
         });
 
         return TournamentRegistrationResource::make(

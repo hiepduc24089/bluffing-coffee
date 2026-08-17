@@ -138,21 +138,11 @@ export function TournamentTemplatePage() {
       ),
     },
     {
-      title: 'Late reg / Rebuy',
+      title: 'Late reg',
       key: 'lateReg',
       width: 170,
-      render: (_, record) => (
-        <Space direction="vertical" size={2}>
-          <span>
-            {record.lateRegUntilLevel ? `Đến hết level ${record.lateRegUntilLevel}` : 'Không giới hạn'}
-          </span>
-          <Typography.Text type="secondary">
-            {record.maxRebuy === null || record.maxRebuy === undefined
-              ? 'Rebuy không giới hạn'
-              : `Tối đa ${record.maxRebuy} lần rebuy`}
-          </Typography.Text>
-        </Space>
-      ),
+      render: (_, record) =>
+        record.lateRegUntilLevel ? `Đến hết level ${record.lateRegUntilLevel}` : 'Không giới hạn',
     },
     {
       title: 'Giá vé',

@@ -19,7 +19,6 @@ class TournamentTemplateResource extends JsonResource
             'tournamentType' => $this->tournament_type->value,
             'startingStack' => $this->starting_stack,
             'lateRegUntilLevel' => $this->late_reg_until_level,
-            'maxRebuy' => $this->max_rebuy,
             'rebuyStack' => $this->rebuy_stack,
             'description' => $this->description,
             'defaultPriceWithDrink' => $this->default_price_with_drink,

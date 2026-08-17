@@ -27,6 +27,7 @@ class UserController extends Controller
         $search = $validated['search'] ?? null;
 
         $users = User::query()
+            ->withCount('pos365Partners')
             ->where('role', UserRoleEnum::Member->value)
             ->when($search, function ($query, string $search) {
                 $query->where(function ($query) use ($search) {
@@ -79,6 +80,9 @@ class UserController extends Controller
             'phone' => $validated['phone'],
             'role' => UserRoleEnum::Member,
             'password' => $validated['phone'],
+            // Admin tạo tay thì tài khoản dùng được ngay, khác với tài khoản vỏ
+            // kéo từ POS365 về vốn phải chờ người chơi tự nhận.
+            'claimed_at' => now(),
         ]);
 
         return UserResource::make($user);
@@ -102,6 +106,9 @@ class UserController extends Controller
     {
         $user->update([
             'password' => $user->phone,
+            // Cũng là lối thoát khi người chơi không nhận được OTP: admin đặt
+            // mật khẩu giúp thì tài khoản vỏ thành tài khoản dùng được.
+            'claimed_at' => $user->claimed_at ?? now(),
         ]);
 
         return response()->json([

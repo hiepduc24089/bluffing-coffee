@@ -35,6 +35,21 @@ export type TournamentLiveEvent = {
   createdAt?: string;
 };
 
+export type LiveTableSeatingStrategy = 'random' | 'sequential';
+
+export type LiveTableOverviewItem = {
+  key: LiveTableKey;
+  name: string;
+  isCurrentTournament: boolean;
+  seats: LiveTableSeat[];
+};
+
+export type MergeLiveTablesPayload = {
+  tournamentId: string;
+  sourceTableKeys: LiveTableKey[];
+  seatingStrategy: LiveTableSeatingStrategy;
+};
+
 export type LiveTableState = {
   table: LiveTableInfo;
   tournament?: TournamentRow | null;

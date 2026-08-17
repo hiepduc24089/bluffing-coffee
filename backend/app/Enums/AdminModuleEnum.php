@@ -12,6 +12,7 @@ enum AdminModuleEnum: string
     case Badge = 'badge';
     case Leaderboard = 'leaderboard';
     case LiveTable = 'live_table';
+    case Pos365 = 'pos365';
     case Setting = 'setting';
 
     public function label(): string
@@ -25,6 +26,7 @@ enum AdminModuleEnum: string
             self::Badge => 'Huy hiệu',
             self::Leaderboard => 'Leaderboard',
             self::LiveTable => 'Live Table',
+            self::Pos365 => 'Đối soát POS365',
             self::Setting => 'Setting',
         };
     }
@@ -39,7 +41,9 @@ enum AdminModuleEnum: string
     {
         return match ($this) {
             self::Dashboard, self::Leaderboard => [AdminActionEnum::View],
-            self::LiveTable => [AdminActionEnum::View, AdminActionEnum::Update],
+            // Bản ghi POS365 do bên kia sinh ra, bên mình không tạo cũng không
+            // xoá — chỉ xem hàng đợi và quyết định gắn vào ai.
+            self::LiveTable, self::Pos365 => [AdminActionEnum::View, AdminActionEnum::Update],
             default => AdminActionEnum::cases(),
         };
     }

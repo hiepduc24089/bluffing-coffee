@@ -50,6 +50,8 @@ nên cũng không vướng SameSite.
 | `backend/docker/php/php.prod.ini` | PHP/opcache cho production |
 | `backend/docker/php/entrypoint.prod.sh` | Chờ DB, warm cache, tạo storage link |
 | `backend/docker/scripts/backup-db.sh` | Backup MySQL + xóa bản cũ, dùng cho cron |
+| `backend/docker/scripts/run-scheduler.sh` | Cron gọi mỗi phút để chạy Laravel scheduler, xem §6 |
+| `backend/routes/console.php` | Khai lịch chạy nền — cần cron gọi `schedule:run`, xem §6 |
 | `backend/.env.production.example` | Mẫu env production |
 | `backend/.env.deploy` | *(chỉ có trên server)* một dòng `APP_IMAGE=` — tag image đang chạy |
 | `.github/workflows/ci.yml` | Test backend + build frontend (reusable) |
@@ -377,6 +379,10 @@ openssl rand -base64 24
 Điền vào `.env.production`, đặc biệt là `APP_KEY`, `SERVER_NAME`, `APP_URL` và
 ba password ở trên. Không cần `FRONTEND_URL` — frontend cùng origin với API.
 
+Nhóm `POS365_*` để trống cũng được: `POS365_ENABLED=false` thì scheduler bỏ qua
+lượt đồng bộ chứ không ném lỗi. Điền khi nào tích hợp POS365 thật (xem §6 và
+`docs/pos365-integration.md`).
+
 Khởi động:
 
 ```bash
@@ -409,11 +415,10 @@ tương ứng commit vừa merge — không phải build trên server nữa.
 > `AdminSeeder` và `MemberSeeder` dùng model factory. Ngoài ra `MemberSeeder`
 > chỉ sinh dữ liệu giả, không nên chạy trên production.
 
-Seed ba seeder dữ liệu tham chiếu (không dùng factory nên chạy được bình thường):
+Seed hai seeder dữ liệu tham chiếu (không dùng factory nên chạy được bình thường):
 
 ```bash
-$COMPOSE exec -T app php artisan db:seed --class=RewardProfileSeeder --force
-$COMPOSE exec -T app php artisan db:seed --class=GameFormatSeeder --force
+$COMPOSE exec -T app php artisan db:seed --class=TournamentTemplateSeeder --force
 $COMPOSE exec -T app php artisan db:seed --class=BadgeSeeder --force
 ```
 
@@ -448,7 +453,132 @@ curl -s -X POST https://bluffing.duckdns.org/api/admin/auth/login \
 $COMPOSE logs -f app
 ```
 
-## 6. Bật CI/CD
+## 6. Bật scheduler
+
+**Bước này bắt buộc.** Không có nó thì mọi thứ khai trong
+`backend/routes/console.php` sẽ không bao giờ chạy — khai đúng, `schedule:list`
+hiện đúng, nhưng nằm im vĩnh viễn vì không ai gọi.
+
+Laravel không tự chạy lịch. Nó cần **đúng một** cron gọi `schedule:run` mỗi
+phút, rồi Laravel tự quyết lệnh nào tới hạn. Stack này không có container
+scheduler, nên dùng crontab của user `deploy` — cùng chỗ với DuckDNS và backup.
+
+```bash
+crontab -e
+```
+
+```cron
+* * * * * /home/deploy/bluffing-coffee/backend/docker/scripts/run-scheduler.sh >> /home/deploy/scheduler.log 2>&1
+```
+
+Sửa đường dẫn cho khớp `DEPLOY_PATH` thật của bạn (chính là thư mục CI/CD deploy
+vào). Script tự suy ra thư mục backend từ vị trí của nó nên bên trong không có
+đường dẫn nào đóng cứng.
+
+**Đừng nhét thẳng lệnh `docker compose ... schedule:run` vào crontab.** Chạy được
+lúc thử tay, nhưng có ba thứ làm nó hỏng âm thầm mà một dòng crontab không xử lý
+được — `run-scheduler.sh` sinh ra để lo đúng ba thứ đó:
+
+| Bẫy | Hậu quả nếu không xử lý |
+|---|---|
+| Cron có `PATH` tối thiểu (`/usr/bin:/bin`) | `docker` cài ngoài `/usr/bin` là không tìm thấy, cron im lặng không chạy |
+| `.env.deploy` chỉ xuất hiện sau lần CI/CD deploy đầu tiên | `--env-file` trỏ vào file chưa có → compose lỗi mỗi phút cho tới khi deploy lần đầu |
+| Deploy làm container `app` xuống vài giây | Lượt cron rơi đúng lúc đó phun lỗi vào log, lẫn với lỗi thật |
+
+Script cũng tự khoá bằng `flock`: một lượt treo thì lượt sau bỏ qua thay vì chồng
+tiến trình. `withoutOverlapping()` của Laravel chỉ chặn được bên trong container,
+không chặn được cái vỏ `docker exec` ở ngoài.
+
+Stdout bị bỏ vì từ khi `pos365:sync-partners` chạy mỗi phút thì lượt nào cũng in
+ra tên lệnh — giữ lại chỉ để đầy disk. Stderr vẫn được ghi vào
+`~/scheduler.log`, đó là chỗ lỗi thật hiện ra. Riêng POS365 thì
+`GET /api/admin/pos365/status` trả về `lastError` cùng `lastSuccessAt`.
+
+### Đang có gì trong lịch
+
+| Lệnh | Nhịp | Việc |
+|---|---|---|
+| `pos365:sync-partners` | 1 phút | Kéo khách hàng mới/vừa sửa từ POS365 về |
+
+Một phút là **nhịp dày nhất khai được**, vì bản thân cron chỉ gọi `schedule:run`
+mỗi phút. Muốn dày hơn nữa thì phải đổi cách chạy (`schedule:work` thường trú),
+và không đáng — quầy tạo khách xong người chơi mở app cũng mất chừng đó.
+
+Xem danh sách thật đang chạy:
+
+```bash
+$COMPOSE exec -T app php artisan schedule:list
+```
+
+### Kiểm tra
+
+```bash
+# Chạy tay một lần, phải ra "Nhận N bản ghi từ POS365"
+$COMPOSE exec -T app php artisan pos365:sync-partners
+
+# Cron có thật sự nổ không: đợi 2 phút rồi xem mốc thành công (phải nhích lên
+# mỗi phút; xem lại lần nữa để chắc là cron chứ không phải lần chạy tay ở trên)
+$COMPOSE exec -T app php artisan tinker --execute='
+  echo App\Models\Pos365SyncState::where("key","partners")->value("last_success_at");'
+```
+
+### Tốn bao nhiêu tài nguyên
+
+Đo thực tế: `schedule:run` lúc rỗng mất ~1,0 giây và ~29MB RAM đỉnh; lượt
+`pos365:sync-partners` gọi thật POS365 mất ~0,5 giây và ~28MB. RAM là **tức
+thời** — tiến trình sinh ra rồi chết trong một giây, không thường trú.
+
+Điểm mấu chốt: 1440 lần boot mỗi ngày là chi phí **cố định**, phải trả ngay cả
+khi lịch rỗng, vì cron gọi `schedule:run` mỗi phút bất kể có việc hay không.
+Chuyển `pos365:sync-partners` từ 2 phút sang 1 phút chỉ thêm phần thân lệnh vào
+những lần boot vốn đã xảy ra. Đo lại sau khi đổi (3 lượt liên tiếp, có gọi thật
+sang POS365): **1,00 / 1,11 / 1,23 giây**, đỉnh ~29MB — nằm gọn trong khoảng
+của lượt rỗng trước đó, vì phần đắt nhất là bootstrap Laravel chứ không phải
+việc cần làm.
+
+Quy ra chừng 1 giây CPU mỗi phút, tức **1–2% của một core**. Trên gói 2 vCPU/4GB
+đang dùng ~880MB–1,1GB thì đây là nhiễu, không cần tính vào bài toán nâng gói.
+
+Chi phí thật của nhịp dày hơn không nằm ở VPS mà ở **phía POS365**: 1440 request
+mỗi ngày thay vì 720. Phiên đăng nhập được cache 30 phút
+(`POS365_SESSION_TTL_MINUTES`) nên số lần đăng nhập không đổi, chỉ số lần gọi
+`/api/partners/sync` tăng gấp đôi. Họ không công bố giới hạn tốc độ; nếu về sau
+gặp lỗi lạ theo cụm thì hạ xuống `everyTwoMinutes()` là bước thử đầu tiên.
+
+Phương án thêm một service `scheduler` vào compose cũng chạy được nhưng tốn
+thêm ~50–80MB RAM thường trú cho một việc chạy nửa giây mỗi hai phút. Không
+đáng khi cả hệ thống đang gói gọn trong một VPS.
+
+### Ba điều dễ vấp
+
+**Đổi biến POS365 trong `.env.production` phải restart container.**
+`config:cache` chạy trong entrypoint nên giá trị bị đóng băng lúc khởi động.
+Quên bước này thì đổi mật khẩu POS365 xong vẫn thấy lỗi đăng nhập cũ, rất mất
+thời gian mò.
+
+**Deploy giết lượt sync đang chạy — và không sao cả.** Con trỏ đồng bộ chỉ nhích
+lên sau khi cả lô xử lý xong, nên lượt sau kéo lại từ đúng chỗ cũ; mọi bước đều
+khoá theo `Partner.Id` nên chạy lại không đẻ bản trùng. Trong vài giây container
+app xuống, cron của phút đó lỗi rồi thôi.
+
+**`withoutOverlapping()` phải có hạn khoá tường minh.** Mặc định của Laravel là
+24 giờ: bị kill cứng một lần là khoá treo lại trong Redis và đồng bộ chết im
+suốt một ngày mà không báo gì. Lịch hiện tại đã đặt `withoutOverlapping(10)`.
+Thêm lệnh mới thì nhớ làm tương tự.
+
+### Không có queue worker
+
+Stack này **không chạy `queue:work`** ở đâu cả, dù `QUEUE_CONNECTION=redis`.
+Nghĩa là job nào `dispatch()` vào hàng đợi sẽ nằm đó mãi mãi, không ai xử lý và
+cũng không có thông báo gì.
+
+Hệ quả khi viết code: mọi việc chạy nền phải nằm trong một artisan command và
+được scheduler gọi, chứ không được đẩy vào queue. Nếu sau này thật sự cần queue
+thì phải thêm một service `worker` vào `docker-compose.prod.yml` (dùng chung
+image, đổi `command` thành `php artisan queue:work`) và tính thêm ~60MB RAM
+thường trú.
+
+## 7. Bật CI/CD
 
 ### Tạo SSH key riêng cho GitHub Actions
 

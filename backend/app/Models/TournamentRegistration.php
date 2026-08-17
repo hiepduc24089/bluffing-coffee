@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\TournamentPurchaseKindEnum;
 use App\Enums\TournamentRegistrationStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TournamentRegistration extends Model
@@ -49,4 +51,22 @@ class TournamentRegistration extends Model
         return $this->hasOne(LiveTournamentPlayerState::class, 'tournament_registration_id');
     }
 
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(TournamentPurchase::class, 'tournament_registration_id');
+    }
+
+    public function rebuys(): HasMany
+    {
+        return $this->purchases()->where('kind', TournamentPurchaseKindEnum::Rebuy);
+    }
+
+    /**
+     * Tổng tiền người chơi đã bỏ ra cho giải này — vào giải cộng mọi lần rebuy.
+     * `entry_price` một mình không trả lời được câu này.
+     */
+    public function totalPaid(): int
+    {
+        return (int) $this->purchases()->sum('price');
+    }
 }

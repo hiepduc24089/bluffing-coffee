@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ClearLiveTableSeatRequest;
 use App\Http\Requests\EliminateLiveTableSeatRequest;
 use App\Http\Requests\LiveTableTournamentRequest;
+use App\Http\Requests\MergeLiveTablesRequest;
 use App\Http\Requests\MoveLiveTableSeatRequest;
 use App\Http\Requests\RebuyLiveTablePlayerRequest;
 use App\Http\Requests\SelectLiveTableTournamentRequest;
@@ -97,6 +98,37 @@ class LiveTableController extends Controller
             tournament: $tournament,
             seatNumber: $seatNumber,
             note: $request->validated('note'),
+            adminId: $request->user()?->id,
+        );
+
+        return response()->json([
+            'data' => $this->formatState($this->liveTableService->getState($tableKey, $tournament->id)),
+        ]);
+    }
+
+    public function overview(Tournament $tournament): JsonResponse
+    {
+        $overview = $this->liveTableService->tournamentOverview($tournament);
+
+        return response()->json([
+            'data' => array_map(fn (array $table) => [
+                'key' => $table['key'],
+                'name' => $table['name'],
+                'isCurrentTournament' => $table['isCurrentTournament'],
+                'seats' => LiveTableSeatResource::collection($table['seats'])->resolve(),
+            ], $overview),
+        ]);
+    }
+
+    public function merge(MergeLiveTablesRequest $request, string $tableKey): JsonResponse
+    {
+        $tournament = Tournament::query()->findOrFail($request->validated('tournamentId'));
+
+        $this->liveTableService->mergeTables(
+            tournament: $tournament,
+            targetTableKey: $tableKey,
+            sourceTableKeys: $request->sourceTableKeys(),
+            strategy: $request->seatingStrategy(),
             adminId: $request->user()?->id,
         );
 

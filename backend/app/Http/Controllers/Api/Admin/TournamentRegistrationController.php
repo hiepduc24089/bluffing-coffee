@@ -9,16 +9,23 @@ use App\Http\Requests\UpdateTournamentRegistrationRequest;
 use App\Http\Resources\TournamentRegistrationResource;
 use App\Models\Tournament;
 use App\Models\TournamentRegistration;
+use App\Services\TournamentPurchaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class TournamentRegistrationController extends Controller
 {
+    public function __construct(
+        private readonly TournamentPurchaseService $purchaseService,
+    ) {
+    }
+
     public function index(Tournament $tournament): AnonymousResourceCollection
     {
         $registrations = $tournament->registrations()
-            ->with('user')
+            ->with(['user', 'purchases'])
             ->orderByRaw('final_position is null')
             ->orderBy('final_position')
             ->latest()
@@ -35,14 +42,20 @@ class TournamentRegistrationController extends Controller
             ? $tournament->ticket_price_with_drink
             : $tournament->ticket_price_without_drink;
 
-        $registration = $tournament->registrations()->firstOrCreate(
-            ['user_id' => $request->validated('userId')],
-            [
-                'entry_price' => $entryPrice,
-                'entry_type' => $validated['entryType'],
-                'status' => TournamentRegistrationStatusEnum::Registered->value,
-            ],
-        );
+        $registration = DB::transaction(function () use ($tournament, $request, $validated, $entryPrice) {
+            $registration = $tournament->registrations()->firstOrCreate(
+                ['user_id' => $request->validated('userId')],
+                [
+                    'entry_price' => $entryPrice,
+                    'entry_type' => $validated['entryType'],
+                    'status' => TournamentRegistrationStatusEnum::Registered->value,
+                ],
+            );
+
+            $this->purchaseService->syncEntry($registration, $request->user()?->id);
+
+            return $registration;
+        });
 
         return TournamentRegistrationResource::make($registration->refresh()->load('user'));
     }

@@ -1,13 +1,19 @@
 import { http } from '@/shared/lib/http';
 import { getAdminAuthHeaders } from '@/admin/modules/auth/utils/admin-auth-storage';
 import type { TournamentRow } from '@/admin/modules/tournament/types/tournament.type';
-import type { LiveTableKey, LiveTableState } from '@/admin/modules/live-table/types/live-table.type';
+import type {
+  LiveTableKey,
+  LiveTableOverviewItem,
+  LiveTableState,
+  MergeLiveTablesPayload,
+} from '@/admin/modules/live-table/types/live-table.type';
 
 export const liveTableQueryKeys = {
   all: ['live-tables'] as const,
   todayTournaments: ['live-tables', 'today-tournaments'] as const,
   detail: (tableKey: LiveTableKey, tournamentId?: string) =>
     ['live-tables', tableKey, tournamentId ?? 'current'] as const,
+  overview: (tournamentId: string) => ['live-tables', 'overview', tournamentId] as const,
 };
 
 export async function getTodayLiveTableTournaments(): Promise<TournamentRow[]> {
@@ -85,6 +91,32 @@ export async function eliminateLiveTableSeat(
   const response = await http.post<{ data: LiveTableState }>(
     `/admin/live-tables/${tableKey}/seats/${seatNumber}/eliminate`,
     { tournamentId, note },
+    {
+      headers: getAdminAuthHeaders(),
+    },
+  );
+
+  return response.data.data;
+}
+
+export async function getLiveTableTournamentOverview(tournamentId: string): Promise<LiveTableOverviewItem[]> {
+  const response = await http.get<{ data: LiveTableOverviewItem[] }>(
+    `/admin/live-tables/tournaments/${tournamentId}/overview`,
+    {
+      headers: getAdminAuthHeaders(),
+    },
+  );
+
+  return response.data.data;
+}
+
+export async function mergeLiveTables(
+  targetTableKey: LiveTableKey,
+  payload: MergeLiveTablesPayload,
+): Promise<LiveTableState> {
+  const response = await http.post<{ data: LiveTableState }>(
+    `/admin/live-tables/${targetTableKey}/merge`,
+    payload,
     {
       headers: getAdminAuthHeaders(),
     },
