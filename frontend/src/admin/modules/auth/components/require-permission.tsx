@@ -15,8 +15,10 @@ const FALLBACK_ROUTES: Array<{ permission: string; path: string }> = [
   { permission: 'badge.view', path: '/admin/badges' },
   { permission: 'leaderboard.view', path: '/admin/leaderboard' },
   { permission: 'live_table.view', path: '/admin/live-tables/green' },
+  { permission: 'schedule.view', path: '/admin/schedule' },
+  { permission: 'payroll.view', path: '/admin/payroll' },
+  { permission: 'special.manage_staff', path: '/admin/staff' },
   { permission: 'setting.view', path: '/admin/settings/posts' },
-  { permission: 'special.manage_staff', path: '/admin/settings/staff' },
 ];
 
 type RequirePermissionProps = {

@@ -38,9 +38,9 @@ import type { TournamentRegistrationRow } from '@/admin/modules/tournament/types
 import { useAppToast } from '@/shared/hooks/use-app-toast';
 
 const tableLabels: Record<LiveTableKey, string> = {
-  green: 'Bàn Xanh Lá',
+  black: 'Bàn Đen',
   red: 'Bàn Đỏ',
-  blue: 'Bàn Xanh Dương',
+  green: 'Bàn Xanh Lá',
 };
 
 const seatNumbers = Array.from({ length: 9 }, (_, index) => index + 1);
@@ -57,7 +57,7 @@ const eventLabels: Record<string, string> = {
 };
 
 function isLiveTableKey(value: string | undefined): value is LiveTableKey {
-  return value === 'green' || value === 'red' || value === 'blue';
+  return value === 'black' || value === 'red' || value === 'green';
 }
 
 function getRegistrationName(registration?: TournamentRegistrationRow) {
@@ -211,7 +211,7 @@ export function LiveTablePage() {
   const queryClient = useQueryClient();
   const toast = useAppToast();
   const routeTableKey = params.tableKey;
-  const tableKey: LiveTableKey = isLiveTableKey(routeTableKey) ? routeTableKey : 'green';
+  const tableKey: LiveTableKey = isLiveTableKey(routeTableKey) ? routeTableKey : 'black';
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>();
   const [pickingSeatNumber, setPickingSeatNumber] = useState<number>();
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);

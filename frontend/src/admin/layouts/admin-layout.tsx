@@ -12,6 +12,9 @@ import {
   PictureOutlined,
   CalendarOutlined,
   IdcardOutlined,
+  ScheduleOutlined,
+  DollarOutlined,
+  UsergroupAddOutlined,
 } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 import { Layout, Menu, Typography } from 'antd';
@@ -29,6 +32,13 @@ type MenuEntry = {
   permission?: string;
   children?: MenuEntry[];
 };
+
+const STAFF_MANAGEMENT_KEY = '/admin/staff-management';
+const STAFF_MANAGEMENT_PATHS = ['/admin/schedule', '/admin/payroll', '/admin/staff'];
+
+function isStaffManagementPath(pathname: string): boolean {
+  return STAFF_MANAGEMENT_PATHS.some((path) => pathname.startsWith(path));
+}
 
 const menuEntries: MenuEntry[] = [
   {
@@ -80,16 +90,41 @@ const menuEntries: MenuEntry[] = [
     permission: 'live_table.view',
     children: [
       {
-        key: '/admin/live-tables/green',
-        label: <Link to="/admin/live-tables/green">Bàn Xanh Lá</Link>,
+        key: '/admin/live-tables/black',
+        label: <Link to="/admin/live-tables/black">Bàn Đen</Link>,
       },
       {
         key: '/admin/live-tables/red',
         label: <Link to="/admin/live-tables/red">Bàn Đỏ</Link>,
       },
       {
-        key: '/admin/live-tables/blue',
-        label: <Link to="/admin/live-tables/blue">Bàn Xanh Dương</Link>,
+        key: '/admin/live-tables/green',
+        label: <Link to="/admin/live-tables/green">Bàn Xanh Lá</Link>,
+      },
+    ],
+  },
+  {
+    key: STAFF_MANAGEMENT_KEY,
+    icon: <UsergroupAddOutlined />,
+    label: 'Quản lý nhân viên',
+    children: [
+      {
+        key: '/admin/schedule',
+        icon: <ScheduleOutlined />,
+        label: <Link to="/admin/schedule">Lịch làm việc</Link>,
+        permission: 'schedule.view',
+      },
+      {
+        key: '/admin/payroll',
+        icon: <DollarOutlined />,
+        label: <Link to="/admin/payroll">Bảng lương</Link>,
+        permission: 'payroll.view',
+      },
+      {
+        key: '/admin/staff',
+        icon: <IdcardOutlined />,
+        label: <Link to="/admin/staff">Nhân viên</Link>,
+        permission: 'special.manage_staff',
       },
     ],
   },
@@ -115,12 +150,6 @@ const menuEntries: MenuEntry[] = [
         icon: <CalendarOutlined />,
         label: <Link to="/admin/settings/events">Sự kiện</Link>,
         permission: 'setting.view',
-      },
-      {
-        key: '/admin/settings/staff',
-        icon: <IdcardOutlined />,
-        label: <Link to="/admin/settings/staff">Nhân viên</Link>,
-        permission: 'special.manage_staff',
       },
     ],
   },
@@ -170,11 +199,14 @@ export function AdminLayout() {
       ? [location.pathname]
     : location.pathname.startsWith('/admin/settings')
       ? [location.pathname]
+    : isStaffManagementPath(location.pathname)
+      ? [location.pathname]
     : ['/admin/dashboard'];
 
   const defaultOpenKeys = [
     ...(location.pathname.startsWith('/admin/live-tables') ? ['/admin/live-tables'] : []),
     ...(location.pathname.startsWith('/admin/settings') ? ['/admin/settings'] : []),
+    ...(isStaffManagementPath(location.pathname) ? [STAFF_MANAGEMENT_KEY] : []),
   ];
 
   return (

@@ -13,6 +13,8 @@ enum AdminModuleEnum: string
     case Leaderboard = 'leaderboard';
     case LiveTable = 'live_table';
     case Pos365 = 'pos365';
+    case Schedule = 'schedule';
+    case Payroll = 'payroll';
     case Setting = 'setting';
 
     public function label(): string
@@ -27,6 +29,8 @@ enum AdminModuleEnum: string
             self::Leaderboard => 'Leaderboard',
             self::LiveTable => 'Live Table',
             self::Pos365 => 'Đối soát POS365',
+            self::Schedule => 'Lịch làm việc',
+            self::Payroll => 'Bảng lương',
             self::Setting => 'Setting',
         };
     }
@@ -42,8 +46,9 @@ enum AdminModuleEnum: string
         return match ($this) {
             self::Dashboard, self::Leaderboard => [AdminActionEnum::View],
             // Bản ghi POS365 do bên kia sinh ra, bên mình không tạo cũng không
-            // xoá — chỉ xem hàng đợi và quyết định gắn vào ai.
-            self::LiveTable, self::Pos365 => [AdminActionEnum::View, AdminActionEnum::Update],
+            // xoá — chỉ xem hàng đợi và quyết định gắn vào ai. Bảng lương cũng
+            // vậy: số liệu sinh ra từ lịch, chỉ sửa được mức lương giờ.
+            self::LiveTable, self::Pos365, self::Payroll => [AdminActionEnum::View, AdminActionEnum::Update],
             default => AdminActionEnum::cases(),
         };
     }

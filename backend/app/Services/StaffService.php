@@ -12,8 +12,7 @@ class StaffService
 {
     public function __construct(
         private readonly StaffRepository $staffRepository,
-    ) {
-    }
+    ) {}
 
     public function paginate(?string $search, int $perPage): LengthAwarePaginator
     {
@@ -21,7 +20,7 @@ class StaffService
     }
 
     /**
-     * @param array{name: string, email: string, password: string} $payload
+     * @param  array{name: string, email: string, password: string, position?: string|null, hourlyRate?: int|null}  $payload
      */
     public function create(array $payload): Admin
     {
@@ -30,11 +29,13 @@ class StaffService
             'email' => $payload['email'],
             'password' => $payload['password'],
             'is_super_admin' => false,
+            'position' => $payload['position'] ?? null,
+            'hourly_rate' => $payload['hourlyRate'] ?? null,
         ])->load('permissions'));
     }
 
     /**
-     * @param array{name: string, email: string, password?: string|null} $payload
+     * @param  array{name: string, email: string, password?: string|null, position?: string|null, hourlyRate?: int|null}  $payload
      */
     public function update(Admin $staff, array $payload, Admin $actor): Admin
     {
@@ -44,7 +45,14 @@ class StaffService
             $attributes = [
                 'name' => $payload['name'],
                 'email' => $payload['email'],
+                'position' => $payload['position'] ?? null,
             ];
+
+            // Người không được xem lương thì form cũng không gửi field này lên —
+            // bỏ qua để lần sửa của họ không xoá mất mức lương đã chốt.
+            if (array_key_exists('hourlyRate', $payload)) {
+                $attributes['hourly_rate'] = $payload['hourlyRate'];
+            }
 
             if (! empty($payload['password'])) {
                 $attributes['password'] = $payload['password'];
@@ -55,7 +63,7 @@ class StaffService
     }
 
     /**
-     * @param array<int, string> $permissions
+     * @param  array<int, string>  $permissions
      */
     public function syncPermissions(Admin $staff, array $permissions, Admin $actor): Admin
     {

@@ -1,6 +1,6 @@
 import type { TournamentRegistrationRow, TournamentRow } from '@/admin/modules/tournament/types/tournament.type';
 
-export type LiveTableKey = 'green' | 'red' | 'blue';
+export type LiveTableKey = 'black' | 'red' | 'green';
 
 export type LiveTableInfo = {
   key: LiveTableKey;

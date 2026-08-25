@@ -42,10 +42,32 @@ body {
 }
 
 .app-sider {
+  /* Dính theo viewport để menu luôn thấy được khi cuộn nội dung dài. */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(243, 214, 128, 0.35) transparent;
   border-inline-end: 1px solid rgba(255, 255, 255, 0.12);
   background:
     linear-gradient(180deg, #0d0d0d 0%, #171717 55%, #241d0f 100%) !important;
   box-shadow: 10px 0 32px rgba(15, 23, 42, 0.18);
+}
+
+.app-sider::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-sider::-webkit-scrollbar-thumb {
+  background: rgba(243, 214, 128, 0.35);
+  border-radius: 3px;
+}
+
+.app-sider::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .app-brand {
@@ -1355,6 +1377,11 @@ body {
     max-width: 100% !important;
     min-width: 100% !important;
     flex: 0 0 100% !important;
+    /* Ở mobile sider nằm trên cùng theo chiều dọc nên không sticky nữa. */
+    position: static;
+    align-self: stretch;
+    height: auto;
+    overflow: visible;
   }
 
   .page-header {
@@ -1483,4 +1510,188 @@ body {
 .badge-icon-table-thumb {
   width: 40px;
   height: 40px;
+}
+
+/* ===== Lịch làm việc ===== */
+
+.schedule-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.schedule-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid #e6e0d2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+/* Lịch chiếm trọn bề ngang; danh sách nhân viên và chú thích xuống dưới, chia đôi. */
+.schedule-page__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.schedule-page__side {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+
+.schedule-page__loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.staff-pool__group {
+  margin-bottom: 12px;
+}
+
+.staff-pool__group-title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.staff-pool__card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border: 1px solid #e6e0d2;
+  border-left-width: 4px;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: grab;
+}
+
+.staff-pool__card:active {
+  cursor: grabbing;
+}
+
+.staff-pool__name {
+  font-weight: 600;
+}
+
+.schedule-legend__keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.schedule-legend__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.schedule-legend__key i {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.schedule-legend__days {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedule-legend__day {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #e6e0d2;
+  font-size: 13px;
+}
+
+.schedule-legend__day:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Ca thuộc tháng đã thanh toán lương: xám và mờ đi để phân biệt với ca còn sửa được. */
+.shift-event.shift-event--locked {
+  opacity: 0.72;
+  cursor: default;
+}
+
+.shift-event__lock {
+  margin-right: 4px;
+}
+
+.shift-event__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 4px;
+  overflow: hidden;
+}
+
+.shift-event__name {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.shift-event__meta {
+  font-size: 11px;
+  line-height: 1.2;
+  opacity: 0.9;
+}
+
+.schedule-page .fc {
+  --fc-border-color: #e6e0d2;
+  --fc-today-bg-color: rgba(243, 214, 128, 0.14);
+  font-size: 13px;
+}
+
+.schedule-page .fc .fc-timegrid-slot {
+  height: 40px;
+}
+
+.payroll-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Nhân viên tự xem lương chỉ có hai ô, trải đều cho khỏi hụt một khoảng trống. */
+.payroll-summary--self {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 1200px) {
+  .payroll-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .payroll-summary,
+  .payroll-summary--self {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.assignment-form__locked {
+  margin-bottom: 16px;
 }

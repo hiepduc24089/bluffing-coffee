@@ -18,9 +18,9 @@ use Illuminate\Validation\ValidationException;
 class LiveTableService
 {
     public const TABLES = [
-        'green' => 'Bàn Xanh Lá',
+        'black' => 'Bàn Đen',
         'red' => 'Bàn Đỏ',
-        'blue' => 'Bàn Xanh Dương',
+        'green' => 'Bàn Xanh Lá',
     ];
 
     public const MAX_SEATS = 9;

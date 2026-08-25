@@ -8,8 +8,10 @@ use App\Http\Controllers\Api\Admin\ContentPageController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\LeaderboardController;
 use App\Http\Controllers\Api\Admin\LiveTableController;
+use App\Http\Controllers\Api\Admin\PayrollController;
 use App\Http\Controllers\Api\Admin\Pos365PartnerImportController;
 use App\Http\Controllers\Api\Admin\SettingImageController;
+use App\Http\Controllers\Api\Admin\ShiftScheduleController;
 use App\Http\Controllers\Api\Admin\StaffController;
 use App\Http\Controllers\Api\Admin\TournamentBpTransactionController;
 use App\Http\Controllers\Api\Admin\TournamentRegistrationController;
@@ -45,6 +47,30 @@ Route::prefix('admin')->name('admin.')->group(function () {
                     ->name('permissions.update');
                 Route::delete('{staff}', [StaffController::class, 'destroy'])->name('destroy');
             });
+
+        Route::prefix('schedule')->name('schedule.')->group(function () {
+            Route::get('/', [ShiftScheduleController::class, 'index'])
+                ->middleware('permission:schedule.view')->name('index');
+            Route::get('staff', [ShiftScheduleController::class, 'staff'])
+                ->middleware('permission:schedule.view')->name('staff');
+            Route::post('assignments', [ShiftScheduleController::class, 'store'])
+                ->middleware('permission:schedule.create')->name('assignments.store');
+            Route::put('assignments/{assignment}', [ShiftScheduleController::class, 'update'])
+                ->middleware('permission:schedule.update')->name('assignments.update');
+            Route::delete('assignments/{assignment}', [ShiftScheduleController::class, 'destroy'])
+                ->middleware('permission:schedule.delete')->name('assignments.destroy');
+        });
+
+        Route::prefix('payroll')->name('payroll.')->group(function () {
+            Route::get('/', [PayrollController::class, 'index'])
+                ->middleware('permission:payroll.view')->name('index');
+            Route::put('staff/{staff}/rate', [PayrollController::class, 'updateRate'])
+                ->middleware('permission:payroll.update')->name('rate.update');
+            Route::post('staff/{staff}/payment', [PayrollController::class, 'pay'])
+                ->middleware('permission:special.pay_salary')->name('payment.store');
+            Route::delete('staff/{staff}/payment', [PayrollController::class, 'revertPayment'])
+                ->middleware('permission:special.pay_salary')->name('payment.destroy');
+        });
 
         Route::get('permissions/catalog', [StaffController::class, 'catalog'])
             ->middleware('permission:special.manage_staff')

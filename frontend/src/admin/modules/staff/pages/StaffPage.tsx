@@ -23,6 +23,7 @@ import type {
   StaffRow,
 } from '@/admin/modules/staff/types/staff.type';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
+import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 
 const defaultFilters: StaffFilter = {
   keyword: '',
@@ -33,6 +34,8 @@ const defaultFilters: StaffFilter = {
 export function StaffPage() {
   const queryClient = useQueryClient();
   const toast = useAppToast();
+  const { can } = useAdminPermissions();
+  const canEditHourlyRate = can('special.view_all_payroll');
   const [filters, setFilters] = useState<StaffFilter>(defaultFilters);
   const [keywordInput, setKeywordInput] = useState(defaultFilters.keyword);
   const [formOpen, setFormOpen] = useState(false);
@@ -94,6 +97,29 @@ export function StaffPage() {
           <Typography.Text type="secondary">{record.email}</Typography.Text>
         </Space>
       ),
+    },
+    {
+      title: 'Vị trí',
+      key: 'position',
+      width: 170,
+      render: (_, record) => {
+        if (!record.position) {
+          return <Typography.Text type="secondary">Không xếp ca</Typography.Text>;
+        }
+
+        return (
+          <Space direction="vertical" size={2}>
+            <Tag color={record.position === 'barista' ? 'cyan' : 'orange'}>
+              {record.positionLabel}
+            </Tag>
+            {record.hourlyRate == null ? null : (
+              <Typography.Text type="secondary">
+                {record.hourlyRate.toLocaleString('vi-VN')}đ/giờ
+              </Typography.Text>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: 'Quyền',
@@ -232,6 +258,7 @@ export function StaffPage() {
 
       <StaffFormModal
         open={formOpen}
+        canEditHourlyRate={canEditHourlyRate}
         initialValues={editingStaff}
         submitting={createMutation.isPending || updateMutation.isPending}
         onCancel={closeForm}

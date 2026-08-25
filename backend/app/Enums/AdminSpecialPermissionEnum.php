@@ -13,6 +13,8 @@ enum AdminSpecialPermissionEnum: string
     case AdjustBp = 'special.adjust_bp';
     case ResetMemberPassword = 'special.reset_member_password';
     case ManageStaff = 'special.manage_staff';
+    case ViewAllPayroll = 'special.view_all_payroll';
+    case PaySalary = 'special.pay_salary';
 
     public function label(): string
     {
@@ -21,6 +23,8 @@ enum AdminSpecialPermissionEnum: string
             self::AdjustBp => 'Cộng / trừ BP thủ công',
             self::ResetMemberPassword => 'Reset mật khẩu thành viên',
             self::ManageStaff => 'Quản lý nhân viên',
+            self::ViewAllPayroll => 'Xem bảng lương toàn quán',
+            self::PaySalary => 'Thanh toán lương',
         };
     }
 

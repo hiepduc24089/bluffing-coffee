@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             MemberSeeder::class,
             TournamentTemplateSeeder::class,
             BadgeSeeder::class,
+            ShiftSettingSeeder::class,
         ]);
     }
 }

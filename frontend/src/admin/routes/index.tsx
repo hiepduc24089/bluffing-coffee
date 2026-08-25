@@ -9,6 +9,8 @@ import { DashboardPage } from '@/admin/modules/dashboard/pages/DashboardPage';
 import { TournamentTemplatePage } from '@/admin/modules/tournament-template/pages/TournamentTemplatePage';
 import { LeaderboardPage } from '@/admin/modules/leaderboard/pages/LeaderboardPage';
 import { LiveTablePage } from '@/admin/modules/live-table/pages/LiveTablePage';
+import { PayrollPage } from '@/admin/modules/payroll/pages/PayrollPage';
+import { SchedulePage } from '@/admin/modules/schedule/pages/SchedulePage';
 import { BannerSettingPage } from '@/admin/modules/setting/pages/BannerSettingPage';
 import { ContentPageSettingPage } from '@/admin/modules/setting/pages/ContentPageSettingPage';
 import { StaffPage } from '@/admin/modules/staff/pages/StaffPage';
@@ -65,6 +67,13 @@ export const adminRoutes: RouteObject[] = [
           guarded('live_table.view', [
             { path: 'live-tables/:tableKey', element: <LiveTablePage /> },
           ]),
+          guarded('schedule.view', [{ path: 'schedule', element: <SchedulePage /> }]),
+          guarded('payroll.view', [{ path: 'payroll', element: <PayrollPage /> }]),
+          guarded('special.manage_staff', [{ path: 'staff', element: <StaffPage /> }]),
+          {
+            path: 'settings/staff',
+            element: <Navigate to="/admin/staff" replace />,
+          },
           guarded('setting.view', [
             {
               path: 'settings/posts',
@@ -91,7 +100,6 @@ export const adminRoutes: RouteObject[] = [
               ),
             },
           ]),
-          guarded('special.manage_staff', [{ path: 'settings/staff', element: <StaffPage /> }]),
         ],
       },
     ],
