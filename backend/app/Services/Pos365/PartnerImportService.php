@@ -7,6 +7,7 @@ use App\Enums\Pos365PartnerImportStatusEnum;
 use App\Models\Pos365PartnerImport;
 use App\Repositories\Pos365PartnerImportRepository;
 use App\Repositories\Pos365SyncStateRepository;
+use App\Services\MemberPresenceService;
 use App\Support\Pos365\Pos365Client;
 use App\Support\Pos365\Pos365Exception;
 use Illuminate\Support\Facades\Log;
@@ -31,6 +32,7 @@ class PartnerImportService
         private readonly Pos365PartnerImportRepository $imports,
         private readonly Pos365SyncStateRepository $syncStates,
         private readonly PartnerLinkService $linker,
+        private readonly MemberPresenceService $presence,
     ) {}
 
     public function sync(bool $full = false): Pos365SyncResult
@@ -80,9 +82,21 @@ class PartnerImportService
                 // Admin đã chủ động bỏ qua bản ghi này (khách vãng lai, bản ghi
                 // rác, hoặc đã gộp tay). Mỗi lượt sync sau vẫn kéo nó về nếu có
                 // thay đổi, nhưng quyết định của người phải thắng máy.
-                $status = $import->status === Pos365PartnerImportStatusEnum::Ignored
-                    ? Pos365PartnerImportStatusEnum::Ignored
-                    : $this->linker->link($partner, $import);
+                if ($import->status === Pos365PartnerImportStatusEnum::Ignored) {
+                    $status = Pos365PartnerImportStatusEnum::Ignored;
+                } else {
+                    $status = $this->linker->link($partner, $import);
+
+                    // Lượt gia tăng chỉ trả về những khách POS365 vừa động vào,
+                    // nên có mặt ở đây là một tín hiệu "người này đang ở quán".
+                    //
+                    // Lượt kéo lại toàn bộ (`--full`) thì KHÔNG: nó trả về cả
+                    // quán, và đóng dấu tất cả cùng một mốc sẽ xoá sạch thứ tự
+                    // gần đây — đúng thứ duy nhất cột này dùng để làm.
+                    if (! $full && $import->user_id !== null) {
+                        $this->presence->markSeenById($import->user_id);
+                    }
+                }
 
                 $counts[$status->value] = ($counts[$status->value] ?? 0) + 1;
             } catch (Throwable $e) {

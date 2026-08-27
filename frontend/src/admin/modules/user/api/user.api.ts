@@ -17,6 +17,7 @@ export async function getUserList(filters: UserFilter): Promise<PaginatedRespons
       search: filters.keyword || undefined,
       page: filters.page,
       per_page: filters.perPage,
+      sort: filters.sort,
     },
   });
 

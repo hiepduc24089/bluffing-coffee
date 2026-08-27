@@ -24,6 +24,7 @@ class UserResource extends JsonResource
             // phải nói ra — nếu không chủ quán không biết ai đã nhận tài khoản.
             'isClaimed' => $this->isClaimed(),
             'claimedAt' => $this->claimed_at?->format('Y-m-d H:i'),
+            'lastSeenAt' => $this->last_seen_at?->format('Y-m-d H:i'),
             'fromPos365' => $this->whenCounted('pos365Partners', fn () => $this->pos365_partners_count > 0),
             'statistic' => $this->whenLoaded('statistic', fn () => UserStatisticResource::make($this->statistic)),
             'badges' => BadgeResource::collection($this->whenLoaded('badges')),

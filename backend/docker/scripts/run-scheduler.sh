@@ -36,9 +36,17 @@ fi
 # Bẫy 3: một lượt treo (POS365 không trả lời, docker exec đơ) mà cron vẫn nổ mỗi
 # phút thì tiến trình chồng lên nhau. `withoutOverlapping()` của Laravel chỉ
 # chặn được ở tầng trong container, không chặn được cái vỏ docker exec ở ngoài.
+#
+# CHỜ chứ không bỏ lượt ngay, và đây là chỗ dễ sai nhất cả file. Từ khi lịch có
+# việc dưới một phút (`everyThirtySeconds` trong routes/console.php),
+# `schedule:run` ở lại tới hết phút thay vì thoát sau ~1,5 giây. Nó nhả khoá
+# đúng quanh giây 0 — cũng chính là lúc cron nổ lượt kế. `flock -n` sẽ thấy khoá
+# còn bận và bỏ lượt luôn, thành ra cứ một phút chạy một phút mất trắng, mà log
+# lẫn `docker events` đều trông bình thường. Chờ mươi giây là qua đúng chỗ giao
+# ca đó; còn treo thật thì hết giờ vẫn bỏ lượt như cũ.
 if command -v flock >/dev/null 2>&1; then
     exec 9<"${BASH_SOURCE[0]}"
-    if ! flock -n 9; then
+    if ! flock -w 10 9; then
         echo "[$(date +'%F %T')] Lượt trước còn đang chạy — bỏ qua lượt này."
         exit 0
     fi
@@ -55,7 +63,7 @@ if [ -z "$cid" ] || [ "$(docker inspect -f '{{.State.Running}}' "$cid" 2>/dev/nu
     exit 0
 fi
 
-# Bỏ stdout: từ khi `pos365:sync-partners` chạy mỗi phút thì lượt nào cũng in ra
+# Bỏ stdout: từ khi `pos365:sync-partners` chạy mỗi 30 giây thì lượt nào cũng in ra
 # tên lệnh, giữ lại chỉ để đầy log. Stderr vẫn chảy ra ngoài cho crontab ghi
 # lại — đó là chỗ lỗi thật hiện ra.
 #

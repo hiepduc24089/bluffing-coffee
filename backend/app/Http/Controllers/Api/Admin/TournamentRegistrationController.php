@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateTournamentRegistrationRequest;
 use App\Http\Resources\TournamentRegistrationResource;
 use App\Models\Tournament;
 use App\Models\TournamentRegistration;
+use App\Services\MemberPresenceService;
 use App\Services\TournamentPurchaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -19,6 +20,7 @@ class TournamentRegistrationController extends Controller
 {
     public function __construct(
         private readonly TournamentPurchaseService $purchaseService,
+        private readonly MemberPresenceService $presence,
     ) {
     }
 
@@ -53,6 +55,11 @@ class TournamentRegistrationController extends Controller
             );
 
             $this->purchaseService->syncEntry($registration, $request->user()?->id);
+
+            // Nhân viên vừa đăng ký người này vào giải, tức là họ đang đứng ở
+            // quán ngay lúc này. Đây là tín hiệu "có mặt" chắc chắn nhất ta có
+            // — khác với tín hiệu từ POS365, nó không dựa vào giả định nào.
+            $this->presence->markSeenById((int) $registration->user_id);
 
             return $registration;
         });

@@ -178,15 +178,23 @@ class PartnerLinkService
 
     private function createShellUser(Pos365PartnerDTO $partner): User
     {
+        // Dạng nội địa đã chuẩn hoá, không phải chuỗi thô thu ngân gõ: cột này
+        // vừa là số điện thoại, vừa là tên đăng nhập, vừa là mật khẩu đầu tiên.
+        $phone = PhoneNumber::toLocal($partner->phone) ?? $partner->phone;
+
         return User::query()->create([
             'name' => $partner->displayName(),
-            // Dạng nội địa đã chuẩn hoá, không phải chuỗi thô thu ngân gõ:
-            // cột này vừa là số điện thoại vừa là tên đăng nhập.
-            'phone' => PhoneNumber::toLocal($partner->phone) ?? $partner->phone,
+            'phone' => $phone,
             'role' => UserRoleEnum::Member,
-            // Chưa ai đăng nhập vào tài khoản này. `claimed_at` để null là tín
-            // hiệu duy nhất phân biệt tài khoản vỏ với thành viên thật.
-            'password' => null,
+            // Mật khẩu mặc định là chính số điện thoại — cùng quy ước với thành
+            // viên do admin tạo tay (`UserController::store`) và với nút reset
+            // mật khẩu. Không có OTP nên đây là đường duy nhất để người chơi
+            // đăng nhập được ngay lần đầu; tài khoản để trống mật khẩu là ngõ
+            // cụt, không ai mở ra được.
+            'password' => $phone,
+            // `claimed_at` vẫn để null: người chơi đăng nhập được rồi nhưng
+            // chưa từng đăng nhập. Chừng nào chưa, POS365 vẫn làm chủ hồ sơ và
+            // `refreshShellProfile()` còn được phép cập nhật tên/số.
         ]);
     }
 

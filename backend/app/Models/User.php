@@ -57,6 +57,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'bp_balance' => 'integer',
             'claimed_at' => 'datetime',
+            'last_seen_at' => 'datetime',
         ];
     }
 
@@ -76,14 +77,27 @@ class User extends Authenticatable
     }
 
     /**
-     * Tài khoản vỏ kéo từ POS365 về chưa có ai đăng nhập: có BP, có lịch sử,
-     * nhưng chưa có mật khẩu. Người chơi "nhận" nó bằng số điện thoại + OTP.
+     * Người chơi đã tự đăng nhập vào tài khoản này lần nào chưa.
+     *
+     * Tài khoản kéo từ POS365 về đăng nhập được ngay (mật khẩu mặc định là số
+     * điện thoại), nên "có mật khẩu" không còn phân biệt được gì. Mốc bây giờ
+     * là `claimed_at` — được đóng dấu ở lần đăng nhập thành công đầu tiên.
+     *
+     * Đây cũng là ranh giới quyền sở hữu hồ sơ: chưa nhận thì quầy sửa gì trên
+     * POS365 thành viên đi theo, nhận rồi thì tên hiển thị là của người chơi.
      */
     public function isClaimed(): bool
     {
-        // Mốc quyết định là "có mật khẩu đăng nhập được hay không", chứ không
-        // phải `claimed_at` — admin tạo thành viên tay cũng là tài khoản dùng
-        // được ngay. `claimed_at` chỉ ghi lại thời điểm, không dùng để chặn.
+        return $this->claimed_at !== null;
+    }
+
+    /**
+     * Hàng ngũ cũ: tài khoản kéo về trước khi có mật khẩu mặc định. Migration
+     * đã cấp mật khẩu cho tất cả, nên đây chỉ còn là chốt chặn cho bản ghi lọt
+     * lưới (khôi phục từ bản sao lưu cũ, seed tay).
+     */
+    public function hasPassword(): bool
+    {
         return $this->password !== null;
     }
 

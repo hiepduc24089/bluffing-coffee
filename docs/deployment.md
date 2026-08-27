@@ -485,12 +485,13 @@ lúc thử tay, nhưng có ba thứ làm nó hỏng âm thầm mà một dòng c
 | `.env.deploy` chỉ xuất hiện sau lần CI/CD deploy đầu tiên | `--env-file` trỏ vào file chưa có → compose lỗi mỗi phút cho tới khi deploy lần đầu |
 | Deploy làm container `app` xuống vài giây | Lượt cron rơi đúng lúc đó phun lỗi vào log, lẫn với lỗi thật |
 
-Script cũng tự khoá bằng `flock`: một lượt treo thì lượt sau bỏ qua thay vì chồng
-tiến trình. `withoutOverlapping()` của Laravel chỉ chặn được bên trong container,
-không chặn được cái vỏ `docker exec` ở ngoài.
+Script cũng tự khoá bằng `flock -w 10`: lượt sau **chờ** lượt trước rồi mới
+chạy, quá 10 giây mới bỏ. Chờ chứ không bỏ ngay là bắt buộc từ khi lịch có việc
+dưới một phút — lý do đầy đủ ở cuối §6. `withoutOverlapping()` của Laravel chỉ
+chặn được bên trong container, không chặn được cái vỏ `docker exec` ở ngoài.
 
-Stdout bị bỏ vì từ khi `pos365:sync-partners` chạy mỗi phút thì lượt nào cũng in
-ra tên lệnh — giữ lại chỉ để đầy disk. Stderr vẫn được ghi vào
+Stdout bị bỏ vì từ khi `pos365:sync-partners` chạy mỗi 30 giây thì lượt nào cũng
+in ra tên lệnh — giữ lại chỉ để đầy disk. Stderr vẫn được ghi vào
 `~/scheduler.log`, đó là chỗ lỗi thật hiện ra. Riêng POS365 thì
 `GET /api/admin/pos365/status` trả về `lastError` cùng `lastSuccessAt`.
 
@@ -498,11 +499,21 @@ ra tên lệnh — giữ lại chỉ để đầy disk. Stderr vẫn được gh
 
 | Lệnh | Nhịp | Việc |
 |---|---|---|
-| `pos365:sync-partners` | 1 phút | Kéo khách hàng mới/vừa sửa từ POS365 về |
+| `pos365:sync-partners` | 30 giây | Kéo khách hàng mới/vừa sửa từ POS365 về |
 
-Một phút là **nhịp dày nhất khai được**, vì bản thân cron chỉ gọi `schedule:run`
-mỗi phút. Muốn dày hơn nữa thì phải đổi cách chạy (`schedule:work` thường trú),
-và không đáng — quầy tạo khách xong người chơi mở app cũng mất chừng đó.
+Cron vẫn chỉ gọi `schedule:run` **mỗi phút** — 30 giây là do Laravel tự lo.
+Hễ trong lịch có việc dưới một phút, `schedule:run` không thoát ngay nữa mà ở
+lại tới hết phút đó, cứ 100ms ngó một lượt xem việc nào tới hạn. Không cần
+`schedule:work` thường trú, không cần đổi crontab.
+
+Nhưng nó đổi một thứ ở tầng ngoài, và đây là **cái bẫy phải nhớ**: tiến trình
+giờ sống gần trọn phút thay vì ~1,5 giây, nên lúc cron nổ lượt kế thì lượt trước
+vẫn đang cầm khoá `flock`. Đo thật ở máy dev: lượt chạy lúc 14:57:05 thoát lúc
+14:58:00,043 — tức là muộn hơn thời điểm cron nổ 43ms. `flock -n` (bản cũ của
+`run-scheduler.sh`) sẽ thấy khoá bận và bỏ luôn lượt đó, thành ra **một phút
+chạy một phút mất trắng** — mà `~/scheduler.log` lẫn `docker events` đều trông
+hoàn toàn bình thường. Script hiện dùng `flock -w 10`: chờ qua chỗ giao ca, còn
+treo thật thì hết giờ vẫn bỏ lượt như cũ.
 
 Xem danh sách thật đang chạy:
 
@@ -541,15 +552,22 @@ ngay sau đó ra `Nhận 2 bản ghi` và tạo đủ 2 tài khoản.
 
 # 2. Cron có thật sự nổ không — bằng chứng duy nhất không đánh lừa được.
 #    Theo dõi 145 giây để bắt ít nhất hai lượt cách nhau đúng ~60 giây.
+#    Lưu ý: đây chỉ chứng minh CRON chạy đều, KHÔNG chứng minh nhịp 30 giây —
+#    mỗi phút vẫn chỉ có đúng một exec_start, phần 30 giây nằm bên trong nó.
 timeout 145 docker events \
   --filter container=bluffing_coffee_prod_app \
   --filter event=exec_start --format '{{.TimeNano}} {{.Action}}' \
   | grep schedule:run
 
+# 2b. Nhịp 30 giây có thật không — phải thấy đủ hai lượt trong một phút.
+#     Nếu chỉ thấy một lượt mỗi phút thì khoá flock đang nuốt lượt (xem §6).
+$COMPOSE exec -T app php artisan schedule:list </dev/null   # phải hiện "30s"
+$COMPOSE logs --since 2m app | grep -c pos365
+
 # 3. Log lỗi phải rỗng
 cat ~/scheduler.log
 
-# 4. Khi POS365 đã bật: mốc thành công phải nhích lên mỗi phút
+# 4. Khi POS365 đã bật: mốc thành công phải nhích lên mỗi 30 giây
 $COMPOSE exec -T app php artisan pos365:sync-partners </dev/null   # "Nhận N bản ghi"
 $COMPOSE exec -T app php artisan tinker </dev/null --execute='
   echo App\Models\Pos365SyncState::where("key","partners")->value("last_success_at");'
@@ -565,31 +583,36 @@ nó, làm các lệnh sau đó im lặng không chạy.
 
 ### Tốn bao nhiêu tài nguyên
 
-Điểm mấu chốt: 1440 lần boot mỗi ngày là chi phí **cố định**, phải trả ngay cả
-khi lịch rỗng, vì cron gọi `schedule:run` mỗi phút bất kể có việc hay không.
-Chuyển `pos365:sync-partners` từ 2 phút sang 1 phút chỉ thêm phần thân lệnh vào
-những lần boot vốn đã xảy ra — phần đắt nhất là bootstrap Laravel, không phải
-việc cần làm.
+1440 lần boot mỗi ngày là chi phí **cố định**, phải trả ngay cả khi lịch rỗng,
+vì cron gọi `schedule:run` mỗi phút bất kể có việc hay không. Bản thân việc thêm
+`pos365:sync-partners` vào lịch chỉ là thêm phần thân lệnh vào những lần boot
+vốn đã xảy ra — phần đắt nhất là bootstrap Laravel, không phải việc cần làm.
 
 Đo trên **server production thật** (`run-scheduler.sh`, tính cả docker CLI bọc
-ngoài): **1,43 / 1,50 / 1,55 giây**, đỉnh ~40MB. Trước đó đo riêng
-`schedule:run` trong container ở máy dev, có gọi thật sang POS365: 1,00–1,23
-giây, đỉnh ~29MB. Chênh lệch là chi phí của `docker compose exec` chứ không phải
-của việc đồng bộ.
+ngoài), hồi còn chạy nhịp một phút: **1,43 / 1,50 / 1,55 giây**, đỉnh ~40MB.
+Đo riêng `schedule:run` trong container ở máy dev, có gọi thật sang POS365:
+1,00–1,23 giây, đỉnh ~29MB. Chênh lệch là chi phí của `docker compose exec` chứ
+không phải của việc đồng bộ.
 
-Quy ra chừng 1,5 giây CPU mỗi phút, tức **2–3% của một core**. RAM là tức thời,
-tiến trình sinh ra rồi chết. Trên gói 2 vCPU/4GB đang dùng ~1,0GB thì đây là
-nhiễu, không cần tính vào bài toán nâng gói.
+**Nhịp 30 giây đổi hình dạng của chi phí này, không phải độ lớn.** Tiến trình
+không còn sinh ra rồi chết trong 1,5 giây nữa mà sống gần trọn phút, nên ~40MB
+RAM giờ là **thường trú** chứ không còn là tức thời. CPU thì gần như không đổi:
+phần lớn quãng thời gian đó nó nằm trong `usleep(100_000)`, và việc thật vẫn chỉ
+là hai lượt sync ~0,5 giây. Trên gói 2 vCPU/4GB đang dùng ~1,0GB thì 40MB vẫn là
+nhiễu.
 
-Chi phí thật của nhịp dày hơn không nằm ở VPS mà ở **phía POS365**: 1440 request
-mỗi ngày thay vì 720. Phiên đăng nhập được cache 30 phút
+Điều đáng nói: lập luận "thêm service `scheduler` vào compose tốn ~50–80MB RAM
+thường trú, không đáng" ở bản trước **giờ yếu hẳn đi** — với việc dưới một phút
+thì ta đang trả tiền RAM thường trú rồi, lại còn cõng thêm một `docker exec` mỗi
+phút. Nếu về sau lịch dày thêm nữa thì `schedule:work` trong một service riêng
+là phương án gọn hơn, không phải phương án tốn hơn.
+
+Chi phí thật của nhịp dày hơn nằm ở **phía POS365**: 2880 request mỗi ngày thay
+vì 1440 (và 720 hồi nhịp hai phút). Phiên đăng nhập được cache 30 phút
 (`POS365_SESSION_TTL_MINUTES`) nên số lần đăng nhập không đổi, chỉ số lần gọi
 `/api/partners/sync` tăng gấp đôi. Họ không công bố giới hạn tốc độ; nếu về sau
-gặp lỗi lạ theo cụm thì hạ xuống `everyTwoMinutes()` là bước thử đầu tiên.
-
-Phương án thêm một service `scheduler` vào compose cũng chạy được nhưng tốn
-thêm ~50–80MB RAM thường trú cho một việc chạy nửa giây mỗi hai phút. Không
-đáng khi cả hệ thống đang gói gọn trong một VPS.
+gặp lỗi lạ theo cụm thì `everyMinute()` là bước lùi đầu tiên — và nhớ trả
+`run-scheduler.sh` về `flock -n` nếu lịch không còn việc dưới một phút nào.
 
 ### Ba điều dễ vấp
 

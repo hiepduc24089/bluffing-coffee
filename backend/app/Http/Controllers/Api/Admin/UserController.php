@@ -36,7 +36,18 @@ class UserController extends Controller
                         ->orWhere('phone', 'like', "%{$search}%");
                 });
             })
-            ->latest()
+            ->when(
+                ($validated['sort'] ?? 'latest') === 'recent',
+                // Ô chọn người chơi lúc đăng ký giải: nhân viên cần người đang
+                // đứng trước mặt, không cần người mở tài khoản gần đây nhất.
+                // Người chưa có dấu vết nào (`last_seen_at` null) xuống cuối
+                // thay vì lên đầu — MySQL xếp NULL trước theo mặc định.
+                fn ($query) => $query
+                    ->orderByRaw('last_seen_at is null')
+                    ->orderByDesc('last_seen_at')
+                    ->orderByDesc('id'),
+                fn ($query) => $query->latest(),
+            )
             ->paginate((int) ($validated['per_page'] ?? 10));
 
         return UserResource::collection($users);
@@ -79,10 +90,10 @@ class UserController extends Controller
             'name' => $validated['name'],
             'phone' => $validated['phone'],
             'role' => UserRoleEnum::Member,
+            // Mật khẩu mặc định là số điện thoại, giống hệt tài khoản kéo từ
+            // POS365 về. `claimed_at` để null cho tới lần người chơi tự đăng
+            // nhập đầu tiên — đó mới là lúc tài khoản thuộc về họ.
             'password' => $validated['phone'],
-            // Admin tạo tay thì tài khoản dùng được ngay, khác với tài khoản vỏ
-            // kéo từ POS365 về vốn phải chờ người chơi tự nhận.
-            'claimed_at' => now(),
         ]);
 
         return UserResource::make($user);
@@ -104,11 +115,11 @@ class UserController extends Controller
 
     public function resetPassword(User $user): JsonResponse
     {
+        // Chỉ đặt lại mật khẩu. `claimed_at` không đụng tới: người chơi đã
+        // từng đăng nhập thì vẫn là chủ hồ sơ của mình, còn người chưa đăng
+        // nhập bao giờ thì việc admin bấm nút hộ không biến thành đã đăng nhập.
         $user->update([
             'password' => $user->phone,
-            // Cũng là lối thoát khi người chơi không nhận được OTP: admin đặt
-            // mật khẩu giúp thì tài khoản vỏ thành tài khoản dùng được.
-            'claimed_at' => $user->claimed_at ?? now(),
         ]);
 
         return response()->json([

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { DeleteOutlined, GiftOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import { Card, Modal, Popconfirm, Space, Tag, Tooltip, Typography } from 'antd';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import AppButton from '@/shared/components/atoms/AppButton';
@@ -28,6 +28,7 @@ import type {
 } from '@/admin/modules/tournament/types/tournament.type';
 import { useAdminPermissions } from '@/admin/modules/auth/hooks/use-admin-permissions';
 import { useAppToast } from '@/shared/hooks/use-app-toast';
+import { useDebouncedValue } from '@/shared/hooks/use-debounced-value';
 import { useUnsavedChangesGuard } from '@/shared/hooks/use-unsaved-changes-guard';
 
 const statusLabels: Record<TournamentRegistrationStatus, string> = {
@@ -44,12 +45,28 @@ const statusColors: Record<TournamentRegistrationStatus, string> = {
 
 const formatCurrency = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}đ`;
 
+/**
+ * Số thành viên nạp về cho ô chọn người chơi mỗi lần gõ.
+ *
+ * Việc lọc phải nằm ở server: danh sách thành viên chỉ có tăng, nên bất kỳ con
+ * số cố định nào cũng sẽ có ngày cắt mất đúng người đang đứng ở quầy. Ở đây chỉ
+ * cần đủ nhìn một màn — gõ thêm một chữ là ra người cần tìm.
+ */
+const MEMBER_PICKER_PAGE_SIZE = 20;
+
+type MemberOption = { value: number; label: string };
+
 export function TournamentRegistrationPage() {
   const queryClient = useQueryClient();
   const toast = useAppToast();
   const { can } = useAdminPermissions();
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>();
   const [selectedUserId, setSelectedUserId] = useState<number>();
+  // Giữ lại nhãn của người đã chọn: sau khi ô tìm kiếm đổi từ khoá, người đó có
+  // thể không còn nằm trong trang kết quả hiện tại, và ô select sẽ trơ ra con số
+  // id nếu không có gì để hiển thị.
+  const [selectedUserOption, setSelectedUserOption] = useState<MemberOption>();
+  const [memberKeyword, setMemberKeyword] = useState('');
   const [selectedEntryType, setSelectedEntryType] = useState<'with_drink' | 'without_drink'>();
   const [draftPositions, setDraftPositions] = useState<Record<number, number | null>>({});
   const [draftStatuses, setDraftStatuses] = useState<Record<number, TournamentRegistrationStatus>>({});
@@ -60,9 +77,24 @@ export function TournamentRegistrationPage() {
     queryFn: () => getTournamentList({ keyword: '', page: 1, perPage: 100 }),
   });
 
-  const { data: users } = useQuery({
-    queryKey: userQueryKeys.list({ keyword: '', page: 1, perPage: 100 }),
-    queryFn: () => getUserList({ keyword: '', page: 1, perPage: 100 }),
+  // Chặn nhịp gõ trước khi bắn lên server — gõ "Nguyễn" không nên thành sáu
+  // request.
+  const debouncedMemberKeyword = useDebouncedValue(memberKeyword, 300);
+
+  const memberFilter = {
+    keyword: debouncedMemberKeyword,
+    page: 1,
+    perPage: MEMBER_PICKER_PAGE_SIZE,
+    // Ô tìm kiếm còn trống thì gợi ý người có mặt ở quán gần đây nhất, thay vì
+    // người mở tài khoản gần đây nhất. Nhân viên gần như không phải gõ.
+    sort: 'recent' as const,
+  };
+
+  const { data: users, isFetching: isFetchingMembers } = useQuery({
+    queryKey: userQueryKeys.list(memberFilter),
+    queryFn: () => getUserList(memberFilter),
+    // Giữ kết quả cũ trong lúc gõ để danh sách không nháy trắng giữa hai lần gõ.
+    placeholderData: keepPreviousData,
   });
 
   const registrationsQueryKey = ['tournament-registrations', selectedTournamentId] as const;
@@ -105,21 +137,22 @@ export function TournamentRegistrationPage() {
     [registrations],
   );
 
-  const userOptions = useMemo(
-    () =>
-      (users?.data ?? [])
-        .filter((user) => !registeredUserIds.has(Number(user.id)))
-        .map((user) => {
-          const label = `${user.name} - ${user.phone}`;
+  const userOptions = useMemo<MemberOption[]>(() => {
+    const options = (users?.data ?? [])
+      .filter((user) => !registeredUserIds.has(Number(user.id)))
+      .map((user) => ({
+        label: `${user.name} - ${user.phone}`,
+        value: Number(user.id),
+      }));
 
-          return {
-            label,
-            searchText: label,
-            value: Number(user.id),
-          };
-        }),
-    [registeredUserIds, users?.data],
-  );
+    // Người đang chọn phải luôn có mặt trong danh sách, kể cả khi họ đã rơi ra
+    // khỏi trang kết quả của từ khoá hiện tại.
+    if (selectedUserOption && !options.some((option) => option.value === selectedUserOption.value)) {
+      return [selectedUserOption, ...options];
+    }
+
+    return options;
+  }, [registeredUserIds, selectedUserOption, users?.data]);
 
   const invalidateRegistrations = async () => {
     await queryClient.invalidateQueries({ queryKey: registrationsQueryKey });
@@ -135,6 +168,8 @@ export function TournamentRegistrationPage() {
     onSuccess: async () => {
       toast.success('Đã đăng ký thành viên vào giải đấu.');
       setSelectedUserId(undefined);
+      setSelectedUserOption(undefined);
+      setMemberKeyword('');
       setSelectedEntryType(undefined);
       await invalidateRegistrations();
     },
@@ -389,6 +424,8 @@ export function TournamentRegistrationPage() {
               confirmUnsavedChanges(() => {
                 setSelectedTournamentId(value as string | undefined);
                 setSelectedUserId(undefined);
+                setSelectedUserOption(undefined);
+                setMemberKeyword('');
                 setSelectedEntryType(undefined);
                 setDraftPositions({});
                 setDraftStatuses({});
@@ -398,13 +435,31 @@ export function TournamentRegistrationPage() {
 
           <AppSelect
             showSearch
-            placeholder="Chọn thành viên"
+            placeholder="Tìm theo tên hoặc số điện thoại"
             style={{ minWidth: 280 }}
             disabled={!selectedTournamentId}
             value={selectedUserId}
-            optionFilterProp="searchText"
+            // Việc lọc đã do server làm; để Antd lọc lại lần nữa trên 20 dòng
+            // vừa tải về sẽ giấu mất chính những người vừa tìm ra.
+            filterOption={false}
+            onSearch={setMemberKeyword}
+            loading={isFetchingMembers}
+            notFoundContent={
+              isFetchingMembers
+                ? 'Đang tìm...'
+                : memberKeyword
+                  ? 'Không tìm thấy thành viên nào'
+                  : 'Chưa có thành viên nào'
+            }
             options={userOptions}
-            onChange={(value) => setSelectedUserId(value as number)}
+            onChange={(value, option) => {
+              setSelectedUserId(value as number | undefined);
+              setSelectedUserOption(option as MemberOption | undefined);
+              // Chọn xong thì trả ô về danh sách gần đây, sẵn sàng cho người
+              // tiếp theo — nhãn của người vừa chọn đã được ghim lại nên không
+              // mất đi khi kết quả tìm kiếm đổi.
+              setMemberKeyword('');
+            }}
           />
 
           <AppSelect

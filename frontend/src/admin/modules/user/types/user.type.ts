@@ -10,6 +10,7 @@ export type UserRow = {
   rankLevel?: string | null;
   isClaimed: boolean;
   claimedAt?: string | null;
+  lastSeenAt?: string | null;
   fromPos365?: boolean;
   statistic?: UserStatistic | null;
   badges?: BadgeRow[];
@@ -33,10 +34,17 @@ export type UserDetail = UserRow & {
   tournamentRegistrations: TournamentRegistrationRow[];
 };
 
+/**
+ * `recent` xếp theo lần gần nhất thành viên có mặt ở quán — dùng cho ô chọn
+ * người chơi ở quầy. `latest` xếp theo ngày tạo, giữ nguyên cho màn quản lý.
+ */
+export type UserSort = 'latest' | 'recent';
+
 export type UserFilter = {
   keyword: string;
   page: number;
   perPage: number;
+  sort?: UserSort;
 };
 
 export type UserFormValues = {

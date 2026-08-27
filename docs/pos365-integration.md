@@ -58,7 +58,7 @@ gia tăng mà chính app của họ dùng để chạy offline-first: `PartnerSy
 `AccountSync`, `BookingSync`, `GroupSync`.
 
 Nên kiến trúc bắt buộc là polling, và điều đó **không mâu thuẫn** với việc để
-POS365 làm nguồn sự thật về hội viên. Chỉ là độ trễ 30–60 giây, không tránh được.
+POS365 làm nguồn sự thật về hội viên. Chỉ là độ trễ 15–30 giây, không tránh được.
 
 ## Luồng dữ liệu — hội viên lần đầu
 
@@ -77,16 +77,16 @@ POS365 làm nguồn sự thật về hội viên. Chỉ là độ trễ 30–60 
    ┌──────────────────────────────────────────────────────────────┐
    │                         Bluffing                             │
    │                                                              │
-   │  3. users (tài khoản vỏ)  ◄── khoá ghép: pos365_partner_id   │
-   │     password = null, chưa ai đăng nhập                       │
+   │  3. users  ◄── khoá ghép: pos365_partner_id                  │
+   │     mật khẩu mặc định = SĐT, claimed_at = null               │
    │           │                                                  │
    │           ▼                                                  │
    │  4. khớp đơn buy-in ──► tournament_registrations             │
    │                         registered + cộng BP                 │
    │           │                                                  │
    │           ▼                                                  │
-   │  5. Người chơi tải app, đăng nhập bằng SĐT ──► nhận tài khoản│
-   │     đặt mật khẩu, thấy nguyên BP và lịch sử đã tích sẵn      │
+   │  5. Người chơi tải app, đăng nhập bằng SĐT (mật khẩu cũng là │
+   │     SĐT), thấy nguyên BP và lịch sử đã tích sẵn              │
    └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -97,7 +97,7 @@ vô ích. Cùng một cron, chạy tuần tự hai bước.
 Bước 5 là điểm hay của hướng này: người chơi mua buy-in xong mới tải app, và
 thấy ngay BP của lần mua đó đã có sẵn. Không phải đăng ký rồi chờ.
 
-Độ trễ giữa bước 1 và bước 4 là 30–60 giây. UI phải hiển thị trạng thái "đang
+Độ trễ giữa bước 1 và bước 4 là 15–30 giây. UI phải hiển thị trạng thái "đang
 xác nhận thanh toán" để người chơi không hoang mang.
 
 ## Luồng dữ liệu — hội viên đã có
@@ -341,19 +341,28 @@ chấm) ngay tại điểm kéo về, một hàm duy nhất.
 Quan hệ là **một user ↔ nhiều partner** (xem ca E), nên ánh xạ nằm ở bảng nối
 `user_pos365_partners` chứ không phải một cột trên `users`.
 
-### Tài khoản vỏ và việc nhận tài khoản
+### Tài khoản kéo về và việc nhận tài khoản
 
-User kéo từ POS365 về chưa có mật khẩu — chưa ai đăng nhập bao giờ. Đây là thay
-đổi bắt buộc lên schema hiện tại: `users.password` đang `NOT NULL`.
+> **Đã đổi so với thiết kế ban đầu (26/08/2026).** Bản gốc để `password = null`
+> và hẹn người chơi nhận tài khoản bằng SĐT + OTP. Luồng OTP đó chưa từng được
+> xây, nên mọi thành viên sync về đều nằm trong ngõ cụt: có tên, có BP, có lịch
+> sử, mà không có mật khẩu nào nhập đúng được. OTP cũng là dịch vụ trả tiền,
+> ngược với ràng buộc hạ tầng của dự án.
 
-Người chơi tải app, nhập số điện thoại. Nếu SĐT đó khớp một tài khoản vỏ, họ đặt
-mật khẩu và nhận luôn tài khoản đó — giữ nguyên BP, badge, lịch sử giải đã tích
-từ trước. Không tạo tài khoản mới, không mất dữ liệu.
+User kéo từ POS365 về **đăng nhập được ngay**: mật khẩu mặc định là chính số
+điện thoại, cùng quy ước với thành viên do admin tạo tay và với nút reset mật
+khẩu. Người chơi tải app, đăng nhập bằng SĐT, thấy nguyên BP và lịch sử đã tích
+từ trước.
 
-Bước xác minh SĐT (OTP hoặc mã do thu ngân đọc) là **bắt buộc**: không có nó thì
-bất kỳ ai đoán được SĐT của người khác đều chiếm được tài khoản kèm toàn bộ BP.
-Hệ thống hiện chưa có luồng đăng ký tự phục vụ nào — `main/auth` chỉ có `login`
-— nên phần này là làm mới hoàn toàn.
+Đánh đổi phải nói thẳng: **SĐT của người chơi thì bạn cùng bàn đều biết**, nên
+tài khoản chưa đổi mật khẩu là tài khoản ai cũng vào được. Màn đổi mật khẩu và
+việc ép đổi ở lần đăng nhập đầu là việc còn nợ; `claimed_at` đang có đủ để biết
+ai chưa từng đăng nhập.
+
+`claimed_at` được đóng dấu ở **lần đăng nhập thành công đầu tiên**, không phải
+lúc tạo. Nó là ranh giới quyền sở hữu hồ sơ: chưa đăng nhập thì POS365 làm chủ
+tên/SĐT (`refreshShellProfile()` còn được sửa), đăng nhập rồi thì hồ sơ là của
+người chơi và một lần thu ngân gõ vội không ghi đè được nữa.
 
 ### Buy-in: sản phẩm POS365 ↔ `tournament_registrations`
 
@@ -403,9 +412,10 @@ Thêm:
 | `claimed_at`   | `timestamp` null | null = tài khoản vỏ, chưa ai nhận           |
 | `phone_e164`   | `string` index   | SĐT đã chuẩn hoá, dùng để so trùng          |
 
-`password` nullable kéo theo việc phải rà mọi chỗ đăng nhập: tài khoản vỏ phải
-bị từ chối đăng nhập bằng mật khẩu (không phải "mật khẩu sai" mà là "tài khoản
-chưa kích hoạt"), và `Auth::attempt` với `password = null` không được lọt.
+`password` vẫn nullable ở tầng schema, nhưng không còn bản ghi nào null: mọi
+tài khoản đều được cấp mật khẩu mặc định. `AuthService` giữ lại một chốt chặn
+cho bản ghi lọt lưới (khôi phục từ sao lưu cũ, seed tay) — báo "chưa có mật
+khẩu, liên hệ quầy" chứ không báo "mật khẩu sai".
 
 **`user_pos365_partners`** — bảng nối, một user có thể ứng với nhiều partner:
 
@@ -518,7 +528,7 @@ vào POS365 thật.
 
 ### Kéo hội viên
 
-Cron 60 giây, **chạy trước bước kéo đơn trong cùng một lượt**. Đường chính là
+Cron 30 giây, **chạy trước bước kéo đơn trong cùng một lượt**. Đường chính là
 `GET /api/partners?Type=1&Orderby=ModifiedDate desc&$top=50`, đọc từng trang cho
 tới khi gặp `ModifiedDate <= last_synced_at`. Đổi sang `PartnerSync` nếu trial
 chứng minh nó trả bản ghi đầy đủ.
@@ -530,8 +540,8 @@ Mỗi partner ghi vào `pos365_partner_imports` rồi xử lý:
    `name` / `phone` của user, xong.
 3. `phone_e164` khớp một user đang có → gắn thêm partner vào user đó
    (`is_primary = false`), đánh dấu `duplicate`. Không tạo user mới.
-4. Còn lại → tạo user vỏ: `password = null`, `claimed_at = null`,
-   `role = member`, `bp_balance = 0`.
+4. Còn lại → tạo user mới: `password = SĐT` (dạng nội địa đã chuẩn hoá),
+   `claimed_at = null`, `role = member`, `bp_balance = 0`.
 
 Bước 3 và 4 phải nằm trong transaction có khoá, vì cron có thể chạy song song
 với luồng nhận tài khoản của chính người đó.
@@ -542,7 +552,7 @@ biết để kéo lại.
 
 ### Kéo đơn
 
-Cron 60 giây, ngay sau bước kéo hội viên. Cách lấy đơn mới, ưu tiên cách (a):
+Cron 30 giây, ngay sau bước kéo hội viên. Cách lấy đơn mới, ưu tiên cách (a):
 
 - **(a) Theo `Id` giảm dần.** `Orderby=Id desc`, đọc từng trang cho tới khi gặp
   `Id <= last_cursor` thì dừng. Không phụ thuộc ngữ nghĩa `Filter` của OData,
@@ -677,6 +687,19 @@ Shop trống nên chưa chạm được vào phần đơn hàng, tức là phầ
 buy-in: mục 3 (`Includes=OrderDetails` có nhồi được dòng hàng không), mục 4
 (`ProductCode` lọc một hay nhiều mã), mục 5 (độ trễ đơn), mục 9 (đơn tạo bằng
 API có ra bill giấy không — cái này bắt buộc phải có người đứng cạnh máy in).
+
+**Bán hàng cho một khách có làm `PartnerSync` trả khách đó về không?** Chưa
+kiểm chứng, và cũng vì shop trống: lần thử 13/08 chỉ xác nhận sync bắt được
+*tạo mới* và *sửa hồ sơ*. DTO `Partner` có `Point`, `Debt`, `TotalDebt` — nếu
+POS365 cập nhật mấy trường này khi bán hàng thì `ModifiedDate` nhích lên và
+sync sẽ trả khách đó về, cho ta một tín hiệu "người này đang ở quán" trễ tối đa
+30 giây.
+
+Đây là câu hỏi rẻ tiền nhất trong danh sách này: bán một ly nước cho một khách
+có sẵn, đợi một phút, xem `pos365_partner_imports` có dòng mới của khách đó
+không. Trả lời được thì `users.last_seen_at` (xem `MemberPresenceService`) từ
+tín hiệu "may thì có" thành tín hiệu chính. Trả lời là không thì cột đó vẫn
+chạy, chỉ là dựa vào lượt đăng ký giải và lượt đăng nhập, chậm hơn.
 
 ## Đã triển khai — chiều kéo hội viên
 

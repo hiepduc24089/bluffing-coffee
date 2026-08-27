@@ -111,6 +111,7 @@ export function MainLoginPanel({
           <Form.Item
             name="password"
             label="Mật khẩu"
+            extra="Lần đầu đăng nhập: mật khẩu chính là số điện thoại của bạn."
             rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
           >
             <AppTextField

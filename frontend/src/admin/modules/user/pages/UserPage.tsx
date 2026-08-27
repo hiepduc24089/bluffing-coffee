@@ -95,10 +95,10 @@ export function UserPage() {
       render: (_, record) => (
         <Space direction="vertical" size={2}>
           {record.isClaimed ? (
-            <Tag color="green">Đã kích hoạt</Tag>
+            <Tag color="green">Đã đăng nhập</Tag>
           ) : (
-            <Tooltip title="Kéo từ POS365 về, người chơi chưa nhận tài khoản nên chưa đăng nhập được.">
-              <Tag color="orange">Chưa kích hoạt</Tag>
+            <Tooltip title="Đăng nhập được bằng số điện thoại (mật khẩu mặc định cũng là số điện thoại), nhưng người chơi chưa vào lần nào.">
+              <Tag color="orange">Chưa đăng nhập</Tag>
             </Tooltip>
           )}
           {record.fromPos365 ? <Tag>POS365</Tag> : null}
